@@ -15,7 +15,7 @@ from PCAfold import PCA as PCAA
 ##########################################################################################
 ### Input Data
 ###
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data_10PSR_Clean/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data_10PSR_Clean_Lin/'
 FigDir             = OutputDir + '/fig/'
 
 NRests             = 10
@@ -114,6 +114,10 @@ np.savetxt(FileName, np.concatenate((tOrig[...,np.newaxis], yMat), axis=1), deli
 FileName = OutputDir+DirName+'/RestVecTot.csv'
 np.savetxt(FileName, RestVecTot, delimiter=',')
 
+FileName = OutputDir+DirName+'/CleanVars.csv'
+StrSep = ','
+with open(FileName, 'w') as the_file:
+    the_file.write(StrSep.join(VarsName)+'\n')
 
 # ### Checking Singular Value Decomposition
 # U, S, VT = np.linalg.svd(yMat, full_matrices=1)

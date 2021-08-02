@@ -16,12 +16,12 @@ from scipy.integrate import solve_ivp
 ##########################################################################################
 ### Input Data
 
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data_10PSR_Clean_Lin/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data_PSR_Clean_Test/'
 FigDir             = OutputDir + '/fig/'
 
 MixtureFile        = 'gri30.yaml'
-NRests             = 10
-RestVec            = np.logspace(np.log10(1.e-5), np.log10(1.e-4), NRests) # [2.e-5]
+NRests             = 1
+RestVec            = [7.e-5] #np.logspace(np.log10(1.e-5), np.log10(1.e-4), NRests) # [2.e-5]
 NPerRest           = 1000
 
 tStratch           = 1.
@@ -186,23 +186,15 @@ for Rest in RestVec:
 
 
     ### Initialize Integration           
-    # dt0        = Rest*1.e-7
-    # tMax       = Rest*1.e+3
-    # tout       = [0.]
-    # tout       = np.concatenate((np.array(tout), np.logspace(np.log10(dt0), np.log10(tMax), Nt-1)), axis=0)
-    # rtol       = 1.e-8
-    
-    dt0        = Rest*1.e-5
+    dt0        = Rest*1.e-9
     tMax       = Rest*1.e+3
     tout       = [0.]
-    tout       = np.concatenate((np.array(tout), np.linspace(dt0, tMax, Nt-1)), axis=0)
-    rtol       = 1.e-12
-
+    tout       = np.concatenate((np.array(tout), np.logspace(np.log10(dt0), np.log10(tMax), Nt-1)), axis=0)
     states     = ct.SolutionArray(gas_, 1, extra={'t': [0.0]})
     SOLVER     = 'BDF'
 
 
-    output     = solve_ivp( ReactorOde_CVODE, tout[[0,-1]], y0, method=SOLVER, t_eval=tout, rtol=rtol)#, first_step=1.e-14)
+    output     = solve_ivp( ReactorOde_CVODE, tout[[0,-1]], y0, method=SOLVER, t_eval=tout, rtol=1.e-8)#, first_step=1.e-14)
 
 
     ### Integrate
