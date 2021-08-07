@@ -42,7 +42,9 @@ def NNBranch(InputData, normalized, NNName, Idx):
                                 bias_regularizer=regularizers.l1_l2(l1=kW1, l2=kW2),
                                 name=LayerName)(hiddenVec[-1]))
         if (iLayer < NLayers-1):
-            hiddenVec.append(layers.Dropout(InputData.BranchDropOutRate, input_shape=(NNLayers[iLayer],))(hiddenVec[-1], training=InputData.BranchDropOutTrain))          
+            hiddenVec.append(layers.Dropout(InputData.BranchDropOutRate, input_shape=(NNLayers[iLayer],))(hiddenVec[-1], training=InputData.BranchDropOutTrain))      
+
+    hiddenVec.append(layers.Softmax()(hiddenVec[-1]))    
 
     return hiddenVec[-1]
 

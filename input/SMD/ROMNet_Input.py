@@ -10,7 +10,7 @@ class inputdata(object):
 
         #=======================================================================================================================================
         ### Case Name
-        self.NNRunIdx            = 3                                                                      # Training Case Identification Number 
+        self.NNRunIdx            = 4                                                                      # Training Case Identification Number 
 
         #=======================================================================================================================================
         ### Execution Flags
@@ -34,7 +34,7 @@ class inputdata(object):
         #=======================================================================================================================================
         ### Data
         self.DataType            = 'BlackBox'
-        self.PathToDataFld       = self.WORKSPACE_PATH + '/ROMNet/Data_100SMD_Clean/'                   # Path To Training Data Folder 
+        self.PathToDataFld       = self.WORKSPACE_PATH + '/ROMNet/Data_10SMD_Clean/'                   # Path To Training Data Folder 
 
         #=======================================================================================================================================
         ## NN Model Structure

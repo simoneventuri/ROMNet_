@@ -4,7 +4,7 @@ import tensorflow                             as tf
 import numpy                                  as np
 
 import matplotlib
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 from matplotlib                           import pyplot as plt
 
 if __name__ == "__main__": 

@@ -1,7 +1,7 @@
 import os
 import sys
 import matplotlib
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 from matplotlib                           import pyplot as plt
 import math
 import tensorflow                             as tf

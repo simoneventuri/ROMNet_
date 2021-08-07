@@ -5,9 +5,9 @@ import numpy  as np
 from sklearn.model_selection import train_test_split
 
 import matplotlib
-import tkinter
+#import tkinter
 import matplotlib
-matplotlib.use('TkAgg')
+# matplotlib.use('TkAgg')
 from matplotlib                           import pyplot as plt
 
 
@@ -17,6 +17,7 @@ def generate_data(InputData):
     print('[SurQCT]:   Reading Data from: ' + InputData.PathToDataFld)
 
     Data = pd.read_csv(InputData.PathToDataFld+'/Input.csv',header=0)
+
 
     uAll = Data[InputData.BranchVars]
     if (len(InputData.TrunkVars) > 0):
