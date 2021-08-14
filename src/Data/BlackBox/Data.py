@@ -14,32 +14,39 @@ from matplotlib                           import pyplot as plt
 #=======================================================================================================================================
 # Reading Data 
 def generate_data(InputData):
-    print('[SurQCT]:   Reading Data from: ' + InputData.PathToDataFld)
+    print('[SurQCT]:   Reading Data from: ' + InputData.PathToTrainDataFld)
 
-    Data = pd.read_csv(InputData.PathToDataFld+'/Input.csv',header=0)
+    Data = pd.read_csv(InputData.PathToTrainDataFld+'/'+InputData.InputFile, header=0)
 
 
-    uAll = Data[InputData.BranchVars]
-    if (len(InputData.TrunkVars) > 0):
-        tAll         = Data[InputData.TrunkVars]
-        xAll         = pd.concat([uAll, tAll], axis=1)
+    if (InputData.SurrogateType == 'DeepONet'):
+
+        uAll = Data[InputData.BranchVars]
+        if (len(InputData.TrunkVars) > 0):
+            tAll         = Data[InputData.TrunkVars]
+            xAll         = pd.concat([uAll, tAll], axis=1)
+        else:
+            xAll         = uAll
+
+        if (not InputData.BranchScale == None):
+            for Var in InputData.BranchVars:
+                xAll[Var] = xAll[Var].apply(lambda x: InputData.BranchScale(x+1.e-15))
+        if (not InputData.TrunkScale == None):
+            for Var in InputData.TrunkVars:
+                xAll[Var] = xAll[Var].apply(lambda x: InputData.TrunkScale(x+1.e-15))
+
     else:
-        xAll         = uAll
+        xAll = Data[InputData.InputVars]
 
-    if (not InputData.BranchScale == None):
-        for Var in InputData.BranchVars:
-            xAll[Var] = xAll[Var].apply(lambda x: InputData.BranchScale(x+1.e-15))
-    if (not InputData.TrunkScale == None):
-        for Var in InputData.TrunkVars:
-            xAll[Var] = xAll[Var].apply(lambda x: InputData.TrunkScale(x+1.e-15))
 
+   
 
     for iCol in range(xAll.shape[1]):
         array_sum = np.sum(xAll.to_numpy()[:,iCol])
         if (np.isnan(array_sum)):
             print('xAll has NaN!!!')
 
-    Data = pd.read_csv(InputData.PathToDataFld+'/Output.csv',header=0)
+    Data = pd.read_csv(InputData.PathToTrainDataFld+'/'+InputData.OutputFile, header=0)
     yAll = Data[InputData.OutputVars]
     for iCol in range(yAll.shape[1]):
         array_sum = np.sum(yAll.to_numpy()[:,iCol])
@@ -48,7 +55,7 @@ def generate_data(InputData):
 
 
     if (InputData.PINN):
-        Data  = pd.read_csv(InputData.PathToDataFld+'/dOutput.csv',header=0)
+        Data  = pd.read_csv(InputData.PathToTrainDataFld+'/'+InputData.dOutputFile, header=0)
         dyAll = Data[InputData.OutputVars]
         dOutputVars = []
         for iy in range(len(InputData.OutputVars)):

@@ -2,10 +2,27 @@ import os
 import sys
 import tensorflow                             as tf
 import numpy                                  as np
+from pathlib import Path
+import shutil
+
+print(tf.version.VERSION)
 
 import matplotlib
 #matplotlib.use('TkAgg')
 from matplotlib                           import pyplot as plt
+
+
+#=======================================================================================================================================
+from datetime import datetime
+
+def get_curr_time():
+    return datetime.now().strftime("%Y.%m.%d.%H.%M.%S")
+
+def get_start_time():
+    return get_curr_time()
+
+#=======================================================================================================================================
+
 
 if __name__ == "__main__": 
 
@@ -47,31 +64,53 @@ if __name__ == "__main__":
     from ROMNet_Input import inputdata
 
     print("\n[ROMNet]: Initializing Input ...")
-    InputData    = inputdata(WORKSPACE_PATH, ROMNetFldr)
+    InputData              = inputdata(WORKSPACE_PATH, ROMNetFldr)
 
-    PathToFldr = InputData.PathToRunFld
+
+    print("\n[ROMNet]: Creating Run Folder ...")
+    InputData.PathToRunFld = InputData.PathToRunFld + '/' + InputData.SurrogateType + '/' + InputData.ProbApproach + '/'
+    path = Path(InputData.PathToRunFld)
+    path.mkdir(parents=True, exist_ok=True)
+
+    Prefix = 'Run_'
+    if (InputData.NNRunIdx == 0):
+        if (len([x for x in os.listdir(InputData.PathToRunFld) if 'Run_' in x]) > 0):
+            InputData.NNRunIdx = str(np.amax( np.array( [int(x[len(Prefix):]) for x in os.listdir(InputData.PathToRunFld) if Prefix in x], dtype=int) ) + 1)
+        else:
+            InputData.NNRunIdx = 1
+
+    InputData.TBCheckpointFldr = InputData.PathToRunFld + '/TB/' + Prefix + str(InputData.NNRunIdx) + "_{}".format(get_start_time())
+    print("\n[ROMNet]: TensorBoard Data can be Found here: " + InputData.TBCheckpointFldr)
+
+    InputData.PathToRunFld     = InputData.PathToRunFld +    '/' + Prefix + str(InputData.NNRunIdx)
+    path = Path(InputData.PathToRunFld)
+    path.mkdir(parents=True, exist_ok=True)
+
     try:
-        os.makedirs(PathToFldr)
-        print("\n[ROMNet]: Creating Run Folder ...")
+        shutil.copyfile(InputFile+'/ROMNet_Input.py', InputData.PathToRunFld + '/ROMNet_Input.py')
     except OSError as e:
         pass
-        
-    PathToFldr = InputData.PathToFigFld
-    try:
-        os.makedirs(PathToFldr)
-    except OSError as e:
-        pass
+    
+    InputData.PathToFigFld = InputData.PathToRunFld+'/Figures/'
+    path = Path(InputData.PathToFigFld)
+    path.mkdir(parents=True, exist_ok=True)
+    print("\n[ROMNet]: Final Figures can be Found here: " + InputData.PathToFigFld)
+
+    InputData.PathToParamsFld = InputData.PathToRunFld+'/Params/'
 
     #===================================================================================================================================
+
 
 
     #===================================================================================================================================
     print("\n[ROMNet]: Loading Final Modules ... ")
 
-    sys.path.insert(0, ROMNetFldr  + '/src/Model/' + InputData.ApproxModel + '/')
+    SurrogateType = InputData.SurrogateType
+    if (SurrogateType == 'FNN-SourceTerms'):
+        SurrogateType = 'FNN'
+
+    sys.path.insert(0, ROMNetFldr  + '/src/Model/' + SurrogateType + '/' + InputData.ProbApproach + '/')
     from Model import model
-    # if (InputData.ApproxModel == 'FNN'):
-    #     from Model import FNN
 
     sys.path.insert(0, ROMNetFldr  + '/src/Data/' + InputData.DataType + '/')
     from Data import generate_data
@@ -105,7 +144,7 @@ if __name__ == "__main__":
         if (InputData.TrainIntFlg == 1):
             print('\n[ROMNet]: Reading the ML Model Parameters ... ')
 
-            NN.load_params(InputData.PathToParamsFld)
+            NN.load_params(InputData)
 
 
         print('\n[ROMNet]: Training the ML Model ... ')
@@ -113,9 +152,11 @@ if __name__ == "__main__":
         History = NN.train(InputData)
 
 
-        print('\n[ROMNet]: Plotting the Losses Evolution ... ')
+        if (InputData.PlotIntFlg >= 1):
+    
+            print('\n[ROMNet]: Plotting the Losses Evolution ... ')
 
-        plot_losseshistory(InputData, History)
+            plot_losseshistory(InputData, History)
 
 
     else:
@@ -128,52 +169,57 @@ if __name__ == "__main__":
 
 
 
-    #===================================================================================================================================
+    # #===================================================================================================================================
 
-    if (InputData.PlotIntFlg >= 1):
+    # if (InputData.PlotIntFlg >= 1):
 
-        print('\n[ROMNet]: Evaluating the ML Model at the Training Data and Plotting the Results ... ')
+    #     print('\n[ROMNet]: Evaluating the ML Model at the Training Data and Plotting the Results ... ')
 
-        # xAll      = AllData[0]
-        # yAll      = AllData[1]
-        # yPred     = NN.Model.predict(xAll.to_numpy())
+    #     # xAll      = AllData[0]
+    #     # yAll      = AllData[1]
+    #     # yPred     = NN.Model.predict(xAll.to_numpy())
         
-        # iy=0
-        # for OutputVar in InputData.OutputVars:
-        #     print(OutputVar)
+    #     # iy=0
+    #     # for OutputVar in InputData.OutputVars:
+    #     #     print(OutputVar)
 
-        #     fig = plt.figure(figsize=(16, 12))
-        #     plt.plot(xAll['t'], yAll[OutputVar], 'ko')
-        #     plt.plot(xAll['t'], yPred[:,iy], 'ro')
-        #     plt.xlabel('t')
-        #     plt.ylabel(OutputVar)
-        #     #plt.xscale('log')
-        #     plt.show()
-        #     iy+=1
+    #     #     fig = plt.figure(figsize=(16, 12))
+    #     #     plt.plot(xAll['t'], yAll[OutputVar], 'ko')
+    #     #     plt.plot(xAll['t'], yPred[:,iy], 'ro')
+    #     #     plt.xlabel('t')
+    #     #     plt.ylabel(OutputVar)
+    #     #     #plt.xscale('log')
+    #     #     plt.show()
+    #     #     iy+=1
 
+    #     xAll      = TestData[0]
+    #     yAll      = TestData[1]
+    #     yPred     = NN.Model.predict(xAll.to_numpy())
+    
+    #     try:        
+    #         iy=0
+    #         for OutputVar in InputData.OutputVars:
+    #             print(OutputVar)
 
-        xAll      = TestData[0]
-        yAll      = TestData[1]
-        yPred     = NN.Model.predict(xAll.to_numpy())
-        
-        iy=0
-        for OutputVar in InputData.OutputVars:
-            print(OutputVar)
-
-            fig = plt.figure(figsize=(16, 12))
-            if (InputData.TrunkScale == np.log10):
-                plt.plot(10.**xAll['t'], yAll[OutputVar], 'ko')
-                plt.plot(10.**xAll['t'], yPred[:,iy], 'ro')
-            else:
-                plt.plot(xAll['t'], yAll[OutputVar], 'ko')
-                plt.plot(xAll['t'], yPred[:,iy], 'ro')
-            plt.xlabel('t')
-            plt.ylabel(OutputVar)
-            #plt.xscale('log')
-            plt.show()
-            iy+=1
-
-    #===================================================================================================================================
+    #             fig = plt.figure(figsize=(16, 12))
+    #             Flg = False
+    #             if (InputData.SurrogateType == 'DeepONet'):
+    #                 if (InputData.TrunkScale == np.log10):
+    #                     Flg = True
+    #             if (Flg):
+    #                 plt.plot(10.**xAll['t'], yAll[OutputVar], 'ko')
+    #                 plt.plot(10.**xAll['t'], yPred[:,iy], 'ro')
+    #             else:
+    #                 plt.plot(xAll['t'], yAll[OutputVar], 'ko')
+    #                 plt.plot(xAll['t'], yPred[:,iy], 'ro')
+    #             plt.xlabel('t')
+    #             plt.ylabel(OutputVar)
+    #             #plt.xscale('log')
+    #             plt.show()
+    #             iy+=1
+    #     except:
+    #         pass
+    # #===================================================================================================================================
 
 
 
