@@ -25,9 +25,9 @@ class inputdata(object):
         ### Paths
         self.WORKSPACE_PATH      = WORKSPACE_PATH                                                         # os.getenv('WORKSPACE_PATH')      
         self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
-        self.PathToRunFld        = self.ROMNetFldr   + '/../PSR_10Cases/'                                 # Path To Training Folder
-        self.PathToTrainDataFld  = self.ROMNetFldr   + '/../Data/PSR_10Cases/pc_data_3/'                  # Path To Training Data Folder 
-        self.PathToTestDataFld   = self.ROMNetFldr   + '/../Data/PSR_10Cases_Test/pc_data_3/'             # Path To Test Data Folder 
+        self.PathToRunFld        = self.ROMNetFldr   + '/../PSR_100Cases/'                                 # Path To Training Folder
+        self.PathToTrainDataFld  = self.ROMNetFldr   + '/../Data/PSR_100Cases/pc_data_3/'                  # Path To Training Data Folder 
+        self.PathToTestDataFld   = self.ROMNetFldr   + '/../Data/PSR_100Cases_Test/pc_data_3/'             # Path To Test Data Folder 
 
         #=======================================================================================================================================
         ### Data
@@ -36,17 +36,17 @@ class inputdata(object):
         #=======================================================================================================================================
         ## NN Model Structure
         self.SurrogateType       = 'FNN-SourceTerms'                                                      # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
-        self.ProbApproach        = 'Deterministic'                                                        # Probabilistic Technique for Training the BNN (if Any)
+        self.ProbApproach        = 'MCDropOut'                                                            # Probabilistic Technique for Training the BNN (if Any)
         self.PINN                = False                                                                  # Flag for Training a Physics-Informed NN (in development)
         self.dOutputFile         = ''                                                                     # Name of the File Containing the ODE Residuals
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Input Data
         self.InputFile           = 'Output.csv'                                                           # Name of the File Containing the Input Data
         self.InputVars           = ['log10(Rest)','PC_1','PC_2','PC_3']                                   # List Containing the Input Data Column Names 
         self.InputScale          = None                                                                   # Function to Be Applied to the Input Data
-        self.Layers              = [np.array([32,64,128,64,32])]                                              # List Containing the No of Neurons per Each NN's Layer
+        self.Layers              = [np.array([32,64,128,64,32])]                                          # List Containing the No of Neurons per Each NN's Layer
         self.ActFun              = [['relu','relu','relu','relu','relu']]                                 # List Containing the Activation Funct.s per Each NN's Layer
         self.DropOutRate         = 1.e-3                                                                  # NN's Layers Dropout Rate
-        self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
+        self.DropOutPredFlg      = True                                                                   # Flag for Using NN's Dropout during Prediction
         self.OutputFile          = 'dOutput.csv'                                                          # Name of the File Containing the Output Data
         self.OutputVars          = ['SPC_1_Scaled','SPC_2_Scaled','SPC_3_Scaled']                         # List Containing the Output Data Column Names
 
@@ -60,7 +60,7 @@ class inputdata(object):
         self.LearningRate        = 1.e-4                                                                  # Initial Learning Rate
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
-        self.WeightDecay         = np.array([1.e-10,1.e-4], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
+        self.WeightDecay         = np.array([1.e-8,1.e-8], dtype=np.float64)                              # Hyperparameters for L1 and L2 Weight Decay Regularizations
         self.ImpThold            = 1.e-6                                                                  # Importance Threshold for Early Stopping
         self.NPatience           = 300                                                                    # Patience Epoches for Early Stopping
         self.DecaySteps          = 30000                                                                  # No of Steps for Learning Rate Exponential Dacay

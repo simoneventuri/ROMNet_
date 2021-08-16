@@ -21,7 +21,7 @@ FigDir             = OutputDir + '/fig/'
 
 MixtureFile        = 'gri30.yaml'
 NRests             = 10
-RestVec            = np.logspace(np.log10(1.e-5), np.log10(1.e-4), NRests) # [2.e-5]
+RestVec            = np.logspace(np.log10(1.e5), np.log10(1.e-4), NRests) # [2.e-5]
 NPerRest           = 1000
 
 tStratch           = 1.

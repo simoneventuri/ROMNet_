@@ -74,7 +74,7 @@ def NNBranch(InputData, normalized, NNName, Idx, NN_Transfer_Model):
 
     hiddenVec = [normalized]
     for iLayer in range(NLayers):
-        WeightsName = NNName + '_' + InputData.OutputVars[Idx] + '_HL' + str(iLayer+1) 
+        WeightsName = NNName + '_HL' + str(iLayer+1) 
         LayerName   = WeightsName 
 
         if (InputData.TransferFlg):
@@ -124,7 +124,7 @@ def NNTrunk(InputData, normalized, NNName, Idx, NN_Transfer_Model):
 
     hiddenVec = [normalized]
     for iLayer in range(NLayers):
-        WeightsName = NNName + '_' + InputData.TrunkVars[Idx] + '_HL' + str(iLayer+1) 
+        WeightsName = NNName + '_HL' + str(iLayer+1) 
         LayerName   = WeightsName 
 
         if (InputData.TransferFlg):
@@ -225,6 +225,7 @@ class model:
             input_                  = tf.keras.Input(shape=[self.NVarsx,])
             inputBranch, inputTrunk = tf.split(input_, num_or_size_splits=[self.NVarsBranch, self.NVarsTrunk], axis=1)
 
+            print('InputData.BranchVars=', InputData.BranchVars)
 
             ### Normalizer Layers
             if (InputData.NormalizeInput):
@@ -253,13 +254,13 @@ class model:
 
 
             ### Trunks
-            outputTrunk        = NNTrunk(InputData,  InputTrunk,  'Trunk',  0, NN_Transfer_Model)
+            outputTrunk        = NNTrunk(InputData,  InputTrunk, 'Trunk_'+str(1), 0, NN_Transfer_Model)
 
             outputLayer = []
             for iy in range(self.NVarsy):
 
                 ### Branches
-                outputBranch       = NNBranch(InputData, InputBranch, 'Branch', iy, NN_Transfer_Model)
+                outputBranch       = NNBranch(InputData, InputBranch, 'Branch_'+InputData.OutputVars[iy], iy, NN_Transfer_Model)
                 
                 ## Final Dot Product
                 output_P           = layers.Dot(axes=1)([outputBranch, outputTrunk])
@@ -369,14 +370,15 @@ class model:
             self.Model.compile(loss=lss, optimizer=opt)
 
 
-            ModelFile = PathToRunFld + '/NNModel'
-            print('[ROMNet]:   Saving ML Model in File: ' + ModelFile)
-            # try:
-            #     os.makedirs(ModelFile)
-            #     print("\n[ROMNet]: Creating Run Folder ...")
-            # except OSError as e:
-            #     pass
-            self.Model.save(ModelFile)
+            if (InputData.TrainIntFlg >= 1):
+                ModelFile = PathToRunFld + '/NNModel'
+                print('[ROMNet]:   Saving ML Model in File: ' + ModelFile)
+                # try:
+                #     os.makedirs(ModelFile)
+                #     print("\n[ROMNet]: Creating Run Folder ...")
+                # except OSError as e:
+                #     pass
+                self.Model.save(ModelFile)
             #---------------------------------------------------------------------------------------------------------------------------
 
             #-------------------------------------------------------------------------------------------------------------------------------

@@ -202,8 +202,8 @@ class model:
                 OutputVars         = InputData.OutputVars + [InputData.OutputVars[i]+'_Sigma' for i in range(self.NVarsy)]
 
                 outputTrunk        = []
-                outputTrunk.append(NNTrunk(InputData,  InputTrunk, 'Trunk_'+InputData.TrunkVars[0],           0, NN_Transfer_Model))
-                outputTrunk.append(NNTrunk(InputData,  InputTrunk, 'Trunk_'+InputData.TrunkVars[0]+'_Sigma',  0, NN_Transfer_Model))
+                outputTrunk.append(NNTrunk(InputData,  InputTrunk, 'Trunk_'+str(1),           0, NN_Transfer_Model))
+                outputTrunk.append(NNTrunk(InputData,  InputTrunk, 'Trunk_'+str(1)+'_Sigma',  0, NN_Transfer_Model))
 
 
             outputLayer = []

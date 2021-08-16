@@ -254,7 +254,7 @@ class model:
 
 
             ### Trunks
-            outputTrunk        = NNTrunk(InputData,  InputTrunk, 'Trunk_'+InputData.TrunkVars[0], 0, NN_Transfer_Model)
+            outputTrunk        = NNTrunk(InputData,  InputTrunk, 'Trunk_'+str(1), 0, NN_Transfer_Model)
 
             outputLayer = []
             for iy in range(self.NVarsy):
