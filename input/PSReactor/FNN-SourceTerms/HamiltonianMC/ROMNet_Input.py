@@ -44,8 +44,8 @@ class inputdata(object):
         self.InputFile           = 'Output.csv'                                                           # Name of the File Containing the Input Data
         self.InputVars           = ['x','v']                                                              # List Containing the Input Data Column Names 
         self.InputScale          = None                                                                   # Function to Be Applied to the Input Data
-        self.Layers              = [np.array([32,64,128,64,32])]                                              # List Containing the No of Neurons per Each NN's Layer
-        self.ActFun              = [['relu','relu','relu','relu','relu']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+        self.Layers              = [np.array([64,64,64,64,64])]                                           # List Containing the No of Neurons per Each NN's Layer
+        self.ActFun              = [['selu','selu','selu','selu','selu']]                                 # List Containing the Activation Funct.s per Each NN's Layer
         self.DropOutRate         = 1.e-10                                                                 # NN's Layers Dropout Rate
         self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
         self.OutputFile          = 'dOutput.csv'                                                          # Name of the File Containing the Output Data
@@ -63,10 +63,10 @@ class inputdata(object):
         self.NEpoch              = 3000                                                                   # Number of Epoches
         self.MiniBatchSize       = 64                                                                     # Mini-Batch Size
         self.LossFunction        = 'mean_squared_error'                                                   # Loss Function
-        self.LearningRate        = 5.e-3                                                                  # Initial Learning Rate
+        self.LearningRate        = 1.e-2                                                                  # Initial Learning Rate
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
-        self.WeightDecay         = np.array([1.e-8, 1.e-8], dtype=np.float64)                           # Hyperparameters for L1 and L2 Weight Decay Regularizations
+        self.WeightDecay         = np.array([1.e-10, 1.e-10], dtype=np.float64)                           # Hyperparameters for L1 and L2 Weight Decay Regularizations
         self.ImpThold            = 1.e-8                                                                  # Importance Threshold for Early Stopping
         self.NPatience           = 200                                                                    # Patience Epoches for Early Stopping
         self.DecaySteps          = 30000                                                                  # No of Steps for Learning Rate Exponential Dacay

@@ -44,8 +44,8 @@ class inputdata(object):
         self.InputFile           = 'Output.csv'                                                           # Name of the File Containing the Input Data
         self.InputVars           = ['log10(Rest)','PC_1','PC_2','PC_3']                                   # List Containing the Input Data Column Names 
         self.InputScale          = None                                                                   # Function to Be Applied to the Input Data
-        self.Layers              = [np.array([32,64,128,64,32])]                                              # List Containing the No of Neurons per Each NN's Layer
-        self.ActFun              = [['relu','relu','relu','relu','relu']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+        self.Layers              = [np.array([64,64,64,64,64])]                                              # List Containing the No of Neurons per Each NN's Layer
+        self.ActFun              = [['selu','selu','selu','selu','selu']]                                 # List Containing the Activation Funct.s per Each NN's Layer
         #self.DropOutRate         = 1.e-3                                                                  # NN's Layers Dropout Rate
         #self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
         self.OutputFile          = 'dOutput.csv'                                                          # Name of the File Containing the Output Data

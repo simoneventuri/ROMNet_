@@ -16,24 +16,22 @@ from scipy.integrate import solve_ivp
 ##########################################################################################
 ### Input Data
 
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Autoignition_1/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_10Cases/'
 FigDir             = OutputDir + '/fig/'
 
 MixtureFile        = 'gri30.yaml'
 
-P0                 = ct.one_atm
+P0                 = 10. * ct.one_atm
 EqRatio0           = 1.
 
 NTs                = 10
-T0Vec              = [900.] #np.linspace(1000, NTs) # [2.e-5]
-NPerT0             = 1000
+T0Vec              = np.linspace(900, 1700, NTs) # [2.e-5]
+NPerT0             = 10000
 
-tMinVec            = [1.e-1]
-tMaxVec            = [1.e1]
-dt0Vec             = [1.e-2]
-tStratchVec        = [1.05]
-
+tMinVec            = [5.e-3, 5.e-7]
 Integration        = ' '#'Canteras'
+rtol               = 1.e-8
+SOLVER             = 'BDF'#'RK23'#'BDF'#'Radau'
 
 ##########################################################################################
 
@@ -56,7 +54,7 @@ except:
 ##########################################################################################
 ### Defining ODE and its Parameters
 def IdealGasConstPressureReactor_SciPY(t, y):
-    print(t)
+    #print(t)
 
     YEnd     = np.array([1.-np.sum(y[1:])], dtype=np.float64)
     Y        = np.concatenate((y[1:], YEnd), axis=0)
@@ -84,7 +82,7 @@ def IdealGasConstPressureReactor(t, T, Y):
 
 
 def IdealGasReactor_SciPY(t, y):
-    print(t)
+    #print(t)
 
     YEnd     = np.array([1.-np.sum(y[1:])], dtype=np.float64)
     Y        = np.concatenate((y[1:], YEnd), axis=0)
@@ -151,10 +149,11 @@ for T0 in T0Vec:
 
 
     ### Initialize Integration 
-    tMin     = tMinVec[iSim]
-    tMax     = tMaxVec[iSim]
-    dt0      = dt0Vec[iSim]
-    tStratch = tStratchVec[iSim]
+    tMin     = (tMinVec[1]-tMinVec[0])*(T0-900.)/(1700.-900.) + tMinVec[0]
+    print('tMin = ', tMin)
+    tMax     = tMin*5.e2
+    dt0      = tMin*1.e-2
+    tStratch = 1.01
     tVec     = [0.0]
     t        = tMin
     dt       = dt0
@@ -162,9 +161,7 @@ for T0 in T0Vec:
         tVec.append(t)
         t  =   t + dt
         dt = dt0 * tStratch
-    rtol       = 1.e-10
-    SOLVER     = 'BDF'#'RK23'#'BDF'#'Radau'
-
+    
     gas_             = gas
     states           = ct.SolutionArray(gas, 1, extra={'t': [0.0]})
     

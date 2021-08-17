@@ -15,7 +15,7 @@ from PCAfold import PCA as PCAA
 ##########################################################################################
 ### Input Data
 ###
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data_10_0DReact_EASY/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_10Cases/'
 FigDir             = OutputDir + '/fig/'
 
 NTs                = 10
