@@ -37,24 +37,24 @@ class inputdata(object):
         #=======================================================================================================================================
         ## NN Model Structure
         self.SurrogateType       = 'DeepONet'                                                             # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
-        self.ProbApproach        = 'Deterministic'                                                        # Probabilistic Technique for Training the BNN (if Any)
+        self.ProbApproach        = 'MCDropOut'                                                        # Probabilistic Technique for Training the BNN (if Any)
         self.PINN                = False                                                                  # Flag for Training a Physics-Informed NN (in development)
         self.dOutputFile         = ''                                                                     # Name of the File Containing the ODE Residuals
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Branch's Input Data
         self.InputFile           = 'Input.csv'                                                            # Name of the File Containing the Input Data
         self.BranchVars          = ['PC0_1','PC0_2','PC0_3']                                              # List Containing the Branch's Input Data Column Names
         self.BranchScale         = None                                                                   # Function to Be Applied to the Input Data
-        self.BranchLayers        = [np.array([32,32,32]), np.array([32,32,32]), np.array([32,32,32])]     # List Containing the No of Neurons per Each Branch's Layer
-        self.BranchActFun        = [['elu','elu','elu'],  ['elu','elu','elu'],  ['elu','elu','elu']]      # List Containing the Activation Funct.s per Each Branch's Layer
+        self.BranchLayers        = [np.array([16,32,64]), np.array([16,32,64]), np.array([16,32,64])]     # List Containing the No of Neurons per Each Branch's Layer
+        self.BranchActFun        = [['tanh','tanh','tanh'],  ['tanh','tanh','tanh'],  ['tanh','tanh','tanh']]      # List Containing the Activation Funct.s per Each Branch's Layer
         self.BranchDropOutRate   = 1.e-2                                                                  # Branch's Layers Dropout Rate
-        self.BranchDropOutPredFlg= True                                                                   # Flag for Using Branch's Dropout during Prediction
+        self.BranchDropOutPredFlg= True                                                                  # Flag for Using Branch's Dropout during Prediction
         self.BranchSoftmaxFlg    = False                                                                  # Flag for Using Softmax after Branch's Last Layer
-        self.TrunkVars           = ['log10(t)']                                                           # List Containing the Trunk's Input Data Column Names
+        self.TrunkVars           = ['t']                                                                  # List Containing the Trunk's Input Data Column Names
         self.TrunkScale          = None                                                                   # Flag for Normalizing Trunk's Input Data
-        self.TrunkLayers         = [np.array([32,32,32])]                                                 # List Containing the No of Neurons per Each Trunk's Layer
+        self.TrunkLayers         = [np.array([64,64,64])]                                                 # List Containing the No of Neurons per Each Trunk's Layer
         self.TrunkActFun         = [['tanh','tanh','tanh']]                                               # List Containing the Activation Funct.s per Each Trunk's Layer
-        self.TrunkDropOutRate    = 1.e-2                                                                  # Trunk's Layers Dropout Rate  
-        self.TrunkDropOutPredFlg = True                                                                   # Flag for Using Trunk's Dropout during Prediction
+        self.TrunkDropOutRate    = 1.e-2                                                                 # Trunk's Layers Dropout Rate  
+        self.TrunkDropOutPredFlg = True                                                                  # Flag for Using Trunk's Dropout during Prediction
         self.FinalLayerFlg       = True                                                                   # Flag for Using a Full Linear Layer after Dot-Product Layer
         self.OutputFile          = 'Output.csv'                                                           # Name of the File Containing the Output Data
         self.OutputVars          = ['PC_1','PC_2','PC_3']
@@ -66,10 +66,10 @@ class inputdata(object):
         self.NEpoch              = 50000                                                                  # Number of Epoches
         self.MiniBatchSize       = 64                                                                     # Mini-Batch Size
         self.LossFunction        = 'mean_squared_error' #'mean_absolute_percentage_error'                 # Loss Function
-        self.LearningRate        = 1.e-4                                                                  # Initial Learning Rate
+        self.LearningRate        = 5.e-4                                                                  # Initial Learning Rate
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
-        self.WeightDecay         = np.array([1.e-10,1.e-4], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
+        self.WeightDecay         = np.array([1.e-5,1.e-5], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
         self.ImpThold            = 1.e-6                                                                  # Importance Threshold for Early Stopping
         self.NPatience           = 300                                                                    # Patience Epoches for Early Stopping
         self.DecaySteps          = 30000                                                                  # No of Steps for Learning Rate Exponential Dacay

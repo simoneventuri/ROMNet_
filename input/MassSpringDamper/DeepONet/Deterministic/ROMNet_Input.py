@@ -66,10 +66,10 @@ class inputdata(object):
         self.NEpoch              = 100000                                                                 # Number of Epoches
         self.MiniBatchSize       = 32                                                                     # Mini-Batch Size
         self.LossFunction        = 'mean_squared_error' #'mean_absolute_percentage_error'                 # Loss Function
-        self.LearningRate        = 1.e-4                                                                  # Initial Learning Rate
+        self.LearningRate        = 5.e-4                                                                  # Initial Learning Rate
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
-        self.WeightDecay         = np.array([1.e-5, 1.e-10], dtype=np.float64)                            # Hyperparameters for L1 and L2 Weight Decay Regularizations
+        self.WeightDecay         = np.array([1.e-6, 1.e-6], dtype=np.float64)                            # Hyperparameters for L1 and L2 Weight Decay Regularizations
         self.ImpThold            = 1.e-6                                                                  # Importance Threshold for Early Stopping
         self.NPatience           = 3000                                                                   # Patience Epoches for Early Stopping
         self.DecaySteps          = 30000                                                                  # No of Steps for Learning Rate Exponential Dacay
