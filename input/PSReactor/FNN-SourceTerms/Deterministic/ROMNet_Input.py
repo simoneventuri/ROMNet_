@@ -45,7 +45,7 @@ class inputdata(object):
         self.InputScale          = None                                                                   # Function to Be Applied to the Input Data
         self.Layers              = [np.array([64,64,64,64,64])]                                              # List Containing the No of Neurons per Each NN's Layer
         self.ActFun              = [['selu','selu','selu','selu','selu']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-        self.DropOutRate         = 1.e-3                                                                  # NN's Layers Dropout Rate
+        self.DropOutRate         = 1.e-5                                                                  # NN's Layers Dropout Rate
         self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
         self.OutputFile          = 'dOutput.csv'                                                          # Name of the File Containing the Output Data
         self.OutputVars          = ['SPC_1_Scaled','SPC_2_Scaled','SPC_3_Scaled']                         # List Containing the Output Data Column Names
@@ -60,7 +60,7 @@ class inputdata(object):
         self.LearningRate        = 1.e-4                                                                  # Initial Learning Rate
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
-        self.WeightDecay         = np.array([1.e-7,1.e-7], dtype=np.float64)                              # Hyperparameters for L1 and L2 Weight Decay Regularizations
+        self.WeightDecay         = np.array([1.e-8,1.e-8], dtype=np.float64)                              # Hyperparameters for L1 and L2 Weight Decay Regularizations
         self.ImpThold            = 1.e-8                                                                  # Importance Threshold for Early Stopping
         self.NPatience           = 300                                                                    # Patience Epoches for Early Stopping
         self.DecaySteps          = 30000                                                                  # No of Steps for Learning Rate Exponential Dacay

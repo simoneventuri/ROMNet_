@@ -16,17 +16,17 @@ from scipy.integrate import solve_ivp
 ##########################################################################################
 ### Input Data
 
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/PSR_10Cases/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data_31PSR_Clean/'
 FigDir             = OutputDir + '/fig/'
 
 MixtureFile        = 'gri30.yaml'
-NRests             = 10
-RestVec            = np.logspace(np.log10(1.e5), np.log10(1.e-4), NRests) # [2.e-5]
+NRests             = 31
+RestVec            = np.logspace(np.log10(1.e-6), np.log10(1.e-4), NRests) # [2.e-5]
+#RestVec            = np.concatenate([np.linspace(1.e-6, 1.e-5, 20), np.linspace(2.e-5, 1.e-4, 19)])# [2.e-5]
 NPerRest           = 1000
 
 tStratch           = 1.
 Nt                 = NPerRest*2
-rtol               = 1.e-12
 
 T0Inlet            = 300.
 P0Inlet            = ct.one_atm
@@ -88,34 +88,20 @@ def ReactorOde_CVODE_2(t, y):
 def ReactorOde_Jacobian(t, y):
     print(t)
 
+    Eps = 1e-6
     J   = np.zeros([len(y), len(y)], dtype = np.float)
+
     for i in range(len(y)):
         y1 = y.copy()
         y2 = y.copy()
-        y3 = y.copy()
-        y4 = y.copy()
-        y5 = y.copy()
-        y6 = y.copy()
 
-        Eps    = 1e-10 * np.amax([y[i], 1.])
-
-        y1[i] -= 1. * Eps
-        y2[i] += 1. * Eps
-        y3[i] -= 2. * Eps
-        y4[i] += 2. * Eps
-        y5[i] -= 3. * Eps
-        y6[i] += 3. * Eps
+        y1[i] += Eps
+        y2[i] -= Eps
 
         f1 = ReactorOde_CVODE_2(t, y1)
         f2 = ReactorOde_CVODE_2(t, y2)
-        f3 = ReactorOde_CVODE_2(t, y3)
-        f4 = ReactorOde_CVODE_2(t, y4)
-        f5 = ReactorOde_CVODE_2(t, y3)
-        f6 = ReactorOde_CVODE_2(t, y4)
 
-        #J[ : , i] = ( -1/2*f1 +1/2*f2 ) / Eps
-        #J[ : , i] = ( 1/12*f3 -2/3*f1 +2/3*f2 -1/12*f4 ) / Eps
-        J[ : , i] = ( -1/60*f5 +3/20*f3 -3/4*f1 +3/4*f2 -3/20*f4 +1/60*f6) / Eps
+        J[ : , i] = (f1 - f2) / (2. * Eps)
 
     return J
 
@@ -186,18 +172,16 @@ for Rest in RestVec:
     y0         = np.array(np.hstack((h0*gas.density*V_, gas.Y*gas.density*V_)), dtype=np.float64)
 
 
-    ### Initialize Integration               
-    dt0        = Rest*1.e-6
+    ### Initialize Integration           
+    dt0        = Rest*1.e-9
     tMax       = Rest*1.e+3
     tout       = [0.]
-    # tout       = np.concatenate((np.array(tout), np.linspace(dt0, tMax, Nt-1)), axis=0)
     tout       = np.concatenate((np.array(tout), np.logspace(np.log10(dt0), np.log10(tMax), Nt-1)), axis=0)
-
     states     = ct.SolutionArray(gas_, 1, extra={'t': [0.0]})
     SOLVER     = 'BDF'
 
 
-    output     = solve_ivp( ReactorOde_CVODE, tout[[0,-1]], y0, method=SOLVER, t_eval=tout, rtol=rtol)#, first_step=1.e-14)
+    output     = solve_ivp( ReactorOde_CVODE, tout[[0,-1]], y0, method=SOLVER, t_eval=tout, rtol=1.e-8)#, first_step=1.e-14)
 
 
     ### Integrate
@@ -225,8 +209,8 @@ for Rest in RestVec:
 
             #JJ         = ReactorOde_Jacobian(t, u)
            
-        #JJEig          = np.linalg.eigvals(JJ)
-        #JJTauMat[it,:] = 1./np.abs(JJEig)
+        # JJEig, JJVec   = np.linalg.eig(JJ)
+        # JJTauMat[it,:] = 1./JJEig.real
 
 
     ### Storing Results

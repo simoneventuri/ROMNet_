@@ -18,6 +18,46 @@ from scipy.integrate   import solve_ivp, ode
 
 
 
+# #####################################################################################################
+# ### INPUT DATA
+# OutDir   = WORKSPACE_PATH + '/ROMNet/Data/DiffAdvecEq/'
+# FigDir   = OutDir + '/Figs/'
+
+# T0       = 300.
+# P0       = 10. * ct.one_atm
+# T        = 1000.
+
+# nx       = 100   # number of collocation points
+# Lx       = 1.0   # domain size 
+
+# tMin     = 1.e-2
+# tMax     = 5.e-1
+# dt0      = 1.e-2
+# tStratch = 1.0
+
+# rtol     = 1.e-4
+# #####################################################################################################
+
+# #####################################################################################################
+# ### INPUT DATA
+# OutDir   = WORKSPACE_PATH + '/ROMNet/Data/ReacEq/'
+# FigDir   = OutDir + '/Figs/'
+
+# T0       = 300.
+# P0       = 10. * ct.one_atm
+# T        = 1000.
+
+# nx       = 100   # number of collocation points
+# Lx       = 1.0   # domain size 
+
+# tMin     = 1.e-2
+# tMax     = 5.e-1
+# dt0      = 1.e-2
+# tStratch = 1.0
+
+# rtol     = 1.e-4
+# #####################################################################################################
+
 #####################################################################################################
 ### INPUT DATA
 OutDir   = WORKSPACE_PATH + '/ROMNet/Data/ReactDiffAdvecEq/'
@@ -79,7 +119,7 @@ rtol     = 1.e-4
 ### RHS Function
 #def ReacDiffAdvRHS_x(x, y, dx, xx, ns, DiffFun, AdvecFun, ReacFun, gas, T, rho0):
 def ReacDiffAdvRHS_x(x, y):
-    print(x)
+    #print(x)
 
     Y         = y.reshape(nx,ns-1)
     Y         = np.append(Y, np.zeros((nx,1)), axis=1)
@@ -101,7 +141,7 @@ def ReacDiffAdvRHS_x(x, y):
         wdot       = gas.net_production_rates
         Reac       = wdot * gas.molecular_weights / rho0   
         
-        dYdt[iX,:] = Diff[0:-1] + Advec[0:-1] + Reac[0:-1]
+        dYdt[iX,:] = Diff[0:-1] + Advec[0:-1] #+ Reac[0:-1]
 
     dydt = dYdt.flatten() 
 
