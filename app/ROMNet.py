@@ -1,15 +1,14 @@
 import os
 import sys
-import tensorflow                             as tf
 import numpy                                  as np
 from pathlib import Path
 import shutil
 
-print(tf.version.VERSION)
+import romnet as rmnt
 
-import matplotlib
-#matplotlib.use('TkAgg')
-from matplotlib                           import pyplot as plt
+#import tensorflow                             as tf
+#print(tf.version.VERSION)
+
 
 
 #=======================================================================================================================================
@@ -30,44 +29,34 @@ if __name__ == "__main__":
     ROMNetFldr     = WORKSPACE_PATH + '/ROMNet/romnet/'
 
 
-    print("\n======================================================================================================================================")
-    print(" TensorFlow version: {}".format(tf.__version__))
-    print(" Eager execution: {}".format(tf.executing_eagerly()))
+    # print("\n======================================================================================================================================")
+    # print(" TensorFlow version: {}".format(tf.__version__))
+    # print(" Eager execution: {}".format(tf.executing_eagerly()))
 
 
 
     #===================================================================================================================================
-    print("\n[ROMNet]: Loading Modules and Functions ...")
+    print("\n[ROMNet]: Loading Input Module ...")
 
-    sys.path.insert(0, ROMNetFldr  + '/src/Reading/')
-    # from Reading import read_data, read_losseshistory
-    sys.path.insert(0, ROMNetFldr  + '/src/Plotting/')
-    from Plotting import plot_losseshistory
-    # sys.path.insert(0, ROMNetFldr  + '/src/Saving/')
-    # from Saving import save_parameters, save_data
-
-    if (len(sys.argv) > 1):
+    try:
         InputFile = sys.argv[1]
         print("[ROMNet]:   Calling ROMNet with Input File = ", InputFile)
         sys.path.insert(0, InputFile)
-    else:
-        InputFile = ROMNetFldr + '/src/InputData/'
-        print("[ROMNet]:   Calling ROMNet with the PRESET Input File Located in " + InputFile )
-        sys.path.insert(0, InputFile)
-
-    #===================================================================================================================================
+    except OSError:
+        print('Input File not Specified')
 
 
-
-    #===================================================================================================================================
-    print("\n[ROMNet]: Keep Loading Modules and Functions...")
     from ROMNet_Input import inputdata
 
     print("\n[ROMNet]: Initializing Input ...")
     InputData              = inputdata(WORKSPACE_PATH, ROMNetFldr)
+    #===================================================================================================================================
 
 
+
+    #===================================================================================================================================
     print("\n[ROMNet]: Creating Run Folder ...")
+
     InputData.PathToRunFld = InputData.PathToRunFld + '/' + InputData.SurrogateType + '/' + InputData.ProbApproach + '/'
     path = Path(InputData.PathToRunFld)
     path.mkdir(parents=True, exist_ok=True)
@@ -103,26 +92,10 @@ if __name__ == "__main__":
 
 
     #===================================================================================================================================
-    print("\n[ROMNet]: Loading Final Modules ... ")
+    print("\n[ROMNet]: Getting Data ... ")
 
-    SurrogateType = InputData.SurrogateType
-    if (SurrogateType == 'FNN-SourceTerms'):
-        SurrogateType = 'FNN'
-
-    sys.path.insert(0, ROMNetFldr  + '/src/Model/' + SurrogateType + '/' + InputData.ProbApproach + '/')
-    from Model import model
-
-    sys.path.insert(0, ROMNetFldr  + '/src/Data/' + InputData.DataType + '/')
-    from Data import generate_data
-
-    #===================================================================================================================================
-
-
-
-    #===================================================================================================================================
-    print("\n[ROMNet]: Generating Data ... ")
-
-    InputData, TrainData, ValidData, AllData, TestData, ExtraData = generate_data(InputData)
+    data = rmnt.data.Data(InputData)
+    data.get()
 
     #===================================================================================================================================
 
@@ -131,7 +104,12 @@ if __name__ == "__main__":
     #===================================================================================================================================
     print('\n[ROMNet]: Initializing ML Model ... ')
 
-    NN = model(InputData, InputData.PathToRunFld, TrainData, ValidData)
+    SurrogateType = InputData.SurrogateType
+    if (SurrogateType == 'FNN-SourceTerms'):
+        SurrogateType = 'FNN'
+        
+    Model = getattr(rmnt.model,  SurrogateType + '_' + InputData.ProbApproach)
+    NN    = Model(InputData, InputData.PathToRunFld, data.Train, data.Valid)
 
     #===================================================================================================================================
 
@@ -149,14 +127,14 @@ if __name__ == "__main__":
 
         print('\n[ROMNet]: Training the ML Model ... ')
 
-        History = NN.train(InputData)
+        loss_history = NN.train(InputData)
 
 
         if (InputData.PlotIntFlg >= 1):
     
             print('\n[ROMNet]: Plotting the Losses Evolution ... ')
 
-            plot_losseshistory(InputData, History)
+            loss_history.plot(InputData)
 
 
     else:
@@ -166,107 +144,3 @@ if __name__ == "__main__":
         NN.load_params(InputData.PathToParamsFld)
 
     #===================================================================================================================================
-
-
-
-    # #===================================================================================================================================
-
-    # if (InputData.PlotIntFlg >= 1):
-
-    #     print('\n[ROMNet]: Evaluating the ML Model at the Training Data and Plotting the Results ... ')
-
-    #     # xAll      = AllData[0]
-    #     # yAll      = AllData[1]
-    #     # yPred     = NN.Model.predict(xAll.to_numpy())
-        
-    #     # iy=0
-    #     # for OutputVar in InputData.OutputVars:
-    #     #     print(OutputVar)
-
-    #     #     fig = plt.figure(figsize=(16, 12))
-    #     #     plt.plot(xAll['t'], yAll[OutputVar], 'ko')
-    #     #     plt.plot(xAll['t'], yPred[:,iy], 'ro')
-    #     #     plt.xlabel('t')
-    #     #     plt.ylabel(OutputVar)
-    #     #     #plt.xscale('log')
-    #     #     plt.show()
-    #     #     iy+=1
-
-    #     xAll      = TestData[0]
-    #     yAll      = TestData[1]
-    #     yPred     = NN.Model.predict(xAll.to_numpy())
-    
-    #     try:        
-    #         iy=0
-    #         for OutputVar in InputData.OutputVars:
-    #             print(OutputVar)
-
-    #             fig = plt.figure(figsize=(16, 12))
-    #             Flg = False
-    #             if (InputData.SurrogateType == 'DeepONet'):
-    #                 if (InputData.TrunkScale == np.log10):
-    #                     Flg = True
-    #             if (Flg):
-    #                 plt.plot(10.**xAll['t'], yAll[OutputVar], 'ko')
-    #                 plt.plot(10.**xAll['t'], yPred[:,iy], 'ro')
-    #             else:
-    #                 plt.plot(xAll['t'], yAll[OutputVar], 'ko')
-    #                 plt.plot(xAll['t'], yPred[:,iy], 'ro')
-    #             plt.xlabel('t')
-    #             plt.ylabel(OutputVar)
-    #             #plt.xscale('log')
-    #             plt.show()
-    #             iy+=1
-    #     except:
-    #         pass
-    # #===================================================================================================================================
-
-
-
-    # # #===================================================================================================================================
-
-    # if (InputData.TestIntFlg >= 1):
-
-    #     if (InputData.PlotIntFlg >= 1):
-
-    #          print('\n[ROMNet]: Evaluating the ML Model at the Test Data and Plotting the Results ... ')
-
-    #          xTest     = TestData[0]
-    #          yTest     = TestData[1]
-    #          yPred     = NN.Model.predict(xTest[NN.xTrainingVar])
-
-    #          plot_prediction(InputData, 'Test', InputData.TTranVecTest, xTest, yTest, yPred)
-
-    # # #===================================================================================================================================
-
-
-
-    # #===================================================================================================================================
-
-    # if (InputData.TestIntFlg >= 1):
-
-    #     if (InputData.PlotIntFlg >= 1):
-
-    #         print('\n[ROMNet]: Evaluating the ML Model at the Test Data and Plotting the Results ... ')
-
-    #         xExtra    = ExtraData
-    #         yPred     = NN.Model.predict(xExtra[NN.xTrainingVar])
-    #         yData     = []
-
-    #         plot_prediction(InputData, 'Extra', InputData.TTranVecExtra, xExtra, yData, yPred)
-
-    # #===================================================================================================================================
-
-
-    # #===================================================================================================================================
-
-    # #if (InputData.PredictIntFlg >= 1):
-   
-    #  #   print('\n[ROMNet]: Generating Rate Matrixes ... ')
-
-    #   #  TTran = 10000.0
-    #    # KExcitMat = generate_predictiondata(InputData, NN, TTran)
-    #    # print(KExcitMat)
-    #    # print(KExcitMat[9,:])
-
-    # #===================================================================================================================================
