@@ -16,12 +16,12 @@ from scipy.integrate import solve_ivp
 ##########################################################################################
 ### Input Data
 
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data_31PSR_Clean/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/PSR_10Cases/'
 FigDir             = OutputDir + '/fig/'
 
 MixtureFile        = 'gri30.yaml'
-NRests             = 31
-RestVec            = np.logspace(np.log10(1.e-6), np.log10(1.e-4), NRests) # [2.e-5]
+NRests             = 10
+RestVec            = np.logspace(np.log10(1.e-5), np.log10(1.01e-5), NRests) # [2.e-5]
 #RestVec            = np.concatenate([np.linspace(1.e-6, 1.e-5, 20), np.linspace(2.e-5, 1.e-4, 19)])# [2.e-5]
 NPerRest           = 1000
 
@@ -31,6 +31,8 @@ Nt                 = NPerRest*2
 T0Inlet            = 300.
 P0Inlet            = ct.one_atm
 EqRatioInlet       = 1.
+
+TrainFlg           = 'train'
 ##########################################################################################
 
 try:
@@ -42,9 +44,18 @@ try:
 except:
     pass
 try:
-    os.makedirs(OutputDir+'/orig_data/')
+    os.makedirs(OutputDir+'/Orig/')
 except:
     pass
+try:
+    os.makedirs(OutputDir+'/Orig/'+TrainFlg+'/')
+except:
+    pass
+try:
+    os.makedirs(OutputDir+'/Orig/'+TrainFlg+'/ext/')
+except:
+    pass
+OutputDir += '/Orig/'+TrainFlg+'/ext'
 
 
 
@@ -131,7 +142,7 @@ def ProduceSource(t, y):
 ### Generating Training Data
 
 ### Writing Residence Times
-FileName = OutputDir+'/orig_data/ResidenceTimes.csv'
+FileName = OutputDir+'/ResidenceTimes.csv'
 np.savetxt(FileName, RestVec)
 
 
@@ -181,7 +192,7 @@ for Rest in RestVec:
     SOLVER     = 'BDF'
 
 
-    output     = solve_ivp( ReactorOde_CVODE, tout[[0,-1]], y0, method=SOLVER, t_eval=tout, rtol=1.e-8)#, first_step=1.e-14)
+    output     = solve_ivp( ReactorOde_CVODE, tout[[0,-1]], y0, method=SOLVER, t_eval=tout, rtol=1.e-12)#, first_step=1.e-14)
 
 
     ### Integrate
@@ -257,7 +268,7 @@ for Rest in RestVec:
     for iSpec in range(NSpec):
         Header += ','+gas.species_name(iSpec)
 
-    FileName = OutputDir+'/orig_data/States.csv.'+str(iSim+1)
+    FileName = OutputDir+'/States.csv.'+str(iSim+1)
     np.savetxt(FileName, DataTemp,       delimiter=',', header=Header, comments='')
 
 
@@ -266,10 +277,10 @@ for Rest in RestVec:
     for iSpec in range(NSpec):
         Header += ','+gas.species_name(iSpec)
 
-    FileName = OutputDir+'/orig_data/y.csv.'+str(iSim+1)
+    FileName = OutputDir+'/y.csv.'+str(iSim+1)
     np.savetxt(FileName, yTemp,       delimiter=',', header=Header, comments='')
 
-    FileName = OutputDir+'/orig_data/ySource.csv.'+str(iSim+1)
+    FileName = OutputDir+'/ySource.csv.'+str(iSim+1)
     np.savetxt(FileName, ySourceTemp, delimiter=',', header=Header, comments='')
 
     # FileName = OutputDir+'/orig_data/Jacobian.csv.'+str(iSim+1)
@@ -280,7 +291,7 @@ for Rest in RestVec:
     iSim+=1
 
 
-FileName = OutputDir+'/orig_data/SimIdxs.csv'
+FileName = OutputDir+'/SimIdxs.csv'
 Header   = 'iStart,iEnd'
 np.savetxt(FileName, np.concatenate((iStart[...,np.newaxis], iEnd[...,np.newaxis]), axis=1), delimiter=',', header=Header, comments='')
 

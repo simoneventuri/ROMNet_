@@ -7,7 +7,7 @@ import numpy                                  as np
 
 from .model        import Model
 from ..training    import customCallbacks, LossHistory
-from ..nn          import fnn_block
+from ..nn          import FNN
 
 from tensorflow                           import keras
 from tensorflow                           import train
@@ -65,26 +65,14 @@ class FNN_Deterministic(Model):
             #---------------------------------------------------------------------------------------------------------------------------
             
             ### Input Layer
-            input_      = tf.keras.Input(shape=[self.NVarsx,])
+            input_       = tf.keras.Input(shape=[self.NVarsx,])
 
-            NNNs        = len(InputData.Layers)
-            outputLayer = []
-            for iy in range(NNNs):
+            fnn          = FNN(InputData, self.xTrain, NN_Transfer_Model, None, None)
 
-                ## FNN Block
-                output_net = fnn_block(InputData, input_, self.xTrain, '', 'NN', iy, NN_Transfer_Model)
-                
-                outputLayer.append(output_net)
+            output_final = fnn.call(input_)
 
+            self.Model   = keras.Model(inputs=[input_], outputs=[output_final] )
 
-            ### If Multiple NNs (i.e., One per Output Variable), then Concatenate their Outputs
-            if (NNNs > 1):
-                output_final = tf.keras.layers.Concatenate(axis=1)(outputLayer)
-            else:
-                output_final = outputLayer[0]
-
-
-            self.Model = keras.Model(inputs=[input_], outputs=[output_final] )
             #---------------------------------------------------------------------------------------------------------------------------
 
 

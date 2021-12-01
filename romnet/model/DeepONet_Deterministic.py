@@ -8,7 +8,6 @@ import pandas                                 as pd
 
 from .model        import Model
 from ..training    import customCallbacks, LossHistory
-from ..nn          import fnn_block, deeponet_final_layer
 
 from tensorflow                           import keras
 from tensorflow                           import train
@@ -65,35 +64,21 @@ class DeepONet_Deterministic(Model):
 
 
             #---------------------------------------------------------------------------------------------------------------------------
+            SurrogateType = InputData.SurrogateType
+            if (SurrogateType == 'FNN-SourceTerms'):
+                SurrogateType = 'FNN'
+            
             input_                  = tf.keras.Input(shape=[self.NVarsx,])
-            inputBranch, inputTrunk = tf.split(input_, num_or_size_splits=[self.NVarsBranch, self.NVarsTrunk], axis=1)
+            if (InputData.SurrogateType == 'DeepONet'):
+                input_ = tf.split(input_, num_or_size_splits=[self.NVarsBranch, self.NVarsTrunk], axis=1)
 
+            Net                     = getattr(nn, SurrogateType)
+            net                     = Net(InputData, self.xTrain, NN_Transfer_Model, None, None)
 
-            ### Trunks
-            outputTrunk        = fnn_block(InputData, inputTrunk, self.xTrain[InputData.TrunkVars], 'Trunk', 'Trunk_'+str(1), 0, NN_Transfer_Model)
+            output_final            = net.call(input_)
 
-            outputLayer = []
-            for iy in range(self.NVarsy):
+            self.Model              = keras.Model(inputs=[input_], outputs=[output_final] )
 
-                ### Branches
-                outputBranch       = fnn_block(InputData, inputBranch, self.xTrain[InputData.BranchVars], 'Branch', 'Branch_'+InputData.OutputVars[iy], iy, NN_Transfer_Model)
-                
-                ## Final Dot Product
-                output_P           = layers.Dot(axes=1)([outputBranch, outputTrunk])
-           
-                ### Final Layer
-                output_net         = deeponet_final_layer(InputData, output_P, iy, NN_Transfer_Model)
-
-                outputLayer.append(output_net)
-
-
-            if (self.NVarsy > 1):
-                output_final = tf.keras.layers.Concatenate(axis=1)(outputLayer)
-            else:
-                output_final = outputLayer[0]
-
-
-            self.Model = keras.Model(inputs=[input_], outputs=[output_final] )
             #---------------------------------------------------------------------------------------------------------------------------
 
 

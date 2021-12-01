@@ -1,9 +1,11 @@
 
-from .nn        import fnn_block, fnn_block_tfp, deeponet_final_layer, deeponet_final_layer_tfp
+from .nn       import load_model_, load_weights_
+from .fnn      import FNN
+from .deeponet import DeepONet
 
 __all__ = [
-    "fnn_block",
-    "fnn_block_tfp",
-    "deeponet_final_layer",
-    "deeponet_final_layer_tfp",
+    "load_model_",
+    "load_weights_",
+    "FNN",
+    "DeepONet",
 ]

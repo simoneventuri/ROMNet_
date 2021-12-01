@@ -1,5 +1,7 @@
-from .data import Data
+from .blackbox import BlackBox
+from .pde      import PDE
 
 __all__ = [
-    "Data",
+    "BlackBox",
+    "PDE",
 ]

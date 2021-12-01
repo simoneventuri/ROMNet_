@@ -1,26 +1,10 @@
 import os
 import sys
-import numpy                                  as np
-from pathlib import Path
+import numpy  as np
 import shutil
 
 import romnet as rmnt
 
-#import tensorflow                             as tf
-#print(tf.version.VERSION)
-
-
-
-#=======================================================================================================================================
-from datetime import datetime
-
-def get_curr_time():
-    return datetime.now().strftime("%Y.%m.%d.%H.%M.%S")
-
-def get_start_time():
-    return get_curr_time()
-
-#=======================================================================================================================================
 
 
 if __name__ == "__main__": 
@@ -29,13 +13,8 @@ if __name__ == "__main__":
     ROMNetFldr     = WORKSPACE_PATH + '/ROMNet/romnet/'
 
 
-    # print("\n======================================================================================================================================")
-    # print(" TensorFlow version: {}".format(tf.__version__))
-    # print(" Eager execution: {}".format(tf.executing_eagerly()))
 
-
-
-    #===================================================================================================================================
+    #===========================================================================
     print("\n[ROMNet]: Loading Input Module ...")
 
     try:
@@ -49,98 +28,67 @@ if __name__ == "__main__":
     from ROMNet_Input import inputdata
 
     print("\n[ROMNet]: Initializing Input ...")
-    InputData              = inputdata(WORKSPACE_PATH, ROMNetFldr)
-    #===================================================================================================================================
+    InputData               = inputdata(WORKSPACE_PATH, ROMNetFldr)
+    InputData.InputFilePath = InputFile
+    #===========================================================================
 
 
 
-    #===================================================================================================================================
-    print("\n[ROMNet]: Creating Run Folder ...")
+    #===========================================================================
+    print("\n[ROMNet]: Importing Physical System ... ")
 
-    InputData.PathToRunFld = InputData.PathToRunFld + '/' + InputData.SurrogateType + '/' + InputData.ProbApproach + '/'
-    path = Path(InputData.PathToRunFld)
-    path.mkdir(parents=True, exist_ok=True)
-
-    Prefix = 'Run_'
-    if (InputData.NNRunIdx == 0):
-        if (len([x for x in os.listdir(InputData.PathToRunFld) if 'Run_' in x]) > 0):
-            InputData.NNRunIdx = str(np.amax( np.array( [int(x[len(Prefix):]) for x in os.listdir(InputData.PathToRunFld) if Prefix in x], dtype=int) ) + 1)
-        else:
-            InputData.NNRunIdx = 1
-
-    InputData.TBCheckpointFldr = InputData.PathToRunFld + '/TB/' + Prefix + str(InputData.NNRunIdx) + "_{}".format(get_start_time())
-    print("\n[ROMNet]: TensorBoard Data can be Found here: " + InputData.TBCheckpointFldr)
-
-    InputData.PathToRunFld     = InputData.PathToRunFld +    '/' + Prefix + str(InputData.NNRunIdx)
-    path = Path(InputData.PathToRunFld)
-    path.mkdir(parents=True, exist_ok=True)
-
-    try:
-        shutil.copyfile(InputFile+'/ROMNet_Input.py', InputData.PathToRunFld + '/ROMNet_Input.py')
-    except OSError as e:
-        pass
-    
-    InputData.PathToFigFld = InputData.PathToRunFld+'/Figures/'
-    path = Path(InputData.PathToFigFld)
-    path.mkdir(parents=True, exist_ok=True)
-    print("\n[ROMNet]: Final Figures can be Found here: " + InputData.PathToFigFld)
-
-    InputData.PathToParamsFld = InputData.PathToRunFld+'/Params/'
-
-    #===================================================================================================================================
+    if (InputData.PhysSystem is not None):
+        System = getattr(rmnt.pinn.system, InputData.PhysSystem)
+        system = System(InputData)
+    #===========================================================================
 
 
 
-    #===================================================================================================================================
+    #===========================================================================
     print("\n[ROMNet]: Getting Data ... ")
 
-    data = rmnt.data.Data(InputData)
-    data.get()
+    Data = getattr(rmnt.data, InputData.DataType)
+    data = Data(InputData, system)
+    data.get(InputData)
 
-    #===================================================================================================================================
+    #===========================================================================
 
 
 
-    #===================================================================================================================================
-    print('\n[ROMNet]: Initializing ML Model ... ')
-
+    #===========================================================================
     SurrogateType = InputData.SurrogateType
     if (SurrogateType == 'FNN-SourceTerms'):
         SurrogateType = 'FNN'
         
-    Model = getattr(rmnt.model,  SurrogateType + '_' + InputData.ProbApproach)
-    NN    = Model(InputData, InputData.PathToRunFld, data.Train, data.Valid)
+    Net   = getattr(rmnt.nn, SurrogateType)
 
-    #===================================================================================================================================
+    model = rmnt.model.Model_Deterministic(InputData)
+
+    model.build(InputData, data, Net)
+
+    #===========================================================================
 
 
 
-    #===================================================================================================================================
+    #===========================================================================
     if (InputData.TrainIntFlg > 0):
 
+        model.compile(InputData)
 
-        if (InputData.TrainIntFlg == 1):
-            print('\n[ROMNet]: Reading the ML Model Parameters ... ')
-
-            NN.load_params(InputData)
-
-
-        print('\n[ROMNet]: Training the ML Model ... ')
-
-        loss_history = NN.train(InputData)
+        model.train(InputData)
 
 
         if (InputData.PlotIntFlg >= 1):
     
             print('\n[ROMNet]: Plotting the Losses Evolution ... ')
 
-            loss_history.plot(InputData)
+            #loss_history.plot(InputData)
 
 
     else:
 
         print('\n[ROMNet]: Reading the ML Model Parameters ... ')
 
-        NN.load_params(InputData.PathToParamsFld)
+        model.load_params(InputData.PathToParamsFld)
 
-    #===================================================================================================================================
+    #===========================================================================

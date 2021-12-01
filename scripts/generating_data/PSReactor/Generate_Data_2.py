@@ -22,7 +22,8 @@ NRests             = 10
 iSimVec            = range(NRests)
 
 NVarsRed           = 3
-DirName            = '/orig_data/'
+
+TrainFlg           = 'train'
 ##########################################################################################
 
 
@@ -34,18 +35,25 @@ try:
 except:
     pass
 try:
-    os.makedirs(OutputDir+'/pca_' + str(NVarsRed) + '/')
+    os.makedirs(OutputDir+'/' + str(NVarsRed) + 'PC/')
 except:
     pass
 try:
-    os.makedirs(OutputDir+'/pc_data_' + str(NVarsRed) + '/')
+    os.makedirs(OutputDir+'/' + str(NVarsRed) + 'PC/ROM/')
+except:
+    pass
+try:
+    os.makedirs(OutputDir+'/' + str(NVarsRed) + 'PC/' + TrainFlg + '/')
+except:
+    pass
+try:
+    os.makedirs(OutputDir+'/' + str(NVarsRed) + 'PC/' + TrainFlg + '/ext/')
 except:
     pass
 
 
-
 ### Retrieving Data
-FileName    = OutputDir+DirName+'/ResidenceTimes.csv'
+FileName    = OutputDir+'/Orig/'+TrainFlg+'/ext/ResidenceTimes.csv'
 Data        = pd.read_csv(FileName, header=None)
 RestVecOrig = np.squeeze(Data.to_numpy())
 try:
@@ -60,11 +68,11 @@ print('[PCA] ')
 
 jSim=0
 for iSim in iSimVec:
-    FileName     = OutputDir+DirName+'/y.csv.'+str(iSim+1) 
+    FileName     = OutputDir+'/Orig/'+TrainFlg+'/ext/y.csv.'+str(iSim+1) 
     Datay        = pd.read_csv(FileName, header=0)
     print(Datay.head())
     SpeciesNames = list(Datay.columns.array)[1:]
-    FileName     = OutputDir+DirName+'/ySource.csv.'+str(iSim+1) 
+    FileName     = OutputDir+'/Orig/'+TrainFlg+'/ext/ySource.csv.'+str(iSim+1) 
     DataS        = pd.read_csv(FileName, header=0)
     if (jSim == 0):
         yMatCSV      = Datay.to_numpy()
@@ -81,7 +89,7 @@ for iSim in iSimVec:
 
 ### Removing Constant Features
 tOrig        = yMatCSV[:,0]
-FileName = OutputDir+DirName+'/t.csv'
+FileName = OutputDir+'/Orig/'+TrainFlg+'/ext/t.csv'
 np.savetxt(FileName, tOrig, delimiter=',')
 
 yMatTemp     = yMatCSV[:,1:]
@@ -103,18 +111,27 @@ print('[PCA] Final (', len(KeptSpeciesNames), ') Variables: ', KeptSpeciesNames)
 print('[PCA] ')
 
 
+ToOrig = []
+for Var in VarsName:
+    ToOrig.append(SpeciesNames.index(Var))
+ToOrig = np.array(ToOrig, dtype=int)
+
+FileName    = OutputDir+'/'+str(NVarsRed)+'PC/ROM/ToOrig_Mask.csv'
+np.savetxt(FileName, ToOrig, delimiter=',')
+
+
 ### Removing Constant Features
 tOrig    = yMatCSV[:,0]
-FileName = OutputDir+DirName+'/yCleaned.csv'
+FileName = OutputDir+'/Orig/'+TrainFlg+'/ext/yCleaned.csv'
 Header = 't'
 for Var in KeptSpeciesNames:
     Header += ','+Var
 np.savetxt(FileName, np.concatenate((tOrig[...,np.newaxis], yMat), axis=1), delimiter=',', header=Header)
 
-FileName = OutputDir+DirName+'/RestVecTot.csv'
+FileName = OutputDir+'/Orig/'+TrainFlg+'/ext/RestVecTot.csv'
 np.savetxt(FileName, RestVecTot, delimiter=',')
 
-FileName = OutputDir+DirName+'/CleanVars.csv'
+FileName = OutputDir+'/Orig/'+TrainFlg+'/ext/CleanVars.csv'
 StrSep = ','
 with open(FileName, 'w') as the_file:
     the_file.write(StrSep.join(VarsName)+'\n')
@@ -221,14 +238,15 @@ AT         = A.T
 print('[PCA] Shape of A        = ', A.shape)
 print('[PCA] ')
 
-FileName    = OutputDir+'/pca_'+str(NVarsRed)+'/A.csv'
+FileName    = OutputDir+'/'+str(NVarsRed)+'PC/ROM/A.csv'
 np.savetxt(FileName, A, delimiter=',')
 
-FileName    = OutputDir+'/pca_'+str(NVarsRed)+'/C.csv'
+FileName    = OutputDir+'/'+str(NVarsRed)+'PC/ROM/C.csv'
 np.savetxt(FileName, C, delimiter=',')
 
-FileName    = OutputDir+'/pca_'+str(NVarsRed)+'/D.csv'
+FileName    = OutputDir+'/'+str(NVarsRed)+'PC/ROM/D.csv'
 np.savetxt(FileName, D, delimiter=',')
+
 
 
 Header   = 'PC_1'
@@ -240,15 +258,15 @@ for iVarsRed in range(1,NVarsRed):
 
 #yMat_pca    = pca.transform(yMat, nocenter=False)
 yMat_pca   = ((yMat - C)/D).dot(AT)
-FileName    = OutputDir+'/pc_data_'+str(NVarsRed)+'/PC.csv'
+FileName    = OutputDir+'/'+str(NVarsRed)+'PC/'+str(TrainFlg)+'/ext/PC.csv'
 np.savetxt(FileName, np.concatenate((tOrig[...,np.newaxis], yMat_pca), axis=1), delimiter=',', header='t,'+Header, comments='')
 
 #ySource_pca = pca.transform(ySource, nocenter=False)
 ySource_pca = (ySource/D).dot(AT) 
-FileName    = OutputDir+'/pc_data_'+str(NVarsRed)+'/PCSource.csv'
+FileName    = OutputDir+'/'+str(NVarsRed)+'PC/'+str(TrainFlg)+'/ext/PCSource.csv'
 np.savetxt(FileName, np.concatenate((tOrig[...,np.newaxis], ySource_pca), axis=1), delimiter=',', header='t,'+HeaderS, comments='')
 
-FileName    = OutputDir+'/pc_data_'+str(NVarsRed)+'/PCAll.csv'
+FileName    = OutputDir+'/'+str(NVarsRed)+'PC/'+str(TrainFlg)+'/ext/PCAll.csv'
 Temp        = np.concatenate((tOrig[...,np.newaxis], yMat_pca, ySource_pca), axis=1)
 np.savetxt(FileName, Temp, delimiter=',', header='t,'+Header+','+HeaderS, comments='')
 
@@ -271,7 +289,7 @@ HeaderS = 't,'+HeaderS
 for iRest in range(1,NRests+1):
     print(KeptSpeciesNames)
 
-    FileName    = OutputDir+DirName+'/y.csv.'+str(iRest) 
+    FileName    = OutputDir+'/Orig/'+TrainFlg+'/ext/y.csv.'+str(iRest) 
     Datay       = pd.read_csv(FileName, header=0)
     tVec        = Datay['t'].to_numpy()[...,np.newaxis]
     yTemp       = Datay[KeptSpeciesNames].to_numpy()
@@ -279,16 +297,16 @@ for iRest in range(1,NRests+1):
 
 
     yMat_pca    = ((yTemp - C)/D).dot(AT)
-    FileName    = OutputDir+'/pc_data_'+str(NVarsRed)+'/PC.csv.'+str(iRest)
+    FileName    = OutputDir+'/'+str(NVarsRed)+'PC/'+str(TrainFlg)+'/ext/PC.csv.'+str(iRest)
     Temp        = np.concatenate((tVec, yMat_pca), axis=1)
     np.savetxt(FileName, Temp, delimiter=',', header=Header, comments='')
 
-    FileName    = OutputDir+DirName+'/ySource.csv.'+str(iRest) 
+    FileName    = OutputDir+'/Orig/'+TrainFlg+'/ext/ySource.csv.'+str(iRest) 
     Datay       = pd.read_csv(FileName, header=0)
     tVec        = Datay['t'].to_numpy()[...,np.newaxis]
     ySourceTemp = Datay[KeptSpeciesNames].to_numpy()
 
     ySource_pca = (ySourceTemp/D).dot(AT) 
-    FileName    = OutputDir+'/pc_data_'+str(NVarsRed)+'/PCSource.csv.'+str(iRest)
+    FileName    = OutputDir+'/'+str(NVarsRed)+'PC/'+str(TrainFlg)+'/ext/PCSource.csv.'+str(iRest)
     Temp        = np.concatenate((tVec, ySource_pca), axis=1)
     np.savetxt(FileName, Temp, delimiter=',', header=HeaderS, comments='')
