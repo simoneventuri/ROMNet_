@@ -2,7 +2,6 @@ import time
 import tensorflow.keras.callbacks as CB
 
 from tensorflow.python.util.tf_export import keras_export
-from prode.utilities import utils
 
 
 #=======================================================================================================================================
@@ -26,9 +25,7 @@ class Timer(CB.Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         if (time.time() - self.t_start) > self.threshold:
-            utils.print_main("Stop training as time used up."
-                "Time used: {:.1f} mins, epoch trained: {}".format(
-                    (time.time() - self.t_start) / 60, epoch))
+            print("Stop training as time used up. Time used: ",  (time.time() - self.t_start) / 60, " mins, epoch trained:", epoch)
             self.model.stop_training = True
 
 #=======================================================================================================================================

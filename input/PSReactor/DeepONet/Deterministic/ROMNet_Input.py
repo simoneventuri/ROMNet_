@@ -29,7 +29,7 @@ class inputdata(object):
         self.WORKSPACE_PATH      = WORKSPACE_PATH                                                         # os.getenv('WORKSPACE_PATH')      
         self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
         self.PathToRunFld        = self.ROMNetFldr   + '/../PSR_10Cases/'                                 # Path To Training Folder
-        self.PathToLoadFld       = self.ROMNetFldr   + '/../PSR_10Cases/DeepONet/Deterministic/Run_11/'                            # Path To Pre-Trained Model Folder
+        self.PathToLoadFld       = None # self.ROMNetFldr   + '/../PSR_10Cases/DeepONet/Deterministic/Run_11/'                            # Path To Pre-Trained Model Folder
         self.ROMPred_Flg         = False
         # self.PathToDataFld       = self.ROMNetFldr   + '/../Data/PSR_10Cases/'+str(self.NRODs)+'PC/'            # Path To Training Data Folder 
         self.PathToDataFld       = self.ROMNetFldr   + '/../Data/PSR_10Cases/Orig/'                        # Path To Training Data Folder 
@@ -42,8 +42,8 @@ class inputdata(object):
         ### Data
         self.DataType            = 'PDE'                                                                    # Module to Be Used for Reading Data
         self.GenerateFlg         = False
-        self.NTrain              = {'ics': 64, 'res': 128}                                                # No of Training Cases
-        #self.NTrain              = {'pts': 128}                                                             # No of Training Cases
+        # self.NTrain              = {'ics': 64, 'res': 128}                                                # No of Training Cases
+        self.NTrain              = {'pts': 128}                                                             # No of Training Cases
         self.ValidPerc           = 20.0                                                                     # Percentage of Training Data to Be Used for Validation (e.g., = 20.0 => 20%)
         self.DataDist            = 'uniform'                                                                # Distribution for Sampling Independent Variables
         self.NTest               = 2                                                                        # No of Test Cases
@@ -58,7 +58,7 @@ class inputdata(object):
         self.BranchToTrunk       = [0]*self.NRODs                                                                # Index of the Trunk Corresponding to i-th Branch
         self.BranchVars          = ['log10(Rest)']                                                        # List Containing the Branch's Input Data Column Names
         self.BranchLayers        = [np.array([32,32,32])]*self.NRODs                                            # List Containing the No of Neurons per Each Branch's Layer
-        self.BranchActFun        = [['relu','relu','relu']]*self.NRODs                                             # List Containing the Activation Funct.s per Each Branch's Layer
+        self.BranchActFun        = [['elu','elu','elu']]*self.NRODs                                             # List Containing the Activation Funct.s per Each Branch's Layer
         self.BranchDropOutRate   = 1.e-10                                                                 # Branch's Layers Dropout Rate
         self.BranchDropOutPredFlg= False                                                                  # Flag for Using Branch's Dropout during Prediction
         self.BranchSoftmaxFlg    = False                                                                  # Flag for Using Softmax after Branch's Last Layer
@@ -83,14 +83,14 @@ class inputdata(object):
         self.NEpoch              = 3000                                                                   # Number of Epoches
         self.BatchSize           = 64                                                                     # Mini-Batch Size
         self.ValidBatchSize      = 64                                                                     # Validation Mini-Batch Size
-        self.RunEagerlyFlg       = True
-        self.Losses              = {'ics': {'name': 'mse', 'axis': 0}, 'res': {'name': 'mse', 'axis': 0}} # Loss Functions
-        self.LossWeights         = {'ics': 1., 'res': 1.}     
-        # self.Losses              = {'pts': {'name': 'mape', 'axis': 0}}                                    # Loss Functions
-        # self.LossWeights         = {'pts': 1.}     
+        self.RunEagerlyFlg       = False
+        # self.Losses              = {'ics': {'name': 'mse', 'axis': 0}, 'res': {'name': 'mse', 'axis': 0}} # Loss Functions
+        # self.LossWeights         = {'ics': 1., 'res': 1.}     
+        self.Losses              = {'pts': {'name': 'mse', 'axis': 0}}                                    # Loss Functions
+        self.LossWeights         = {'pts': 1.}     
         self.Metrics             = None                   
-        self.LR                  = 1.e-4                                                               # Initial Learning Rate
-        self.LRDecay             = ["exponential", 20000, 0.98]
+        self.LR                  = 1.e-3                                                               # Initial Learning Rate
+        self.LRDecay             = ["exponential", 2000, 0.98]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
         self.WeightDecay         = np.array([1.e-10,1.e-10], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
@@ -130,12 +130,12 @@ class inputdata(object):
             'lr_tracker': {
                 'verbose': 1
             },
-            'weighted_loss': {
-                'name':          'SoftAttention',
-                'data_generator': None,
-                'loss_weights0': {'ics': 1.e1, 'res': 1.e-10},
-                'freq':          2
-            },
+            # 'weighted_loss': {
+            #     'name':          'SoftAttention',
+            #     'data_generator': None,
+            #     'loss_weights0': {'ics': 1.e1, 'res': 1.e-10},
+            #     'freq':          2
+            # },
             # 'weighted_loss': {
             #     'name':         'EmpiricalWeightsAdapter',
             #     'alpha':        0.9,

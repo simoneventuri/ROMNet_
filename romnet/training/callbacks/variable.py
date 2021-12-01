@@ -2,7 +2,6 @@ import sys
 import tensorflow.keras.callbacks as CB
 
 from tensorflow.python.util.tf_export import keras_export
-from prode.utilities import utils
 
 
 #=======================================================================================================================================

@@ -1,6 +1,7 @@
 matplotlib
 numpy
 pandas
+pydot
 sklearn
 tensorflow
 tensorflow_probability

@@ -4,7 +4,6 @@ import tensorflow.keras.backend as K
 import tensorflow.keras.callbacks as CB
 
 from tensorflow.python.util.tf_export import keras_export
-from prode.utilities import utils
 
 
 @keras_export('keras.callbacks.LRPiecewiseConstantDecay')
@@ -15,17 +14,14 @@ class LRPiecewiseConstantDecay(CB.Callback):
         super(LRPiecewiseConstantDecay, self).__init__()
 
         if len(boundaries) != len(values) - 1:
-            utils.raise_value_err(
-                "In `{}` callback, the length of `boundaries` should "
-                "be 1 less than the length of `values`.".format(self.__name__)
-            )
+            print("In ", self.__name__, " callback, the length of `boundaries` should be 1 less than the length of `values`." )
         self.boundaries = np.array(boundaries)
         self.values     = np.array(values)
         self.idx        = 0
 
     def on_epoch_end(self, epoch, logs=None):
-        if not hasattr(self.model.optimizer, "lr"):
-            utils.raise_value_err("Optimizer must have a `lr` attribute.")
+        #if not hasattr(self.model.optimizer, "lr"):
+        #    utils.raise_value_err("Optimizer must have a `lr` attribute.")
         greater = self.boundaries < epoch
         if True in greater:
             idx = np.where(greater)[0][-1]
@@ -33,10 +29,7 @@ class LRPiecewiseConstantDecay(CB.Callback):
             new_lr = self.values[self.idx]
             K.set_value(self.model.optimizer.lr, new_lr)
             if self.verbose > 0:
-                utils.print_main(
-                    "Epoch %05d: LRPiecewiseConstantDecay reducing "
-                    "learning rate to %s." % (epoch + 1, new_lr)
-                )
+                print("Epoch ", epoch + 1, ": LRPiecewiseConstantDecay reducing learning rate to ", new_lr)
 
 
 @keras_export('keras.callbacks.LearningRateTracker')

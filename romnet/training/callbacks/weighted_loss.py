@@ -9,7 +9,6 @@ import tensorflow.keras.backend               as K
 from tqdm                                 import tqdm
 from tensorflow.python.eager              import backprop
 from tensorflow.python.util.tf_export     import keras_export
-from prode.utilities                      import utils
 
 
 
