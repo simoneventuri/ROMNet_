@@ -17,20 +17,21 @@ from tensorflow                           import train
 from ..training                           import steps as stepss
 from ..training                           import L1L2Regularizer
 from ..training                           import losscontainer
-
+from .normalization                       import CustomNormalization
 
 
 #=======================================================================================================================================
 class TransLayer(tf.keras.layers.Layer):
-    def __init__(self, f, indxs):
-        super(TransLayer, self).__init__()
+    def __init__(self, f, indxs, name='TransLayer'):
+        super(TransLayer, self).__init__(name=name, trainable=False)
         self.f           = f
         self.indxs       = indxs
 
     def call(self, inputs):
         inputs_unpack = tf.unstack(inputs, axis=1)
-        for indx in self.indxs:
-            inputs_unpack[indx] = self.f(inputs_unpack[indx] + 1.e-15)
+        if (self.f == 'log10'):
+            for indx in self.indxs:
+                inputs_unpack[indx] = tf.experimental.numpy.log10(inputs_unpack[indx] + 1.e-15)
         inputs_mod    = tf.stack(inputs_unpack, axis=1)
         return inputs_mod
 
@@ -93,7 +94,7 @@ class NN(tf.keras.Model):
 
     def __init__(self):
         super(NN, self).__init__()
-        
+
         self.NormalizeInput    = False
         self.WeightDecay       = [0., 0.]
         self.OutputVars        = []
@@ -341,30 +342,52 @@ class NN(tf.keras.Model):
 
 
     #=======================================================================================================================================
-    def fnn_block(self, xnorm, BlockName, NNName, Idx):
+    def fnn_block(self, xnorm, BlockName, NNName, Idx, InputVars):
+
+        if (BlockName == ''):
+            VarName = '_' + self.OutputVars[Idx]
+        else:
+            VarName = ''
 
         LayersVec = []
 
 
         ### Transform Layer
 
-        if (BlockName == ''):
-            BlockName_ = NNName
-        else:
-            BlockName_ = BlockName
-        if (self.TransFun[BlockName_]):
-            LayersVec.append( TransLayer(self.TransFun[BlockName]['fun'], self.TransFun[BlockName]['indxs']) )
-        
+        if (self.TransFun):
+            for ifun, fun in enumerate(self.TransFun):
+                vars_list = self.TransFun[fun]
+
+                indxs = []
+                for ivar, var in enumerate(InputVars):
+                    if var in vars_list:
+                        indxs.append(ivar)
+
+                if (len(indxs) > 0):
+                    layer_name = NNName + VarName + '_Transformation_' + fun
+                    LayersVec.append( TransLayer(fun, indxs, name=layer_name) )
+            
 
         ### Normalizer Layer
 
         if (self.NormalizeInput):
+            # if (self.NN_Transfer_Model is not None): 
+            #     Mean        = self.NN_Transfer_Model.get_layer('normalization').mean.numpy()
+            #     Variance    = self.NN_Transfer_Model.get_layer('normalization').variance.numpy()
+            #     normalizer  = tf.keras.layers.Normalization(mean=Mean, variance=Variance)
+            # else:
+            #     normalizer  = tf.keras.layers.Normalization()
+            #     normalizer.adapt(np.array(xnorm))
+            # LayersVec.append( normalizer )
+            layer_name = NNName + VarName + '_Normalization'
             if (self.NN_Transfer_Model is not None): 
-                Mean        = self.NN_Transfer_Model.get_layer('normalization').mean.numpy()
-                Variance    = self.NN_Transfer_Model.get_layer('normalization').variance.numpy()
-                normalizer  = tf.keras.layers.Normalization(mean=Mean, variance=Variance)
+                Mean        = self.NN_Transfer_Model.get_layer(layer_name).mean.numpy()
+                Variance    = self.NN_Transfer_Model.get_layer(layer_name).variance.numpy()
+                MinVals     = self.NN_Transfer_Model.get_layer(layer_name).min_vals.numpy()
+                MaxVals     = self.NN_Transfer_Model.get_layer(layer_name).max_vals.numpy()
+                normalizer  = CustomNormalization(mean=Mean, variance=Variance, min_vals=MinVals, max_vals=MaxVals, name=layer_name)
             else:
-                normalizer  = tf.keras.layers.Normalization()
+                normalizer  = CustomNormalization(name=layer_name)
                 normalizer.adapt(np.array(xnorm))
             LayersVec.append( normalizer )
 
@@ -376,11 +399,6 @@ class NN(tf.keras.Model):
         NNLayers = getattr(self, BlockName+'Layers')[Idx]
         NLayers  = len(NNLayers)
         ActFun   = getattr(self, BlockName+'ActFun')[Idx]
-
-        if (BlockName == ''):
-            VarName = '_' + self.OutputVars[Idx]
-        else:
-            VarName = ''
 
         for iLayer in range(NLayers):
             WeightsName = NNName + VarName + '_HL' + str(iLayer+1) 
@@ -444,7 +462,35 @@ class NN(tf.keras.Model):
             LayersVec.append( OutLayer )
 
 
-        elif ((BlockName == 'Branch') and (self.BranchSoftmaxFlg)):
+        elif (BlockName == 'Branch'):
+
+            ### Final Layer
+
+            NNNs        = len(self.Layers)
+            NOutputsNN  = len(self.OutputVars)
+            if (NNNs > 1):
+                NOutputsNN = 1
+     
+            LayerName      = 'FinalScaling_Branch_' + VarName + '_' + str(Idx+1)
+            if (self.NN_Transfer_Model is not None):
+                x0     = self.NN_Transfer_Model.get_layer(LayerName).kernel.numpy()
+                b0     = self.NN_Transfer_Model.get_layer(LayerName).bias.numpy()
+                WIni   = tf.keras.initializers.RandomNormal(mean=x0, stddev=1.e-10)
+                bIni   = tf.keras.initializers.RandomNormal(mean=b0, stddev=1.e-10)
+            else:
+                WIni   = 'glorot_normal'
+                bIni   = 'zeros'
+            OutLayer   = tf.keras.layers.Dense(units              = NNLayers[-1],
+                                               activation         = 'linear',
+                                               use_bias           = True,
+                                               kernel_initializer = WIni,
+                                               bias_initializer   = bIni,
+                                               name               = LayerName)
+            
+            LayersVec.append( OutLayer )
+
+
+        if ((BlockName == 'Branch') and (self.BranchSoftmaxFlg)):
 
             ### SoftMax Layer 
 
@@ -463,7 +509,11 @@ class NN(tf.keras.Model):
 
         kernel_divergence_fn = lambda q, p, _: tfp.distributions.kl_divergence(q, p) / (self.BatchSize * 1.0)
         bias_divergence_fn   = lambda q, p, _: tfp.distributions.kl_divergence(q, p) / (self.BatchSize * 1.0)
-        
+    
+        if (BlockName == ''):
+            VarName = '_' + self.OutputVars[Idx]
+        else:
+            VarName = ''
 
         LayersVec = []
 
@@ -471,12 +521,23 @@ class NN(tf.keras.Model):
         ### Normalizer Layer
         
         if (self.NormalizeInput):
+        #     if (self.NN_Transfer_Model is not None): 
+        #         Mean        = self.NN_Transfer_Model.get_layer('normalization').mean.numpy()
+        #         Variance    = self.NN_Transfer_Model.get_layer('normalization').variance.numpy()
+        #         normalizer  = tf.keras.layers.Normalization(mean=Mean, variance=Variance)
+        #     else:
+        #         normalizer  = tf.keras.layers.Normalization()
+        #         normalizer.adapt(np.array(xnorm))
+        #     LayersVec.append( normalizer )
+            layer_name = NNName + VarName + '_Normalization'
             if (self.NN_Transfer_Model is not None): 
-                Mean        = self.NN_Transfer_Model.get_layer('normalization').mean.numpy()
-                Variance    = self.NN_Transfer_Model.get_layer('normalization').variance.numpy()
-                normalizer  = tf.keras.layers.Normalization(mean=Mean, variance=Variance)
+                Mean        = self.NN_Transfer_Model.get_layer(layer_name).mean.numpy()
+                Variance    = self.NN_Transfer_Model.get_layer(layer_name).variance.numpy()
+                MinVals     = self.NN_Transfer_Model.get_layer(layer_name).min_vals.numpy()
+                MaxVals     = self.NN_Transfer_Model.get_layer(layer_name).max_vals.numpy()
+                normalizer  = CustomNormalization(mean=Mean, variance=Variance, min_vals=MinVals, max_vals=MaxVals, name=layer_name)
             else:
-                normalizer  = tf.keras.layers.Normalization()
+                normalizer  = CustomNormalization(name=layer_name)
                 normalizer.adapt(np.array(xnorm))
             LayersVec.append( normalizer )
 
@@ -486,11 +547,6 @@ class NN(tf.keras.Model):
         NNLayers = getattr(self, BlockName+'Layers')[Idx]
         NLayers  = len(NNLayers)
         ActFun   = getattr(self, BlockName+'ActFun')[Idx]
-
-        if (BlockName == ''):
-            VarName = '_' + self.OutputVars[Idx]
-        else:
-            VarName = ''
 
         for iLayer in range(NLayers):
             WeightsName = NNName + VarName + '_HL' + str(iLayer+1) 

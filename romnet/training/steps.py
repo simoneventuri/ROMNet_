@@ -11,15 +11,16 @@ def train_step(net, data):
 
     x, y, indx = data_adapter.expand_1d(data)
 
+
     # Gradient descent step
     losses = {}
     with tf.GradientTape() as tape:
         for i, data_id in enumerate(net.data_ids):
             losses[data_id] = _get_loss(i, x[i], y[i], tf.squeeze(indx[i]), net, data_id)
-        
+
         # Regularization loss
         reg_loss = _get_reg_loss(net)
-        
+
         # Calculate total loss
         tot_loss, tot_loss_weighted = _get_tot_loss(net, losses, reg_loss)
 
@@ -66,7 +67,7 @@ def test_step(net, data):
 
 #=======================================================================================================================================
 def _get_loss(i, x, y, indx, net, data_id, training=True):
-    
+            
     if data_id == 'res':
         y_pred = net.residual(x, training=training)
         if isinstance(y_pred, (list,tuple)):

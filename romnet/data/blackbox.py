@@ -36,6 +36,11 @@ class BlackBox(Data):
         self.xtrain, self.ytrain = None, None
         self.xtest,  self.ytest  = None, None
 
+        try:
+            self.TransFun        = InputData.TransFun
+        except:
+            self.TransFun        = None
+
         self.system              = system
         self.other_idxs          = None
         self.ind_idxs            = None
@@ -121,18 +126,17 @@ class BlackBox(Data):
 
 
             if (FirstFlg):
-                self.xnorm  = xall
+                self.xnorm     = xall
+                if (data_id != 'res'):
+                    self.ynorm = yall
             else:
-                self.xnorm  = self.xnorm.append(xall, ignore_index=True)
+                self.xnorm     = self.xnorm.append(xall, ignore_index=True)
+                if (data_id != 'res'):
+                    self.ynorm = self.ynorm.append(yall, ignore_index=True)
             FirstFlg = False
+            self.transform_normalization_data()
+            self.compute_statistics()         
 
-            self.train[data_id] = [xtrain, ytrain]
-            self.valid[data_id] = [xvalid, yvalid]
-            self.test[data_id]  = [xtest,   ytest]
-            self.all[data_id]   = [xall,     yall]
-            self.extra[data_id] = []
-
-            
 
         print("[ROMNet]:   Train      Data: ", self.train)
         print("[ROMNet]:   Validation Data: ", self.valid)

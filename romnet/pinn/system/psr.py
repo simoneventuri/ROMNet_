@@ -241,7 +241,8 @@ class PSR(System):
     def fROM_anti(self):
 
         def fROM_anti_PCA(y_pc):
-            return tf.matmul(y_pc, self.A) * self.D + self.C
+            y_masked = tf.matmul(y_pc, self.A) * self.D + self.C
+            return y_masked
 
         if (self.ROM_pred_flg):
             return None

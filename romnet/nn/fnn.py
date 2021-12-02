@@ -49,7 +49,7 @@ class FNN(NN):
         for iFNN in range(self.NFNNs):
 
             ## FNN Block
-            self.FNNLayersVecs[iFNN] = self.fnn_block(self.xnorm, '', 'NN', iFNN)
+            self.FNNLayersVecs[iFNN] = self.fnn_block(self.xnorm, '', 'NN', iFNN, self.InputVars)
         
 
     #===================================================================================================================================
@@ -79,7 +79,7 @@ class FNN(NN):
             OutputFinal = OutputConcat
 
         return OutputFinal
-        
+
     #===================================================================================================================================
 
 

@@ -63,7 +63,7 @@ class DeepONet(NN):
         ### Trunks
         self.TrunkLayersVecs = {}
         for iTrunk in range(self.NTrunks):
-            self.TrunkLayersVecs[iTrunk] = self.fnn_block(self.xnormTrunk, 'Trunk', 'Trunk_'+str(iTrunk+1), iTrunk)
+            self.TrunkLayersVecs[iTrunk] = self.fnn_block(self.xnormTrunk, 'Trunk', 'Trunk_'+str(iTrunk+1), iTrunk, self.TrunkVars)
 
 
         self.BranchLayersVecs = {}
@@ -71,7 +71,7 @@ class DeepONet(NN):
         for iy in range(self.NVarsy):
 
             ### Branches
-            self.BranchLayersVecs[iy] = self.fnn_block(self.xnormBranch, 'Branch', 'Branch_'+InputData.OutputVars[iy], iy)
+            self.BranchLayersVecs[iy] = self.fnn_block(self.xnormBranch, 'Branch', 'Branch_'+InputData.OutputVars[iy], iy, self.BranchVars)
        
             ### Final Layer
             self.FinalLayersVecs[iy]  = self.deeponet_final_layer(iy)

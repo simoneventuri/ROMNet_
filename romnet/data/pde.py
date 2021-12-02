@@ -42,13 +42,21 @@ class PDE(Data):
         self.xtrain, self.ytrain = None, None
         self.xtest,  self.ytest  = None, None
 
+        try:
+            self.TransFun        = InputData.TransFun
+        except:
+            self.TransFun        = None
+
         self.system              = system
         self.other_idxs          = system.other_idxs
         self.ind_idxs            = system.ind_idxs
         self.size_splits         = [len(self.other_idxs)]+[1]*len(self.ind_idxs)
         self.order               = system.order[0]
         self.get_residual        = system.get_residual
-        self.fROM_anti           = system.fROM_anti()
+        if (system.fROM_anti):
+            self.fROM_anti       = system.fROM_anti()
+        else:
+            self.fROM_anti       = None
         self.grad_fn             = gradient.get_grad_fn(self.order)
     
     #===========================================================================
@@ -117,6 +125,11 @@ class PDE(Data):
                     y_df   = pd.read_csv(data_obj.PathToDataFld+'/'+data_type+"/"+data_id+'/Output.csv')[data_obj.OutputVars]
                     i_df   = pd.DataFrame( np.arange(x_df.shape[0]), columns=['indx'])
 
+                    # if (data_id != 'res'):
+                    #     y    = y_df.to_numpy()
+                    #     y    = (y - data_obj.system.C) / data_obj.system.D
+                    #     y_df = pd.DataFrame(y, columns=y_df.columns)
+
                     data[data_type][data_id] = []
                     data[data_type][data_id].append(x_df) #.to_numpy()
                     data[data_type][data_id].append(y_df) #.to_numpy()
@@ -179,7 +192,7 @@ class PDE(Data):
 
 
         #-----------------------------------------------------------------------
-        def get_xnorm(data):
+        def get_norm(data):
 
             FirstFlg = True
             for i in range(2):
@@ -189,9 +202,14 @@ class PDE(Data):
 
                     x_df     = data[i][data_id][0]
                     xnorm    = x_df if FirstFlg else xnorm.append(x_df, ignore_index=True)
+
+                    if (data_id != 'res'):
+                        y_df     = data[i][data_id][1]
+                        ynorm    = y_df if FirstFlg else ynorm.append(y_df, ignore_index=True)
+
                     FirstFlg = False
 
-            return xnorm
+            return xnorm, ynorm
         #-----------------------------------------------------------------------
 
 
@@ -429,7 +447,9 @@ class PDE(Data):
                 test_data          = None
 
 
-        self.xnorm = get_xnorm([train_data, valid_data])
+        self.xnorm, self.ynorm = get_norm([train_data, valid_data])
+        self.transform_normalization_data()
+        self.compute_statistics()      
 
 
         self.n_train_tot = {}

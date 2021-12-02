@@ -45,6 +45,8 @@ class MassSpringDamper(System):
         # Get ode matrices
         self.K           = self.get_matrix()
 
+        self.fROM_anti   = None
+        
     #===========================================================================
 
 
