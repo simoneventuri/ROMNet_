@@ -58,6 +58,12 @@ class Model_Deterministic(Model):
         self.TrainIntFlg       = InputData.TrainIntFlg
         self.PathToLoadFld     = InputData.PathToLoadFld
 
+        self.got_stats         = False
+        try:
+            self.ynorm_flg     = InputData.NormalizeOutput
+        except:
+            self.ynorm_flg     = False
+
         if (self.TrainIntFlg > 0):
 
             #-------------------------------------------------------------------
@@ -122,7 +128,8 @@ class Model_Deterministic(Model):
         self,
         InputData,
         data,
-        Net
+        Net,
+        loadfile_no=None,
     ):
         """
 
@@ -163,14 +170,20 @@ class Model_Deterministic(Model):
         #     self.net.D_AntiPCA   = data.system.D
 
         self.net.build((1,self.net.NVarsx))
+
         #-----------------------------------------------------------------------
 
 
         #-----------------------------------------------------------------------
         if (self.TrainIntFlg == 0):
-            self.load_params(self.PathToRunFld + "/Training/Params/")
+            if (loadfile_no):
+                self.load_params(self.PathToRunFld + "/Training/Params/"+loadfile_no+".h5")
+            else:
+                self.load_params(self.PathToRunFld + "/Training/Params/")
         else:
             if (self.PathToLoadFld is not None):
+                if (loadfile_no):
+                    self.load_params(self.PathToLoadFld + "/Training/Params/"+loadfile_no+".h5")
                 if (self.PathToLoadFld[-1] == '/'):
                     self.load_params(self.PathToLoadFld + "/Training/Params/")
                 else:
@@ -251,6 +264,18 @@ class Model_Deterministic(Model):
 
 
         #-----------------------------------------------------------------------
+        if (self.ynorm_flg):
+            self.save_data_statistics(self.data.xstat, self.data.ystat)
+            self.data.system.ynorm_flg = True
+            self.data.system.y_mean    = self.y_mean
+            self.data.system.y_std     = self.y_std
+            self.data.system.y_min     = self.y_min
+            self.data.system.y_max     = self.y_max
+            self.data.system.y_range   = self.y_range
+        #-----------------------------------------------------------------------
+
+
+        #-----------------------------------------------------------------------
         self.net.residual  = self.data.res_fn(self.net)    
         self.net.fROM_anti = self.data.fROM_anti
         #-----------------------------------------------------------------------
@@ -321,8 +346,9 @@ class Model_Deterministic(Model):
         print('\n[ROMNet]:   Training the ML Model ... ')
 
         self.loss_history = LossHistory()
-        
-        CallBacksList = callbacks.get_callback(self, InputData.Callbacks)
+    
+        self.NOutputVars  = self.data.NOutputVars
+        CallBacksList     = callbacks.get_callback(self, InputData.Callbacks)
 
         if (InputData.DataType == 'PDE'):
             x        = self.data.train
@@ -406,6 +432,62 @@ class Model_Deterministic(Model):
             
         """
 
-        return self.net.predict(xData)
+        y_pred = self.net.predict(xData)
+
+        if (self.ynorm_flg):
+
+            if (not self.got_stats):
+                self.read_data_statistics()
+
+            y_pred = y_pred * self.y_range + self.y_min
+
+        return y_pred
+
+    #===========================================================================
+
+
+
+    #===========================================================================
+    def save_data_statistics(self, xstat, ystat):
+
+        path = Path( self.PathToRunFld+'/Data/' )
+        path.mkdir(parents=True, exist_ok=True)
+
+        DataNew            = pd.concat([xstat['mean'], xstat['std'], xstat['min'], xstat['max']], axis=1)
+        DataNew.columns    = ['x_mean','x_std','x_min','x_max']
+        DataNew.to_csv( self.PathToRunFld + "/Data/x_stats.csv", index=False)  
+
+        DataNew            = pd.concat([ystat['mean'], ystat['std'], ystat['min'], ystat['max']], axis=1)
+        DataNew.columns    = ['y_mean','y_std','y_min','y_max']
+        DataNew.to_csv( self.PathToRunFld + "/Data/y_stats.csv", index=False)
+
+        self.y_mean  = ystat['mean']
+        self.y_std   = ystat['std']
+        self.y_min   = ystat['min']
+        self.y_max   = ystat['max']
+        self.y_range = self.y_max - self.y_min
+
+        self.got_stats = True
+
+    #===========================================================================
+
+
+
+    #===========================================================================
+    def read_data_statistics(self, PathToRead=None):
+
+
+        if (PathToRead):
+            DataNew = pd.read_csv(PathToRead)
+        else:
+            DataNew = pd.read_csv(self.PathToRunFld + "/Data/y_stats.csv")
+
+        self.y_mean  = DataNew['y_mean'].to_numpy()
+        self.y_std   = DataNew['y_std'].to_numpy()
+        self.y_min   = DataNew['y_min'].to_numpy()
+        self.y_max   = DataNew['y_max'].to_numpy()
+        self.y_range = self.y_max - self.y_min
+
+        self.got_stats = True
 
     #===========================================================================

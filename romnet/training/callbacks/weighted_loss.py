@@ -103,11 +103,12 @@ class SoftAttention(tf.keras.callbacks.Callback):
         n_train_tot=None,
         loss_weights0=None,    
         save_dir=None,
+        shape_1=1,
         **kwargs
     ):
         super(SoftAttention, self).__init__()
 
-        self.name             = None
+        self.name             = 'soft_attention'
         self.pde_loss_weights = pde_loss_weights
         self.data_generator   = data_generator
         self.freq             = np.clip(freq, 1, None) if freq is not None else np.inf
@@ -115,6 +116,7 @@ class SoftAttention(tf.keras.callbacks.Callback):
         self.n_train_tot      = n_train_tot
         self.loss_weights0    = loss_weights0    
         self.save_dir         = save_dir
+        self.shape_1          = shape_1
 
 
     def on_train_begin(self, logs={}):
@@ -145,7 +147,12 @@ class SoftAttention(tf.keras.callbacks.Callback):
         self.model.attention_mask = []
         for key, value in self.n_train_tot.items():
             weight0 = self.loss_weights0[key]
-            self.model.attention_mask.append(tf.Variable(np.random.rand(value,1)*weight0, name='att_mask_'+key, trainable=True))
+            if (key == 'ics'):
+                self.model.attention_mask.append(tf.Variable(np.ones((value,self.shape_1))*weight0, name='att_mask_'+key, trainable=True))
+                #self.model.attention_mask.append(tf.Variable(np.random.rand(value,self.shape_1)*weight0, name='att_mask_'+key, trainable=True))
+            elif (key == 'res'):
+                self.model.attention_mask.append(tf.Variable(np.ones((value,self.shape_1))*weight0, name='att_mask_'+key, trainable=True))
+                #self.model.attention_mask.append(tf.Variable(np.random.rand(value,self.shape_1)*weight0, name='att_mask_'+key, trainable=True))
 
 
     def save_softattention_weights(self, fld_name, suffix):

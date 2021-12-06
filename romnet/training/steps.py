@@ -79,7 +79,7 @@ def _get_loss(i, x, y, indx, net, data_id, training=True):
         if (net.fROM_anti):
             y_pred = net.fROM_anti(y_pred)
 
-    if ((net.attention_mask is None) or (not training) or (data_id == 'pts')):
+    if ((net.attention_mask is None) or (data_id == 'pts') or (not training)):
         attention_mask = None
     else:
         attention_mask = tf.gather(net.attention_mask[i], indx, axis=0)         
@@ -107,7 +107,7 @@ def _get_tot_loss(net, losses, reg_loss):
     
     total_loss          = reg_loss 
     total_loss_weighted = reg_loss 
-    
+
     for data_id, loss in losses.items():
 
         if net.pde_loss_weights is not None:

@@ -23,7 +23,7 @@ MixtureFile        = 'gri30.yaml'
 NRests             = 10
 RestVec            = np.logspace(np.log10(1.e-5), np.log10(1.01e-5), NRests) # [2.e-5]
 #RestVec            = np.concatenate([np.linspace(1.e-6, 1.e-5, 20), np.linspace(2.e-5, 1.e-4, 19)])# [2.e-5]
-NPerRest           = 1000
+NPerRest           = 3000
 
 tStratch           = 1.
 Nt                 = NPerRest*2
@@ -64,7 +64,6 @@ OutputDir += '/Orig/'+TrainFlg+'/ext'
 ### Defining ODE and its Parameters
 
 def ReactorOde_CVODE(t, y):
-    print(t)
 
     mass     = np.sum(y[1:])
     gas_.HPY = y[0]/mass, P_, y[1:]/mass
@@ -75,6 +74,8 @@ def ReactorOde_CVODE(t, y):
     ydot     = np.zeros_like(y)
     ydot[0]  = (mass*hIn_ - y[0]) / Rest_
     ydot[1:] = wdot * gas_.molecular_weights * V_ + (YIn_ - y[1:]) * mdot_
+
+    #print('t = ', t, '; ydot = ', ydot)
 
     return ydot
 
@@ -184,7 +185,7 @@ for Rest in RestVec:
 
 
     ### Initialize Integration           
-    dt0        = Rest*1.e-9
+    dt0        = 1.e-11
     tMax       = Rest*1.e+3
     tout       = [0.]
     tout       = np.concatenate((np.array(tout), np.logspace(np.log10(dt0), np.log10(tMax), Nt-1)), axis=0)
@@ -192,7 +193,7 @@ for Rest in RestVec:
     SOLVER     = 'BDF'
 
 
-    output     = solve_ivp( ReactorOde_CVODE, tout[[0,-1]], y0, method=SOLVER, t_eval=tout, rtol=1.e-12)#, first_step=1.e-14)
+    output     = solve_ivp( ReactorOde_CVODE, tout[[0,-1]], y0, method=SOLVER, t_eval=tout, atol=1.e-20, first_step=1.e-14)#, )
 
 
     ### Integrate

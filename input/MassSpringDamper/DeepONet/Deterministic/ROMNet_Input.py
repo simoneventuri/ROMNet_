@@ -39,6 +39,7 @@ class inputdata(object):
         self.DataType            = 'PDE'                                                                    # Module to Be Used for Reading Data
         self.GenerateFlg         = False
         self.NTrain              = {'ics': 64, 'res': 128}                                                  # No of Training Cases
+        # self.NTrain              = {'pts': 128}                                                  # No of Training Cases
         self.ValidPerc           = 20.0                                                                     # Percentage of Training Data to Be Used for Validation (e.g., = 20.0 => 20%)
         self.DataDist            = 'uniform'                                                                # Distribution for Sampling Independent Variables
         self.NTest               = 2                                                                        # No of Test Cases
@@ -48,7 +49,6 @@ class inputdata(object):
         ## NN Model Structure
         self.SurrogateType       = 'DeepONet'                                                             # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
         self.ProbApproach        = 'Deterministic'                                                        # Probabilistic Technique for Training the BNN (if Any)
-        self.PINN                = False                                                                  # Flag for Training a Physics-Informed NN (in development)
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Branch's Input Data
         self.BranchToTrunk       = [0,0]                                                                  # Index of the Trunk Corresponding to i-th Branch
         self.BranchVars          = ['x','v']                                                              # List Containing the Branch's Input Data Column Names
@@ -62,7 +62,7 @@ class inputdata(object):
         self.TrunkActFun         = [['tanh','tanh','tanh']]                                               # List Containing the Activation Funct.s per Each Trunk's Layer
         self.TrunkDropOutRate    = 1.e-10                                                                  # Trunk's Layers Dropout Rate  
         self.TrunkDropOutPredFlg = False                                                                  # Flag for Using Trunk's Dropout during Prediction
-        self.TransFun            = {'Trunk': None, 'Branch': None}
+        self.TransFun            = None
         self.FinalLayerFlg       = True                                                                   # Flag for Using a Full Linear Layer after Dot-Product Layer
         self.OutputVars          = ['x','v']                                                              # List Containing the Output Data Column Names
 
@@ -74,10 +74,12 @@ class inputdata(object):
         self.BatchSize           = 64                                                                    # Mini-Batch Size
         self.ValidBatchSize      = 64                                                                    # Validation Mini-Batch Size
         self.Losses              = {'ics': {'name': 'MSE', 'axis': 0}, 'res': {'name': 'MSE', 'axis': 0}} # Loss Functions
-        self.LossWeights         = {'ics': 1., 'res': 1.}     
+        # self.LossWeights         = {'ics': 1., 'pts': 1.}     
+        # self.Losses              = {'pts': {'name': 'MSE', 'axis': 0}} # Loss Functions
+        self.LossWeights         = {'ics': 1.0, 'res': 1.}     
         self.Metrics             = None                                                                   # List of Metric Functions
         self.LR                  = 5.e-3                                                                  # Initial Learning Rate
-        self.LRDecay             = ["exponential", 20000, 0.98]
+        self.LRDecay             = ["exponential", 5000, 0.98]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
         self.WeightDecay         = np.array([1.e-5, 1.e-5], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
@@ -117,12 +119,12 @@ class inputdata(object):
             'lr_tracker': {
                 'verbose': 1
             },
-            'weighted_loss': {
-                'name':          'SoftAttention',
-                'data_generator': None,
-                'loss_weights0': {'ics': 1., 'res': 1.e-10},
-                'freq':          5
-            },
+            # 'weighted_loss': {
+            #     'name':          'SoftAttention',
+            #     'data_generator': None,
+            #     'loss_weights0': {'ics': 1., 'res': 1.e-10},
+            #     'freq':          5
+            # },
             # 'weighted_loss': {
             #     'name':         'EmpiricalWeightsAdapter',
             #     'alpha':        0.9,

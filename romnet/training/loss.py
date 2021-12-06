@@ -62,7 +62,7 @@ def mape(axis):
         #n_points = tf.cast(tf.shape(y_true)[0], tf.float64)
         y_pred   = tf.convert_to_tensor(y_pred)
         y_true   = tf.cast(y_true, y_pred.dtype)
-        err      = tf.math.abs((y_true - y_pred)) / K.maximum(tf.math.abs(y_true), K.epsilon())
+        err      = tf.math.abs( (y_true - y_pred) / K.maximum(tf.math.abs(y_true), K.epsilon()) )
         if attention_mask is not None:
             attention_mask = tf.convert_to_tensor(attention_mask)
             err           *= attention_mask**2

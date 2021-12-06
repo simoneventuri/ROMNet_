@@ -22,17 +22,21 @@ from .normalization                       import CustomNormalization
 
 #=======================================================================================================================================
 class TransLayer(tf.keras.layers.Layer):
-    def __init__(self, f, indxs, name='TransLayer'):
+
+    def __init__(self, f, NVars, indxs, name='TransLayer'):
         super(TransLayer, self).__init__(name=name, trainable=False)
         self.f           = f
+        self.NVars       = NVars
         self.indxs       = indxs
 
     def call(self, inputs):
-        inputs_unpack = tf.unstack(inputs, axis=1)
+
+        inputs_unpack = tf.split(inputs, self.NVars, axis=1)
         if (self.f == 'log10'):
             for indx in self.indxs:
-                inputs_unpack[indx] = tf.experimental.numpy.log10(inputs_unpack[indx] + 1.e-15)
-        inputs_mod    = tf.stack(inputs_unpack, axis=1)
+                #inputs_unpack[indx] = tf.experimental.numpy.log10(inputs_unpack[indx] + 1.e-15)
+                inputs_unpack[indx] = tf.math.log(inputs_unpack[indx] + 1.e-15)
+        inputs_mod    = tf.concat(inputs_unpack, axis=1)
         return inputs_mod
 
 #=======================================================================================================================================
@@ -43,7 +47,7 @@ class TransLayer(tf.keras.layers.Layer):
 class bias_layer(tf.keras.layers.Layer):
 
     def __init__(self, b0, LayerName):
-        super(BiasLayer, self).__init__(name=LayerName)
+        super(bias_layer, self).__init__(name=LayerName)
         self.b0   = b0
 
     def build(self, input_shape):
@@ -365,7 +369,7 @@ class NN(tf.keras.Model):
 
                 if (len(indxs) > 0):
                     layer_name = NNName + VarName + '_Transformation_' + fun
-                    LayersVec.append( TransLayer(fun, indxs, name=layer_name) )
+                    LayersVec.append( TransLayer(fun, len(InputVars), indxs, name=layer_name) )
             
 
         ### Normalizer Layer
@@ -423,7 +427,7 @@ class NN(tf.keras.Model):
                                                    kernel_initializer = WIni,
                                                    bias_initializer   = bIni,
                                                    kernel_regularizer = WRegul,
-                                                   bias_regularizer   = bRegul,
+                                                   #bias_regularizer   = bRegul,
                                                    name               = LayerName))
             
             if (iLayer < NLayers-1):
@@ -456,38 +460,38 @@ class NN(tf.keras.Model):
                                                activation         = 'linear',
                                                use_bias           = True,
                                                kernel_initializer = WIni,
-                                               bias_initializer   = bIni,
+                                               #bias_initializer   = bIni,
                                                name               = LayerName)
             
             LayersVec.append( OutLayer )
 
 
-        elif (BlockName == 'Branch'):
+        # elif (BlockName == 'Trunk'):
 
-            ### Final Layer
+        #     ### Final Layer
 
-            NNNs        = len(self.Layers)
-            NOutputsNN  = len(self.OutputVars)
-            if (NNNs > 1):
-                NOutputsNN = 1
+        #     NNNs        = len(self.Layers)
+        #     NOutputsNN  = len(self.OutputVars)
+        #     if (NNNs > 1):
+        #         NOutputsNN = 1
      
-            LayerName      = 'FinalScaling_Branch_' + VarName + '_' + str(Idx+1)
-            if (self.NN_Transfer_Model is not None):
-                x0     = self.NN_Transfer_Model.get_layer(LayerName).kernel.numpy()
-                b0     = self.NN_Transfer_Model.get_layer(LayerName).bias.numpy()
-                WIni   = tf.keras.initializers.RandomNormal(mean=x0, stddev=1.e-10)
-                bIni   = tf.keras.initializers.RandomNormal(mean=b0, stddev=1.e-10)
-            else:
-                WIni   = 'glorot_normal'
-                bIni   = 'zeros'
-            OutLayer   = tf.keras.layers.Dense(units              = NNLayers[-1],
-                                               activation         = 'linear',
-                                               use_bias           = True,
-                                               kernel_initializer = WIni,
-                                               bias_initializer   = bIni,
-                                               name               = LayerName)
+        #     LayerName      = 'FinalScaling_Trunk_' + VarName + '_' + str(Idx+1)
+        #     if (self.NN_Transfer_Model is not None):
+        #         x0     = self.NN_Transfer_Model.get_layer(LayerName).kernel.numpy()
+        #         b0     = self.NN_Transfer_Model.get_layer(LayerName).bias.numpy()
+        #         WIni   = tf.keras.initializers.RandomNormal(mean=x0, stddev=1.e-10)
+        #         bIni   = tf.keras.initializers.RandomNormal(mean=b0, stddev=1.e-10)
+        #     else:
+        #         WIni   = 'glorot_normal'
+        #         bIni   = 'zeros'
+        #     OutLayer   = tf.keras.layers.Dense(units              = NNLayers[-1],
+        #                                        activation         = 'linear',
+        #                                        use_bias           = True,
+        #                                        kernel_initializer = WIni,
+        #                                        bias_initializer   = bIni,
+        #                                        name               = LayerName)
             
-            LayersVec.append( OutLayer )
+        #     LayersVec.append( OutLayer )
 
 
         if ((BlockName == 'Branch') and (self.BranchSoftmaxFlg)):

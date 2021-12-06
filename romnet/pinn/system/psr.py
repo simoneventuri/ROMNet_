@@ -69,13 +69,10 @@ class PSR(System):
 
 
     #===========================================================================
-    def f(self, t, y_masked, rest):
-        n_points               = y_masked.shape[0]
+    def f_orig(self, t, y_orig, rest):
+        n_points               = y_orig.shape[0]
 
-        y_orig                 = np.zeros((n_points,self.n_species+1))
-        y_orig[:,self.to_orig] = y_masked
         mass                   = np.sum(y_orig[:,1:], axis=1)
-
         dy_orig_dt             = np.zeros_like(y_orig)
         for i_point in range(n_points):
             mass_i = mass[i_point]
@@ -92,7 +89,68 @@ class PSR(System):
             dy_orig_dt[i_point,0]  = (mass_i*self.h_in - H_i) / rest_i
             dy_orig_dt[i_point,1:] = wdot * self.gas.molecular_weights * self.v + (self.y_in - Y_i) * mdot
    
-        dy_masked_dt           = dy_orig_dt[:,self.to_orig]
+        return dy_orig_dt
+
+    #===========================================================================
+
+
+
+    #===========================================================================
+    def f_temp(self, t, y_masked, rest):
+        n_points               = y_masked.shape[0]
+
+        y_orig                 = np.zeros((n_points,self.n_species+1))
+        y_orig[:,self.to_orig] = y_masked
+        mass                   = np.sum(y_orig[:,1:], axis=1)
+        dy_orig_dt             = np.zeros_like(y_orig)
+        for i_point in range(n_points):
+            mass_i = mass[i_point]
+            H_i    = y_orig[i_point,0]
+            Y_i    = y_orig[i_point,1:]
+            rest_i = 10.**rest[i_point,0]
+
+            self.gas.HPY           = H_i/mass_i, self.P, Y_i/mass_i
+  
+            rho                    = self.gas.density
+            wdot                   = self.gas.net_production_rates
+            mdot                   = self.density_times_v/rest_i
+  
+            dy_orig_dt[i_point,0]  = (mass_i*self.h_in - H_i) / rest_i
+            dy_orig_dt[i_point,1:] = wdot * self.gas.molecular_weights * self.v + (self.y_in - Y_i) * mdot
+   
+            dy_masked_dt           = dy_orig_dt[:,self.to_orig]
+
+        return dy_masked_dt
+
+    #===========================================================================
+
+
+
+    #===========================================================================
+    def f(self, t, y_masked, rest):
+        n_points               = y_masked.shape[0]
+
+        y_orig                 = np.zeros((n_points,self.n_species+1))
+
+        y_orig[:,self.to_orig] = y_masked * self.D[0,:] + self.C[0,:]
+        mass                   = np.sum(y_orig[:,1:], axis=1)
+        dy_orig_dt             = np.zeros_like(y_orig)
+        for i_point in range(n_points):
+            mass_i = mass[i_point]
+            H_i    = y_orig[i_point,0]
+            Y_i    = y_orig[i_point,1:]
+            rest_i = 10.**rest[i_point,0]
+
+            self.gas.HPY           = H_i/mass_i, self.P, Y_i/mass_i
+  
+            rho                    = self.gas.density
+            wdot                   = self.gas.net_production_rates
+            mdot                   = self.density_times_v/rest_i
+  
+            dy_orig_dt[i_point,0]  = (mass_i*self.h_in - H_i) / rest_i
+            dy_orig_dt[i_point,1:] = wdot * self.gas.molecular_weights * self.v + (self.y_in - Y_i) * mdot
+   
+        dy_masked_dt           = dy_orig_dt[:,self.to_orig] / self.D[0,:]
 
         return dy_masked_dt
 
@@ -102,6 +160,7 @@ class PSR(System):
 
     #===========================================================================
     def f_pc(self, t, y_pc, rest):
+        y_pc                   = y_pc
         n_points               = y_pc.shape[0]
 
         y_masked               = np.matmul(y_pc, self.A) * self.D + self.C
@@ -156,7 +215,13 @@ class PSR(System):
 
         y, dy_dt = grads
 
-        dy_ct_dt = self.f_call(t, y.numpy(), rest.numpy())
+        if (self.ynorm_flg):
+            y = y * self.y_range + self.y_min
+
+        dy_ct_dt = self.f_call(t, y.numpy(), rest.numpy()) #* (np.exp(t[0].numpy())-1.e-15)
+
+        if (self.ynorm_flg):
+            dy_ct_dt /= self.y_range
 
         return dy_dt - dy_ct_dt
 
@@ -241,7 +306,7 @@ class PSR(System):
     def fROM_anti(self):
 
         def fROM_anti_PCA(y_pc):
-            y_masked = tf.matmul(y_pc, self.A) * self.D + self.C
+            y_masked = tf.matmul(y_pc, self.A) #* self.D + self.C
             return y_masked
 
         if (self.ROM_pred_flg):

@@ -41,6 +41,8 @@ class FNN(NN):
 
         self.attention_mask    = None
 
+        self.ynorm_flg         = False
+
         self.TransFun          = InputData.TransFun
 
 

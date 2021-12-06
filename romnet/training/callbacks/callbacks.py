@@ -27,6 +27,15 @@ def get_callback(model, callbacks):
             data_generator = model.data.train
         else:
             data_generator = None
+
+        try:
+            if (args['shape_1'] is None) or (args['shape_1'] == '1'):
+                args['shape_1'] = 1
+            elif (args['shape_1'] == 'all'):
+                args['shape_1'] = model.NOutputVars
+        except:
+            args['shape_1'] = 1
+
         args.update( { 'data_generator': data_generator, 'log_dir': model.TBCheckpointFldr, 'n_train_tot': model.data.n_train_tot, 'save_dir': model.PathToRunFld  } )
         
         Name = args.pop('name')

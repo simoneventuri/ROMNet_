@@ -17,9 +17,10 @@ class BlackBox(Data):
         self.Type                = InputData.DataType
 
         self.PathToDataFld       = InputData.PathToDataFld
+        self.PathToLoadFld       = InputData.PathToLoadFld
         self.InputFiles          = InputData.InputFiles
         self.OutputFiles         = InputData.OutputFiles
-        
+
         self.valid_perc          = InputData.ValidPerc
         self.test_perc           = InputData.TestPerc
 
@@ -29,8 +30,12 @@ class BlackBox(Data):
             self.TrunkVars       = InputData.TrunkVars
         else:
             self.InputVars       = InputData.InputVars
-        self.OutputVars          = InputData.OutputVars
 
+        try:    
+            self.OutputVars      = system.OutputVars
+        except:    
+            self.OutputVars      = InputData.OutputVars
+        self.NOutputVars         = len(self.OutputVars)
     
         self.NData               = 0
         self.xtrain, self.ytrain = None, None
@@ -40,6 +45,11 @@ class BlackBox(Data):
             self.TransFun        = InputData.TransFun
         except:
             self.TransFun        = None
+
+        try:
+            self.ynorm_flg     = InputData.NormalizeOutput
+        except:
+            self.ynorm_flg     = False
 
         self.system              = system
         self.other_idxs          = None
@@ -134,9 +144,14 @@ class BlackBox(Data):
                 if (data_id != 'res'):
                     self.ynorm = self.ynorm.append(yall, ignore_index=True)
             FirstFlg = False
-            self.transform_normalization_data()
-            self.compute_statistics()         
+        self.transform_normalization_data()
+        self.compute_input_statistics()      
+        self.compute_output_statistics()      
 
+        if (self.ynorm_flg):
+            if (self.PathToLoadFld):
+                self.read_output_statistics(self.PathToLoadFld)      
+            train_data, valid_data = self.normalize_output_data([train_data, valid_data])
 
         print("[ROMNet]:   Train      Data: ", self.train)
         print("[ROMNet]:   Validation Data: ", self.valid)

@@ -25,6 +25,7 @@ class PDE(Data):
         self.Type                = InputData.DataType
 
         self.PathToDataFld       = InputData.PathToDataFld
+        self.PathToLoadFld       = InputData.PathToLoadFld
 
         self.SurrogateType       = InputData.SurrogateType
         if (self.SurrogateType == 'DeepONet'):
@@ -33,11 +34,13 @@ class PDE(Data):
             self.InputVars       = self.BranchVars + self.TrunkVars
         else:
             self.InputVars       = InputData.InputVars
+
         try:    
             self.OutputVars      = system.OutputVars
         except:    
             self.OutputVars      = InputData.OutputVars
-    
+        self.NOutputVars         = len(self.OutputVars)
+
         self.NData               = 0
         self.xtrain, self.ytrain = None, None
         self.xtest,  self.ytest  = None, None
@@ -46,6 +49,11 @@ class PDE(Data):
             self.TransFun        = InputData.TransFun
         except:
             self.TransFun        = None
+
+        try:
+            self.ynorm_flg     = InputData.NormalizeOutput
+        except:
+            self.ynorm_flg     = False
 
         self.system              = system
         self.other_idxs          = system.other_idxs
@@ -449,7 +457,13 @@ class PDE(Data):
 
         self.xnorm, self.ynorm = get_norm([train_data, valid_data])
         self.transform_normalization_data()
-        self.compute_statistics()      
+        self.compute_input_statistics()      
+        self.compute_output_statistics()      
+
+        if (self.ynorm_flg):
+            if (self.PathToLoadFld):
+                self.read_output_statistics(self.PathToLoadFld)      
+            train_data, valid_data = self.normalize_output_data([train_data, valid_data])
 
 
         self.n_train_tot = {}
@@ -528,8 +542,8 @@ class PDE(Data):
     def res_fn(self, net):
         '''Residual loss function'''
 
-        self.NVarsx      = net.NVarsx
-        self.NVarsy      = net.NVarsy
+        self.NVarsx    = net.NVarsx
+        self.NVarsy    = net.NVarsy
 
         def residual(inputs, training=True):
 
