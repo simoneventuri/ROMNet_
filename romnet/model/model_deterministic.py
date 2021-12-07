@@ -69,8 +69,7 @@ class Model_Deterministic(Model):
             #-------------------------------------------------------------------
             ### Dealing With Paths
 
-            InputData.PathToRunFld += '/' + self.SurrogateType + '/' +         \
-                                                         self.ProbApproach + '/'
+            InputData.PathToRunFld += '/' + self.SurrogateType + '/' + self.ProbApproach + '/'
             path = Path(InputData.PathToRunFld)
             path.mkdir(parents=True, exist_ok=True)
 
@@ -272,6 +271,8 @@ class Model_Deterministic(Model):
             self.data.system.y_min     = self.y_min
             self.data.system.y_max     = self.y_max
             self.data.system.y_range   = self.y_range
+        else:
+            self.data.system.ynorm_flg = False
         #-----------------------------------------------------------------------
 
 
@@ -348,7 +349,7 @@ class Model_Deterministic(Model):
         self.loss_history = LossHistory()
     
         self.NOutputVars  = self.data.NOutputVars
-        CallBacksList     = callbacks.get_callback(self, InputData.Callbacks)
+        CallBacksList     = callbacks.get_callback(self, InputData)
 
         if (InputData.DataType == 'PDE'):
             x        = self.data.train

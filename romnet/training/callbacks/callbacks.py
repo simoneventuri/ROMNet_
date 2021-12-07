@@ -16,10 +16,10 @@ from . import base
 
 
 #=======================================================================================================================================
-def get_callback(model, callbacks):
+def get_callback(model, InputData):
 
     #=======================================================================================================================================
-    def _get_weighted_loss(model, args):
+    def _get_weighted_loss(model, pde_loss_weights, args):
         # Add loss weights to the network class model.net.add_loss_weights(model.loss_weights)
         # Manipulate arguments for `weighted_loss` callback
 
@@ -36,7 +36,7 @@ def get_callback(model, callbacks):
         except:
             args['shape_1'] = 1
 
-        args.update( { 'data_generator': data_generator, 'log_dir': model.TBCheckpointFldr, 'n_train_tot': model.data.n_train_tot, 'save_dir': model.PathToRunFld  } )
+        args.update( { 'data_generator': data_generator, 'log_dir': model.TBCheckpointFldr, 'n_train_tot': model.data.n_train_tot, 'save_dir': model.PathToRunFld, 'pde_loss_weights': pde_loss_weights  } )
         
         Name = args.pop('name')
 
@@ -74,7 +74,7 @@ def get_callback(model, callbacks):
 
 
         elif Name == "weighted_loss":
-            return _get_weighted_loss(model, args)
+            return _get_weighted_loss(model, InputData.LossWeights, args)
 
         elif Name == "lr_scheduler":
             return _get_lr_scheduler(args)
@@ -102,10 +102,10 @@ def get_callback(model, callbacks):
 
         #=======================================================================================================================================
 
-    callback_list = [ _get_single_callback(model, Name, args) for Name, args in callbacks.items() if args is not None ]
+    callback_list = [ _get_single_callback(model, Name, args) for Name, args in InputData.Callbacks.items() if args is not None ]
 
-    if "weighted_loss" not in callbacks:
-        callback_list.append( _get_single_callback(model, "weighted_loss", {'name': 'ConstantWeightsAdapter', 'data_generator': None}) )
+    if "weighted_loss" not in InputData.Callbacks:
+        callback_list.append( _get_single_callback(model, "weighted_loss", {'name': 'ConstantWeightsAdapter', 'data_generator': None, 'pde_loss_weights': InputData.LossWeights}) )
     
     print('callback_list = ', callback_list)
 

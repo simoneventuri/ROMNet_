@@ -27,6 +27,7 @@ class ConstantWeightsAdapter(tf.keras.callbacks.Callback):
     ):
         super(ConstantWeightsAdapter, self).__init__()
 
+        print('pde_loss_weights = ', pde_loss_weights)
         self.name             = None
         self.data_generator   = data_generator
         self.pde_loss_weights = pde_loss_weights
@@ -45,7 +46,7 @@ class ConstantWeightsAdapter(tf.keras.callbacks.Callback):
             _pde_loss_weights = dict( zip(self.model.data_ids, [1.]*len(self.model.data_ids)) )
         elif isinstance(self.pde_loss_weights, (list,tuple)):
             _pde_loss_weights = dict( zip(self.model.data_ids, self.pde_loss_weights) )
-        elif isinstance(pde_loss_weights, dict):
+        elif isinstance(self.pde_loss_weights, dict):
             _pde_loss_weights = self.pde_loss_weights
         else:
             utils.raise_value_err("`pde_loss_weights` passed into `{}` "

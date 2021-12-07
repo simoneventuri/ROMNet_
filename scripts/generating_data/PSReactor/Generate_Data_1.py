@@ -16,14 +16,14 @@ from scipy.integrate import solve_ivp
 ##########################################################################################
 ### Input Data
 
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/PSR_10Cases/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/PSR_100Cases/'
 FigDir             = OutputDir + '/fig/'
 
 MixtureFile        = 'gri30.yaml'
-NRests             = 10
-RestVec            = np.logspace(np.log10(1.e-5), np.log10(1.01e-5), NRests) # [2.e-5]
+NRests             = 100
+RestVec            = np.logspace(np.log10(1.e-5), np.log10(1.e-4), NRests) # [2.e-5]
 #RestVec            = np.concatenate([np.linspace(1.e-6, 1.e-5, 20), np.linspace(2.e-5, 1.e-4, 19)])# [2.e-5]
-NPerRest           = 3000
+NPerRest           = 1000
 
 tStratch           = 1.
 Nt                 = NPerRest*2
@@ -185,7 +185,7 @@ for Rest in RestVec:
 
 
     ### Initialize Integration           
-    dt0        = 1.e-11
+    dt0        = 1.e-10
     tMax       = Rest*1.e+3
     tout       = [0.]
     tout       = np.concatenate((np.array(tout), np.logspace(np.log10(dt0), np.log10(tMax), Nt-1)), axis=0)

@@ -15,10 +15,10 @@ from PCAfold import PCA as PCAA
 ##########################################################################################
 ### Input Data
 ###
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/PSR_10Cases/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/PSR_100Cases/'
 FigDir             = OutputDir + '/fig/'
 
-NRests             = 10
+NRests             = 100
 iSimVec            = range(NRests)
 
 NVarsRed           = 3

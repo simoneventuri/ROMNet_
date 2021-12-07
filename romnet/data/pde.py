@@ -203,6 +203,8 @@ class PDE(Data):
         def get_norm(data):
 
             FirstFlg = True
+            xnorm    = None
+            ynorm    = None
             for i in range(2):
                 for data_id in data[i]:
                     if data[i][data_id] is None:

@@ -78,7 +78,7 @@ class inputdata(object):
         # self.Losses              = {'pts': {'name': 'MSE', 'axis': 0}} # Loss Functions
         self.LossWeights         = {'ics': 1.0, 'res': 1.}     
         self.Metrics             = None                                                                   # List of Metric Functions
-        self.LR                  = 5.e-3                                                                  # Initial Learning Rate
+        self.LR                  = 5.e-4                                                                  # Initial Learning Rate
         self.LRDecay             = ["exponential", 5000, 0.98]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
@@ -105,17 +105,17 @@ class inputdata(object):
                 'save_freq':         'epoch', 
                 'options':           None
             },
-            'tensorboard': {
-                'histogram_freq':         0,
-                'write_graph':            True,
-                'write_grads':            True,
-                'write_images':           True,
-                'profile_batch':          0,
-                'embeddings_freq':        0, 
-                'embeddings_layer_names': None, 
-                'embeddings_metadata':    None, 
-                'embeddings_data':        None
-            },
+            # 'tensorboard': {
+            #     'histogram_freq':         0,
+            #     'write_graph':            True,
+            #     'write_grads':            True,
+            #     'write_images':           True,
+            #     'profile_batch':          0,
+            #     'embeddings_freq':        0, 
+            #     'embeddings_layer_names': None, 
+            #     'embeddings_metadata':    None, 
+            #     'embeddings_data':        None
+            # },
             'lr_tracker': {
                 'verbose': 1
             },
