@@ -20,14 +20,16 @@ class Data(object):
                 for ivar, var in enumerate(self.InputVars):
                     if var in vars_list:
                         if (fun == 'log10'):
-                            #self.xnorm[var] = np.log10(self.xnorm[var] + 1.e-15)
-                            self.xnorm[var] = np.log(self.xnorm[var] + 1.e-15)
+                            self.xnorm[var] = np.log10(self.xnorm[var])
+                        elif (fun == 'log'):
+                            self.xnorm[var] = np.log(self.xnorm[var])
 
                 for ivar, var in enumerate(self.OutputVars):
                     if var in vars_list:
                         if (fun == 'log10'):
-                            #self.ynorm[var] = np.log10(self.xnorm[var] + 1.e-15)
-                            self.ynorm[var] = np.log(self.xnorm[var] + 1.e-15)
+                            self.ynorm[var] = np.log10(self.ynorm[var])
+                        elif (fun == 'log'):
+                            self.ynorm[var] = np.log(self.ynorm[var])
                     
     #===========================================================================
 

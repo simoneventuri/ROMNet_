@@ -32,13 +32,16 @@ class TransLayer(tf.keras.layers.Layer):
     def call(self, inputs):
 
         inputs_unpack = tf.split(inputs, self.NVars, axis=1)
+        
         if (self.f == 'log10'):
             for indx in self.indxs:
-                #inputs_unpack[indx] = tf.experimental.numpy.log10(inputs_unpack[indx] + 1.e-15)
-                inputs_unpack[indx] = tf.math.log(inputs_unpack[indx] + 1.e-15)
-        inputs_mod    = tf.concat(inputs_unpack, axis=1)
-        return inputs_mod
-
+                inputs_unpack[indx] = tf.experimental.numpy.log10(inputs_unpack[indx])
+        elif (self.f == 'log'):
+            for indx in self.indxs:
+                inputs_unpack[indx] = tf.math.log(inputs_unpack[indx])
+        
+        return tf.concat(inputs_unpack, axis=1)
+        
 #=======================================================================================================================================
 
 

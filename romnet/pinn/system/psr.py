@@ -218,16 +218,16 @@ class PSR(System):
         if (self.ynorm_flg):
             y = y * self.y_range + self.y_min
 
-        with open('/Users/sventuri/Desktop/DAJE/Input.csv', "ab") as f:
-            np.savetxt(f, np.concatenate([t[0].numpy(), y.numpy()], axis=1), delimiter=',')
+        # with open('/Users/sventuri/Desktop/DAJE/Input.csv', "ab") as f:
+        #     np.savetxt(f, np.concatenate([t[0].numpy(), y.numpy()], axis=1), delimiter=',')
 
-        dy_ct_dt = self.f_call(t, y.numpy(), rest.numpy()) * np.exp(t[0].numpy())
+        dy_ct_dt = self.f_call(t, y.numpy(), rest.numpy()) #* np.exp(t[0].numpy())
 
         if (self.ynorm_flg):
-            dy_dt *= self.y_range
+            dy_ct_dt /= self.y_range
 
-        with open('/Users/sventuri/Desktop/DAJE/Output.csv', "ab") as f:
-            np.savetxt(f, np.concatenate([t[0].numpy(), dy_dt.numpy(), dy_ct_dt], axis=1), delimiter=',')
+        # with open('/Users/sventuri/Desktop/DAJE/Output.csv', "ab") as f:
+        #     np.savetxt(f, np.concatenate([t[0].numpy(), dy_dt.numpy(), dy_ct_dt], axis=1), delimiter=',')
 
         return dy_dt - dy_ct_dt
 

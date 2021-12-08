@@ -188,8 +188,9 @@ for Rest in RestVec:
     dt0        = 1.e-10
     tMax       = Rest*1.e+3
     tout       = [0.]
-    tout       = np.concatenate((np.array(tout), np.logspace(np.log10(dt0), np.log10(tMax), Nt-1)), axis=0)
-    states     = ct.SolutionArray(gas_, 1, extra={'t': [0.0]})
+    #tout       = np.concatenate((np.array(tout), np.logspace(np.log10(dt0), np.log10(tMax), Nt-1)), axis=0)
+    tout       = np.logspace(np.log10(dt0), np.log10(tMax), Nt-1)
+    states     = ct.SolutionArray(gas_, 1, extra={'t': tout[0]})
     SOLVER     = 'BDF'
 
 
@@ -206,9 +207,14 @@ for Rest in RestVec:
         mass     = np.sum(u[1:])
         gas_.HPY = u[0]/mass, P_, u[1:]/mass
         
-        if (t==0.):
-            Mat    = y0[np.newaxis,...]
-            Source = ProduceSource(0., y0)
+        if (it==0):
+
+            if (t==0.):
+                Mat    = y0[np.newaxis,...]
+                Source = ProduceSource(0., y0)
+            else:
+                Mat    = u[np.newaxis,...]
+                Source = ProduceSource(t, u)
 
             #JJ     = ReactorOde_Jacobian(t, y0)
             
@@ -262,6 +268,9 @@ for Rest in RestVec:
         
         iStart[iSim] = iEnd[iSim-1]
         iEnd[iSim]   = iEnd[iSim-1]+Ntt
+
+
+    print('DataTemp = ', DataTemp)
         
 
     ### Writing Results
