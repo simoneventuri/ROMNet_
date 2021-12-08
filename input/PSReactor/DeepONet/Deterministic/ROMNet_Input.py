@@ -29,7 +29,7 @@ class inputdata(object):
         self.WORKSPACE_PATH      = WORKSPACE_PATH                                                         # os.getenv('WORKSPACE_PATH')      
         self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
         self.PathToRunFld        = self.ROMNetFldr   + '/../PSR_100Cases/'                                 # Path To Training Folder
-        self.PathToLoadFld       = None#self.ROMNetFldr   + '/../PSR_10Cases/DeepONet/Deterministic/Run_1/'                            # Path To Pre-Trained Model Folder
+        self.PathToLoadFld       = self.ROMNetFldr   + '/../PSR_10Cases/DeepONet/Deterministic/Run_1/'                            # Path To Pre-Trained Model Folder
         self.ROMPred_Flg         = True
         self.PathToDataFld       = self.ROMNetFldr   + '/../Data/PSR_100Cases/'+str(self.NRODs)+'PC/'            # Path To Training Data Folder 
         # self.PathToDataFld       = self.ROMNetFldr   + '/../Data/PSR_100Cases/Orig/'                        # Path To Training Data Folder 
@@ -42,10 +42,10 @@ class inputdata(object):
         ### Data
         self.DataType            = 'PDE'                                                                    # Module to Be Used for Reading Data
         self.GenerateFlg         = False
-        # self.NTrain              = {'ics': 64, 'res': 128, 'pts': 128}                                                # No of Training Cases
+        self.NTrain              = {'ics': 64, 'res': 128, 'pts': 128}                                                # No of Training Cases
         # self.NTrain              = {'res': 128}                                                             # No of Training Cases
         # self.NTrain              = {'ics': 64, 'pts': 128}                                                             # No of Training Cases
-        self.NTrain              = {'pts': 64}                                                             # No of Training Cases
+        # self.NTrain              = {'pts': 64}                                                             # No of Training Cases
         self.ValidPerc           = 20.0                                                                     # Percentage of Training Data to Be Used for Validation (e.g., = 20.0 => 20%)
         self.DataDist            = 'uniform'                                                                # Distribution for Sampling Independent Variables
         self.NTest               = 2                                                                        # No of Test Cases
@@ -81,17 +81,17 @@ class inputdata(object):
         self.NEpoch              = 100000                                                                   # Number of Epoches
         self.BatchSize           = 64                                                                     # Mini-Batch Size
         self.ValidBatchSize      = 64                                                                   # Validation Mini-Batch Size
-        self.RunEagerlyFlg       = False
-        # self.Losses              = {'ics': {'name': 'mse', 'axis': 0}, 'res': {'name': 'mse', 'axis': 0}, 'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
-        # self.LossWeights         = {'ics': 1.e0, 'res': 1.e-7, 'pts': 1.e0}     
+        self.RunEagerlyFlg       = True
+        self.Losses              = {'ics': {'name': 'mse', 'axis': 0}, 'res': {'name': 'mse', 'axis': 0}, 'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
+        self.LossWeights         = {'ics': 1.e0, 'res': 1.e-7, 'pts': 1.e0}     
         # self.Losses              = {'res': {'name': 'mse', 'axis': 0}}                                    # Loss Functions
         # self.LossWeights         = {'res': 1.} 
         # self.Losses              = {'ics': {'name': 'mse', 'axis': 0}, 'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
         # self.LossWeights         = {'ics': 1., 'pts': 10.}   
-        self.Losses              = {'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
-        self.LossWeights         = {'pts': 1.}     
+        # self.Losses              = {'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
+        # self.LossWeights         = {'pts': 1.}     
         self.Metrics             = None                   
-        self.LR                  = 1.e-3                                                          # Initial Learning Rate
+        self.LR                  = 1.e-5                                                          # Initial Learning Rate
         self.LRDecay             = ["exponential", 5000, 0.98]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
