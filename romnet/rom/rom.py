@@ -68,3 +68,56 @@ class AntiPCALayer(tf.keras.layers.Layer):
         return tf.matmul(x, self.A ) * self.D + self.C
 
 #=======================================================================================================================================
+
+
+
+#=======================================================================================================================================
+class AutoEncoderLayer_PSR(tf.keras.layers.Layer):
+
+    def __init__(self, HH_min, HH_max, NVars, trainable_flg=False, LayerName='AutoEncoderLayer_PSR'):
+        super(AutoEncoderLayer_PSR, self).__init__(name=LayerName)
+        self.HH_min        = HH_min
+        self.HH_max        = HH_max
+        self.HH_range      = HH_max - HH_min
+        self.NVars         = NVars
+        self.trainable_flg = trainable_flg
+
+    def call(self, inputs):
+
+        inputs_unpack    = tf.split(inputs, [1,self.NVars-1], axis=1)
+
+        inputs_unpack[0] = (inputs_unpack[0] - self.HH_min) / self.HH_range
+
+        #inputs_unpack[1] = tf.experimental.numpy.log10(inputs_unpack[1])
+        inputs_unpack[1] = tf.math.log(inputs_unpack[1])
+        
+        return tf.concat(inputs_unpack, axis=1)
+
+#=======================================================================================================================================
+
+
+
+#=======================================================================================================================================
+class AntiAutoEncoderLayer_PSR(tf.keras.layers.Layer):
+
+    def __init__(self, HH_min, HH_max, NVars, trainable_flg=False, LayerName='AntiAutoEncoderLayer_PSR'):
+        super(AntiAutoEncoderLayer_PSR, self).__init__(name=LayerName)
+        self.HH_min        = HH_min
+        self.HH_max        = HH_max
+        self.HH_range      = HH_max - HH_min
+        self.NVars         = NVars
+        self.trainable_flg = trainable_flg
+
+    def call(self, inputs):
+
+        inputs_unpack    = tf.split(inputs, [1,self.NVars-1], axis=1)
+
+        inputs_unpack[0] = inputs_unpack[0] * self.HH_range + self.HH_min
+
+        #inputs_unpack[1] = 10**(inputs_unpack[1])
+        inputs_unpack[1] = tf.math.exp(inputs_unpack[1])
+        
+        return tf.concat(inputs_unpack, axis=1)
+
+#=======================================================================================================================================
+

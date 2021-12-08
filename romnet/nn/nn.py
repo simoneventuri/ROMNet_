@@ -349,15 +349,12 @@ class NN(tf.keras.Model):
 
 
     #=======================================================================================================================================
-    def fnn_block(self, xnorm, BlockName, NNName, Idx, InputVars):
+    def fnn_block(self, xnorm, BlockName, NNName, Idx, InputVars, LayersVec=[]):
 
         if (BlockName == ''):
             VarName = '_' + self.OutputVars[Idx]
         else:
             VarName = ''
-
-        LayersVec = []
-
 
         ### Transform Layer
 

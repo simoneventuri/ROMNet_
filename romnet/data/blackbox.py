@@ -58,6 +58,7 @@ class BlackBox(Data):
         self.order               = None
         self.get_residual        = None
         self.grad_fn             = None
+        self.fROM_anti           = None
     
     #===========================================================================
 
@@ -75,6 +76,16 @@ class BlackBox(Data):
         self.extra               = {}
         FirstFlg                 = True
         for data_id, InputFile in self.InputFiles.items():
+
+            if isinstance(self.InputVars, (list,tuple)):
+                InputVars = self.InputVars
+            else:
+                InputVars = list(pd.read_csv(self.PathToDataFld+'/train/'+data_id+'/'+self.InputVars[data_id], header=None).to_numpy()[0,:])
+
+            if isinstance(self.OutputVars, (list,tuple)):
+                OutputVars = self.OutputVars
+            else:
+                OutputVars = list(pd.read_csv(self.PathToDataFld+'/train/'+data_id+'/'+self.OutputVars[data_id], header=None).to_numpy()[0,:])
 
             Data = pd.read_csv(self.PathToDataFld+'/train/'+data_id+'/'+InputFile, header=0)
 
@@ -98,10 +109,7 @@ class BlackBox(Data):
                 #                                           self.TrunkScale(x+1.e-15))
 
             else:
-                xall = Data[self.InputVars]
-
-
-           
+                xall = Data[InputVars]           
 
             for iCol in range(xall.shape[1]):
                 array_sum = np.sum(xall.to_numpy()[:,iCol])
@@ -110,7 +118,7 @@ class BlackBox(Data):
 
 
             Data = pd.read_csv(self.PathToDataFld+'/train/'+data_id+'/'+self.OutputFiles[data_id], header=0)
-            yall = Data[self.OutputVars]
+            yall = Data[OutputVars]
             for iCol in range(yall.shape[1]):
                 array_sum = np.sum(yall.to_numpy()[:,iCol])
                 if (np.isnan(array_sum)):
@@ -144,6 +152,13 @@ class BlackBox(Data):
                 if (data_id != 'res'):
                     self.ynorm = self.ynorm.append(yall, ignore_index=True)
             FirstFlg = False
+        
+            self.train[data_id] = [xtrain, ytrain]
+            self.valid[data_id] = [xvalid, yvalid]
+            self.test[data_id]  = [xtest,   ytest]
+            self.all[data_id]   = [xall,     yall]
+            self.extra[data_id] = []
+
         self.transform_normalization_data()
         self.compute_input_statistics()      
         self.compute_output_statistics()      
@@ -151,7 +166,9 @@ class BlackBox(Data):
         if (self.ynorm_flg):
             if (self.PathToLoadFld):
                 self.read_output_statistics(self.PathToLoadFld)      
-            train_data, valid_data = self.normalize_output_data([train_data, valid_data])
+            self.train, self.valid = self.normalize_output_data([self.train, self.valid])
+
+        self.train, self.valid = self.system.preprocess_data([self.train, self.valid], self.xstat)
 
         print("[ROMNet]:   Train      Data: ", self.train)
         print("[ROMNet]:   Validation Data: ", self.valid)
@@ -160,7 +177,7 @@ class BlackBox(Data):
 
 
 
- #===========================================================================
+    #===========================================================================
     def get_num_pts(self, data_type='training', verbose=1):
 
         def print_fn(dset, data_type, verbose):

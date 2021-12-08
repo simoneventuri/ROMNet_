@@ -17,7 +17,10 @@ class PSR(System):
     ):
         PathToDataFld      = InputData.PathToDataFld
         ROMNetFldr         = InputData.ROMNetFldr
-        self.ROM_pred_flg  = InputData.ROMPred_Flg
+        try:
+            self.ROM_pred_flg = InputData.ROMPred_Flg
+        except:
+            self.ROM_pred_flg = None
         self.NRODs         = InputData.NRODs
 
         self.mixture_file  = 'gri30.yaml'
@@ -320,3 +323,89 @@ class PSR(System):
         else:
             return fROM_anti_PCA 
     #===========================================================================
+
+
+
+    #===========================================================================
+    def preprocess_data(self, all_data, xstat):
+
+        for i, now_data in enumerate(all_data):
+            for data_id, xyi_data in now_data.items():
+
+                # all_data[i][data_id][0]['HH'] = (all_data[i][data_id][0]['HH'] - xstat['min'].to_numpy()[0]) / (xstat['max'].to_numpy()[0] - xstat['min'].to_numpy()[0])
+                # all_data[i][data_id][1]['HH'] = (all_data[i][data_id][1]['HH'] - xstat['min'].to_numpy()[0]) / (xstat['max'].to_numpy()[0] - xstat['min'].to_numpy()[0])
+
+                # for var in list(all_data[i][data_id][0].columns)[1:]:
+                #     all_data[i][data_id][0][var] = np.log10(all_data[i][data_id][0][var])          
+                #     all_data[i][data_id][1][var] = np.log10(all_data[i][data_id][1][var])   
+                
+                all_data[i][data_id][0] = (all_data[i][data_id][0] - xstat['mean'].to_numpy()) / np.sqrt(xstat['std'].to_numpy())
+                all_data[i][data_id][1] = (all_data[i][data_id][1] - xstat['mean'].to_numpy()) / np.sqrt(xstat['std'].to_numpy())
+
+        return all_data       
+
+    #===========================================================================
+
+
+
+#=======================================================================================================================================
+class AutoEncoderLayer(tf.keras.layers.Layer):
+
+    def __init__(self, PathToDataFld, NVars, trainable_flg=False, name='AutoEncoderLayer'):
+        super(AutoEncoderLayer, self).__init__(name=name, trainable=False)
+
+        self.PathToDataFld = PathToDataFld
+        Data               = pd.read_csv(self.PathToDataFld+'/train/ext/Output_MinMax.csv')
+        var_min            = Data.to_numpy()[:,0]
+        var_max            = Data.to_numpy()[:,1]
+
+        self.HH_min        = var_min[0]
+        self.HH_max        = var_max[0]
+        self.HH_range      = self.HH_max - self.HH_min
+        self.NVars         = NVars
+        self.trainable_flg = trainable_flg
+
+    def call(self, inputs):
+
+        inputs_unpack    = tf.split(inputs, [1,self.NVars-1], axis=1)
+
+        inputs_unpack[0] = (inputs_unpack[0] - self.HH_min) / self.HH_range
+
+        #inputs_unpack[1] = tf.experimental.numpy.log10(inputs_unpack[1])
+        inputs_unpack[1] = tf.math.log(inputs_unpack[1])
+        
+        return tf.concat(inputs_unpack, axis=1)
+
+#=======================================================================================================================================
+
+
+
+#=======================================================================================================================================
+class AntiAutoEncoderLayer(tf.keras.layers.Layer):
+
+    def __init__(self, PathToDataFld, NVars, trainable_flg=False, name='AntiAutoEncoderLayer'):
+        super(AntiAutoEncoderLayer, self).__init__(name=name, trainable=False)
+
+        self.PathToDataFld = PathToDataFld
+        Data               = pd.read_csv(self.PathToDataFld+'/train/ext/Output_MinMax.csv')
+        var_min            = Data.to_numpy()[:,0]
+        var_max            = Data.to_numpy()[:,1]
+
+        self.HH_min        = var_min[0]
+        self.HH_max        = var_max[0]
+        self.HH_range      = self.HH_max - self.HH_min
+        self.NVars         = NVars
+        self.trainable_flg = trainable_flg
+
+    def call(self, inputs):
+
+        inputs_unpack    = tf.split(inputs, [1,self.NVars-1], axis=1)
+
+        inputs_unpack[0] = inputs_unpack[0] * self.HH_range + self.HH_min
+
+        #inputs_unpack[1] = 10**(inputs_unpack[1])
+        inputs_unpack[1] = tf.math.exp(inputs_unpack[1])
+        
+        return tf.concat(inputs_unpack, axis=1)
+
+#=======================================================================================================================================

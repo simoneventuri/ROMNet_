@@ -1,5 +1,6 @@
 import time
 import tensorflow                         as tf
+import pandas                             as pd
 
 from tensorflow.python.util.tf_export import keras_export
 import tensorflow.keras.callbacks         as CB
@@ -17,10 +18,11 @@ class BaseLogger(CB.Callback):
           All others will be averaged in `on_epoch_end`.
     """
 
-    def __init__(self, stateful_metrics=None):
+    def __init__(self, stateful_metrics=None, PathToRunFld=None):
         super(BaseLogger, self).__init__()
         self.stateful_metrics = set(stateful_metrics or [])
-
+        self.PathToRunFld     = PathToRunFld
+        self.first_time       = True
 
 
     def on_epoch_begin(self, epoch, logs=None):
@@ -54,7 +56,16 @@ class BaseLogger(CB.Callback):
 
 
     def on_epoch_end(self, epoch, logs=None):
-        
+
+        logss = {}
+        for key, val in logs.items():
+            logss[key] = [val]
+        if (self.first_time):
+            self.first_time = False
+            pd.DataFrame.from_dict(logss).to_csv(path_or_buf=self.PathToRunFld+'/Training/History.csv', index=False, mode='w', header=True)
+        else:
+            pd.DataFrame.from_dict(logss).to_csv(path_or_buf=self.PathToRunFld+'/Training/History.csv', index=False, mode='a', header=False)
+
         if logs is not None:
             for k in self.all_metrics:
                 if k in self.stateful_metrics:

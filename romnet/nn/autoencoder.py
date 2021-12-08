@@ -3,16 +3,17 @@ import tensorflow   as tf
 import pandas       as pd
 
 from .nn        import NN
+from ..pinn     import system as system_class
 
-class FNN(NN):
+class AutoEncoder(NN):
     """Fully-connected neural network.
     """
 
     #===================================================================================================================================
     def __init__(self, InputData, xnorm, NN_Transfer_Model):
-        super(FNN, self).__init__()
+        super(AutoEncoder, self).__init__()
 
-        self.Name              = 'FNN'
+        self.Name              = 'AutoEncoder'
 
         if isinstance(InputData.InputVars, (list,tuple)):
             self.InputVars  = InputData.InputVars
@@ -59,12 +60,13 @@ class FNN(NN):
             self.TransFun      = None
 
 
-        self.FNNLayersVecs = {}
-        for iFNN in range(self.NFNNs):
+        self.FNNLayers = []
 
-            ## FNN Block
-            self.FNNLayersVecs[iFNN] = self.fnn_block(self.xnorm, '', 'NN', iFNN, self.InputVars)
+        #self.FNNLayers.append( system_class.AutoEncoderLayer(InputData.PathToDataFld, self.NVarsx) )
+
+        self.FNNLayers = self.fnn_block(self.xnorm, '', 'NN', 0, self.InputVars, LayersVec=self.FNNLayers)
         
+        #self.FNNLayers.append( system_class.AntiAutoEncoderLayer(InputData.PathToDataFld, self.NVarsx) )
 
     #===================================================================================================================================
 
@@ -73,26 +75,12 @@ class FNN(NN):
     #===================================================================================================================================
     def call(self, inputs, training=False):
 
-        OutputVec = []
-        for iFNN in range(self.NFNNs):
-            y  = inputs
-    
-            for f in self.FNNLayersVecs[iFNN]:
-                y = f(y, training=training)
+        y  = inputs
 
-            OutputVec.append(y)
+        for f in self.FNNLayers:
+            y = f(y, training=training)
 
-        if (self.NFNNs > 1):
-            OutputConcat = tf.keras.layers.Concatenate(axis=1)(OutputVec)
-        else:
-            OutputConcat = OutputVec[0]
-
-        if (self.AntiPCA_flg):
-            OutputFinal = ROM.AntiPCALayer(A0=self.A_AntiPCA, C0=self.C_AntiPCA, D0=self.D_AntiPCA)(OutputConcat)
-        else:
-            OutputFinal = OutputConcat
-
-        return OutputFinal
+        return y
 
     #===================================================================================================================================
 
@@ -100,7 +88,7 @@ class FNN(NN):
 
     #===================================================================================================================================
     def get_graph(self):
-            input_  = tf.keras.Input(shape=[self.NVarsx,])
-            return tf.keras.Model(inputs=[input_], outputs=[self.call(input_)] )
+        input_  = tf.keras.Input(shape=[self.NVarsx,])
+        return tf.keras.Model(inputs=[input_], outputs=[self.call(input_)] )
 
     #===================================================================================================================================

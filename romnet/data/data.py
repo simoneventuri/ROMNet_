@@ -40,6 +40,22 @@ class Data(object):
         for i, now_data in enumerate(all_data):
             for data_id, xyi_data in now_data.items():
                 if (data_id != 'res'):
+                    x_data = xyi_data[0]
+
+                    all_data[i][data_id][0] = (x_data - self.xstat['min'].to_numpy()) / (self.xstat['max'].to_numpy() - self.xstat['min'].to_numpy())
+                    #all_data[i][data_id][1] = (y_data - self.system.C) / self.system.D
+        
+        return all_data
+
+    #===========================================================================
+
+
+    #===========================================================================
+    def normalize_output_data(self, all_data):
+
+        for i, now_data in enumerate(all_data):
+            for data_id, xyi_data in now_data.items():
+                if (data_id != 'res'):
                     y_data = xyi_data[1]
 
                     all_data[i][data_id][1] = (y_data - self.ystat['min'].to_numpy()) / (self.ystat['max'].to_numpy() - self.ystat['min'].to_numpy())

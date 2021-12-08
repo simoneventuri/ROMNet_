@@ -61,6 +61,7 @@ def get_callback(model, InputData):
     def _get_single_callback(model, Name, args):
 
         if   Name == "base":
+            args.update( { 'PathToRunFld': InputData.PathToRunFld  } )
             return base.BaseLogger(**args)
 
         elif Name == "early_stopping":
