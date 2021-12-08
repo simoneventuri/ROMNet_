@@ -57,6 +57,13 @@ class BaseLogger(CB.Callback):
 
     def on_epoch_end(self, epoch, logs=None):
 
+        if logs is not None:
+            for k in self.all_metrics:
+                if k in self.stateful_metrics:
+                    logs[k] = self.totals[k]
+                else:
+                    logs[k] = self.totals[k] / self.seen
+
         logss = {}
         for key, val in logs.items():
             logss[key] = [val]
@@ -65,12 +72,5 @@ class BaseLogger(CB.Callback):
             pd.DataFrame.from_dict(logss).to_csv(path_or_buf=self.PathToRunFld+'/Training/History.csv', index=False, mode='w', header=True)
         else:
             pd.DataFrame.from_dict(logss).to_csv(path_or_buf=self.PathToRunFld+'/Training/History.csv', index=False, mode='a', header=False)
-
-        if logs is not None:
-            for k in self.all_metrics:
-                if k in self.stateful_metrics:
-                    logs[k] = self.totals[k]
-                else:
-                    logs[k] = self.totals[k] / self.seen
 
 #=======================================================================================================================================

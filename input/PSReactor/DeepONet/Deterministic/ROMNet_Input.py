@@ -29,7 +29,7 @@ class inputdata(object):
         self.WORKSPACE_PATH      = WORKSPACE_PATH                                                         # os.getenv('WORKSPACE_PATH')      
         self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
         self.PathToRunFld        = self.ROMNetFldr   + '/../PSR_100Cases/'                                 # Path To Training Folder
-        self.PathToLoadFld       = self.ROMNetFldr   + '/../PSR_10Cases/DeepONet/Deterministic/Run_1/'                            # Path To Pre-Trained Model Folder
+        self.PathToLoadFld       = self.ROMNetFldr   + '/../PSR_100Cases/DeepONet/Deterministic/Run_1/'                            # Path To Pre-Trained Model Folder
         self.ROMPred_Flg         = True
         self.PathToDataFld       = self.ROMNetFldr   + '/../Data/PSR_100Cases/'+str(self.NRODs)+'PC/'            # Path To Training Data Folder 
         # self.PathToDataFld       = self.ROMNetFldr   + '/../Data/PSR_100Cases/Orig/'                        # Path To Training Data Folder 
