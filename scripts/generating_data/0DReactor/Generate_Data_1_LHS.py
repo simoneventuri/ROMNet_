@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import time
 
+import pyDOE
+
 import matplotlib.pyplot as plt
 WORKSPACE_PATH  = os.environ['WORKSPACE_PATH']
 plt.style.use(WORKSPACE_PATH+'/ROMNet/romnet/extra/postprocessing/presentation.mplstyle')
@@ -16,22 +18,21 @@ from scipy.integrate import solve_ivp
 ##########################################################################################
 ### Input Data
 
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_10Cases/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Adiabatic_100Cases/'
 FigDir             = OutputDir + '/fig/'
 
 MixtureFile        = 'gri30.yaml'
 
-P0                 = 10. * ct.one_atm
-EqRatio0           = 1.
+NICs               = 100
+P0Exts             = np.array([5. * ct.one_atm, 20. * ct.one_atm], dtype=np.float64)
+EqRatio0Exts       = np.array([0.5, 1.0], dtype=np.float64)
+T0Exts             = np.array([900, 1700], dtype=np.float64)
 
-NTs                = 10
-T0Vec              = np.linspace(900, 1700, NTs) # [2.e-5]
 NPerT0             = 1000
 
-tMinVec            = [5.e-3, 5.e-7]
 Integration        = ' '#'Canteras'
 #rtol               = 1.e-8
-atol               = 1.e-8
+atol               = 1.e-9
 SOLVER             = 'BDF'#'RK23'#'BDF'#'Radau'
 
 ##########################################################################################
@@ -118,19 +119,35 @@ def IdealGasReactor(t, T, Y):
 ##########################################################################################
 ### Generating Training Data
 
+
+MinVals = np.array([P0Exts[0], EqRatio0Exts[0], T0Exts[0]], dtype=np.float64)
+MaxVals = np.array([P0Exts[1], EqRatio0Exts[1], T0Exts[1]], dtype=np.float64)
+NDims   = 3
+
+ICs     = pyDOE.lhs(3, samples=100, criterion='center')
+
+for i in range(NDims):
+    ICs[:,i] = ICs[:,i] * (MaxVals[i] - MinVals[i]) + MinVals[i]
+
+
+
 ### Writing Initial Temperatures
-FileName = OutputDir+'/orig_data/T0s.csv'
-np.savetxt(FileName, T0Vec)
+FileName = OutputDir+'/orig_data/ICs.csv'
+Header   = 'P,EqRatio,T'
+np.savetxt(FileName, ICs, delimiter=',', header=Header, comments='')
 
 
 
 ### Iterating Over Residence Times
-DataMat  = None
-iStart   = np.zeros(len(T0Vec))
-iEnd     = np.zeros(len(T0Vec))
-iSim     = 0
-for T0 in T0Vec:
-    print('Temperature = ', T0, '; 1000/Temperature = ', 1000/T0)
+DataMat         = None
+iStart          = np.zeros(NICs)
+iEnd            = np.zeros(NICs)
+AutoIgnitionVec = np.zeros((NICs,1))
+for iIC in range(NICs):
+    P0       = ICs[iIC,0]
+    EqRatio0 = ICs[iIC,1]
+    T0       = ICs[iIC,2]
+    print('Pressure = ', P0, 'Pa; EqRatio0 = ', EqRatio0, '; Temperature = ', T0, 'K')
     
 
     ### Create Mixture
@@ -138,7 +155,7 @@ for T0 in T0Vec:
 
     ### Create Reactor
     gas.TP  = T0, P0
-    #gas.set_equivalence_ratio(EqRatio0, 'CH4:1.0', 'O2:0.21, N2:0.79')
+    # gas.set_equivalence_ratio(EqRatio0, 'CH4:1.0', 'O2:0.21, N2:0.79')
     gas.set_equivalence_ratio(EqRatio0, 'CH4:1.0', 'O2:1.0')
     r       = ct.IdealGasReactor(gas)
     sim     = ct.ReactorNet([r])
@@ -152,11 +169,11 @@ for T0 in T0Vec:
 
 
     ### Initialize Integration 
-#    tAuto    = 10**( (7.37601476*(1000/T0) - 8.44036162) - (P0/ct.one_atm-10)/10 )
+    # tAuto    = 10**( (7.37601476*(1000/T0) - 8.44036162) - (P0/ct.one_atm-10)/10 )
     tAuto    = 10**( (8.30140399*(1000/T0) -9.9625361) - (P0/ct.one_atm-10)/10 )
-    print('tAuto = ', tAuto)
+    ### print('tAuto = ', tAuto)
     tMin     = tAuto * 1.e-3
-    tMax     = tAuto * 1.e1
+    tMax     = tAuto * 5.e1
     dt0      = tMin
     tStratch = 1.01
     tVec     = [0.0]
@@ -199,10 +216,10 @@ for T0 in T0Vec:
             TT               = output.y[0,it]
             YY               = np.concatenate((np.maximum(output.y[1:,it],0.), [1.0-np.minimum(np.sum(output.y[1:,it]),1.)]), axis=0)
         
-        Vec              = np.concatenate(([TT],YY), axis=0)
+        Vec                  = np.concatenate(([TT],YY), axis=0)
 
-        TTdot, YYdot, HR = IdealGasReactor(t, TT, YY)
-        Vecdot           = np.concatenate(([TTdot],YYdot), axis=0)
+        TTdot, YYdot, HR     = IdealGasReactor(t, TT, YY)
+        Vecdot               = np.concatenate(([TTdot],YYdot), axis=0)
 
         if (it == 0):
             Mat              = np.array(Vec[np.newaxis,...])
@@ -214,8 +231,8 @@ for T0 in T0Vec:
         HRVec.append(HR)
         it+=1 
         
-    auto_ignition = tVecFinal[HRVec.index(max(HRVec))+it0]   
-    print('Auto Ignition Delay = ', auto_ignition)
+    AutoIgnitionVec[iIC,0]   = tVecFinal[HRVec.index(max(HRVec))+it0]   
+    ### print('Auto Ignition Delay = ', auto_ignition)
 
 
     ### Storing Results
@@ -226,10 +243,8 @@ for T0 in T0Vec:
     else:
         Mask = np.linspace(0,Nt-1,NPerT0, dtype=int)
         Ntt  = NPerT0
-    #print('Mask = ', Mask)
-    #print('Ntt  = ', Ntt)
 
-    if (iSim == 0):
+    if (iIC == 0):
         T0All        = np.ones(Ntt)*T0
         yTemp        = np.concatenate((tVecFinal[Mask,np.newaxis], Mat[Mask,:]), axis=1)
         yMat         = yTemp
@@ -237,8 +252,8 @@ for T0 in T0Vec:
         ySourceTemp  = np.concatenate((tVecFinal[Mask,np.newaxis], Source[Mask,:]), axis=1)
         SourceMat    = ySourceTemp
         
-        iStart[iSim] = 0
-        iEnd[iSim]   = Ntt
+        iStart[iIC]  = 0
+        iEnd[iIC]    = Ntt
     else:
         T0All        = np.concatenate((T0All, np.ones(Ntt)*T0), axis=0)
 
@@ -248,8 +263,8 @@ for T0 in T0Vec:
         ySourceTemp  = np.concatenate((tVecFinal[Mask,np.newaxis], Source[Mask,:]), axis=1)
         SourceMat    = np.concatenate((SourceMat, ySourceTemp), axis=0) 
         
-        iStart[iSim] = iEnd[iSim-1]
-        iEnd[iSim]   = iEnd[iSim-1]+Ntt
+        iStart[iIC]  = iEnd[iIC-1]
+        iEnd[iIC]    = iEnd[iIC-1]+Ntt
         
 
     ### Writing Results
@@ -258,7 +273,7 @@ for T0 in T0Vec:
     for iSpec in range(NSpec):
         Header += ','+gas.species_name(iSpec)
 
-    # FileName = OutputDir+'/orig_data/States.csv.'+str(iSim+1)
+    # FileName = OutputDir+'/orig_data/States.csv.'+str(iIC+1)
     # np.savetxt(FileName, DataTemp,       delimiter=',', header=Header, comments='')
 
 
@@ -267,35 +282,37 @@ for T0 in T0Vec:
     for iSpec in range(NSpec):
         Header += ','+gas.species_name(iSpec)
 
-    FileName = OutputDir+'/orig_data/y.csv.'+str(iSim+1)
+    FileName = OutputDir+'/orig_data/y.csv.'+str(iIC+1)
     np.savetxt(FileName, yTemp,       delimiter=',', header=Header, comments='')
 
-    FileName = OutputDir+'/orig_data/ySource.csv.'+str(iSim+1)
+    FileName = OutputDir+'/orig_data/ySource.csv.'+str(iIC+1)
     np.savetxt(FileName, ySourceTemp, delimiter=',', header=Header, comments='')
 
-    # FileName = OutputDir+'/orig_data/Jacobian.csv.'+str(iSim+1)
+    # FileName = OutputDir+'/orig_data/Jacobian.csv.'+str(iIC+1)
     # np.savetxt(FileName, JJTauMat,    delimiter=',')
 
-
-    ### Moving to New Scenario
-    iSim+=1
 
 
 FileName = OutputDir+'/orig_data/SimIdxs.csv'
 Header   = 'iStart,iEnd'
 np.savetxt(FileName, np.concatenate((iStart[...,np.newaxis], iEnd[...,np.newaxis]), axis=1), delimiter=',', header=Header, comments='')
 
+FileName = OutputDir+'/orig_data/tAutoIgnition.csv'
+Header   = 't'
+np.savetxt(FileName, AutoIgnitionVec, delimiter=',', header=Header, comments='')
+
+
 
 # # Plot the Results
 # iSimVec   = range(10)#[0,49,99]
 # SpecOIVec = ['O2','HCO','CO','H2O','OH','CH4']
 
-# for iSim in iSimVec:
+# for iIC in iSimVec:
 
 #     for SpecOI in SpecOIVec:
 
-#         jStart  = int(iStart[iSim])
-#         jEnd    = int(iEnd[iSim])
+#         jStart  = int(iStart[iIC])
+#         jEnd    = int(iEnd[iIC])
 #         for iSpec in range(gas.n_species):
 #             if (gas.species_name(iSpec) == SpecOI):
 #                 jSpec = iSpec
@@ -310,7 +327,7 @@ np.savetxt(FileName, np.concatenate((iStart[...,np.newaxis], iEnd[...,np.newaxis
 #         plt.ylabel('Mass Fraction')
 #         plt.legend(L1+L2, [line.get_label() for line in L1+L2], loc='lower right')
 #         plt.xscale('log')
-#         FigPath = FigDir+SpecOI+'_Sim'+str(iSim+1)+'.png'
+#         FigPath = FigDir+SpecOI+'_Sim'+str(iIC+1)+'.png'
 #         fig.savefig(FigPath, dpi=600)
 
 # ##########################################################################################
