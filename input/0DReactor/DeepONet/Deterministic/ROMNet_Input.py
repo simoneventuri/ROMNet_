@@ -29,7 +29,7 @@ class inputdata(object):
         self.WORKSPACE_PATH      = WORKSPACE_PATH                                                         # os.getenv('WORKSPACE_PATH')      
         self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
         self.PathToRunFld        = self.ROMNetFldr   + '/../0DReact_Isobaric_10Cases/'                                 # Path To Training Folder
-        self.PathToLoadFld       = None#self.ROMNetFldr   + '/../0DReact_Isobaric_10Cases/DeepONet/Deterministic/Run_1/'                            # Path To Pre-Trained Model Folder
+        self.PathToLoadFld       = self.ROMNetFldr   + '/../0DReact_Isobaric_10Cases/DeepONet/Deterministic/Run_2/'                            # Path To Pre-Trained Model Folder
         self.ROMPred_Flg         = True
         self.PathToDataFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_10Cases/'+str(self.NRODs)+'PC/'            # Path To Training Data Folder 
         # self.PathToDataFld       = self.ROMNetFldr   + '/../Data/PSR_100Cases/Orig/'                        # Path To Training Data Folder 
@@ -42,10 +42,10 @@ class inputdata(object):
         ### Data
         self.DataType            = 'PDE'                                                                    # Module to Be Used for Reading Data
         self.GenerateFlg         = False
-        # self.NTrain              = {'ics': 64, 'res': 128, 'pts': 128}                                                # No of Training Cases
+        self.NTrain              = {'scs': 64, 'res': 128, 'pts': 128}                                                # No of Training Cases
         # self.NTrain              = {'res': 128}                                                             # No of Training Cases
-        # self.NTrain              = {'ics': 64, 'pts': 128}                                                             # No of Training Cases
-        self.NTrain              = {'pts': 64}                                                             # No of Training Cases
+        # self.NTrain              = {'scs': 64, 'pts': 128}                                                             # No of Training Cases
+        # self.NTrain              = {'pts': 64}                                                             # No of Training Cases
         self.ValidPerc           = 20.0                                                                     # Percentage of Training Data to Be Used for Validation (e.g., = 20.0 => 20%)
         self.DataDist            = 'uniform'                                                                # Distribution for Sampling Independent Variables
         self.NTest               = 2                                                                        # No of Test Cases
@@ -55,11 +55,11 @@ class inputdata(object):
         ## NN Model Structure
         self.SurrogateType       = 'DeepONet'                                                             # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
         self.ProbApproach        = 'Deterministic'                                                        # Probabilistic Technique for Training the BNN (if Any)
-        self.NormalizeInput      = False                                                                   # Flag for Normalizing Branch's Input Data
+        self.NormalizeInput      = True                                                                   # Flag for Normalizing Branch's Input Data
         # self.BranchToTrunk       = range(self.NRODs)                                                                # Index of the Trunk Corresponding to i-th Branch
         self.BranchToTrunk       = [0]*self.NRODs                                                                # Index of the Trunk Corresponding to i-th Branch
-        self.BranchVars          = ['T0']+['PC0_'+str(i+1) for i in range(self.NRODs)]                                                        # List Containing the Branch's Input Data Column Names
-        self.BranchLayers        = [np.array([16,32,64])]*self.NRODs                                            # List Containing the No of Neurons per Each Branch's Layer
+        self.BranchVars          = ['T0']#+['PC0_'+str(i+1) for i in range(self.NRODs)]                                                        # List Containing the Branch's Input Data Column Names
+        self.BranchLayers        = [np.array([64,64,64])]*self.NRODs                                            # List Containing the No of Neurons per Each Branch's Layer
         self.BranchActFun        = [['sigmoid','sigmoid','sigmoid']]*self.NRODs                                             # List Containing the Activation Funct.s per Each Branch's Layer
         self.BranchDropOutRate   = 1.e-10                                                                 # Branch's Layers Dropout Rate
         self.BranchDropOutPredFlg= False                                                                  # Flag for Using Branch's Dropout during Prediction
@@ -82,20 +82,20 @@ class inputdata(object):
         self.BatchSize           = 64                                                                     # Mini-Batch Size
         self.ValidBatchSize      = 64                                                                   # Validation Mini-Batch Size
         self.RunEagerlyFlg       = True
-        # self.Losses              = {'ics': {'name': 'mse', 'axis': 0}, 'res': {'name': 'mse', 'axis': 0}, 'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
-        # self.LossWeights         = {'ics': 1.e0, 'res': 1.e-7, 'pts': 1.e0}     
+        self.Losses              = {'scs': {'name': 'mse', 'axis': 0}, 'res': {'name': 'mse', 'axis': 0}, 'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
+        self.LossWeights         = {'scs': 1.e0, 'res': 1.e-10, 'pts': 1.e0}     
         # self.Losses              = {'res': {'name': 'mse', 'axis': 0}}                                    # Loss Functions
         # self.LossWeights         = {'res': 1.} 
-        # self.Losses              = {'ics': {'name': 'mse', 'axis': 0}, 'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
-        # self.LossWeights         = {'ics': 1., 'pts': 10.}   
-        self.Losses              = {'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
-        self.LossWeights         = {'pts': 1.}     
+        # self.Losses              = {'scs': {'name': 'mse', 'axis': 0}, 'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
+        # self.LossWeights         = {'scs': 1., 'pts': 1.}   
+        # self.Losses              = {'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
+        # self.LossWeights         = {'pts': 1.}     
         self.Metrics             = None                   
-        self.LR                  = 1.e-3                                                          # Initial Learning Rate
-        self.LRDecay             = ["exponential", 5000, 0.98]
+        self.LR                  = 1.e-4                                                          # Initial Learning Rate
+        self.LRDecay             = ["exponential", 3000, 0.98]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
-        self.WeightDecay         = np.array([1.e-8,1.e-8], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
+        self.WeightDecay         = np.array([1.e-12,1.e-12], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
         self.Callbacks           = {
             'base': {
                 'stateful_metrics': None

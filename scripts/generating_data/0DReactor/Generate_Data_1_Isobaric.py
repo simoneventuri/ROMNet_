@@ -13,25 +13,26 @@ plt.style.use(WORKSPACE_PATH+'/ROMNet/romnet/extra/postprocessing/presentation.m
 
 import cantera as ct
 from scipy.integrate import solve_ivp
+from scipy.interpolate import interp1d
 
 
 ##########################################################################################
 ### Input Data
 
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_10Cases/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_100Cases/'
 FigDir             = OutputDir + '/fig/'
 
 MixtureFile        = 'gri30.yaml'
 
-NICs               = 10
+NICs               = 100
 P0                 = ct.one_atm
-EqRatio0Exts       = np.array([1.0, 1.0], dtype=np.float64)
-T0Exts             = np.array([900, 1700], dtype=np.float64)
+EqRatio0Exts       = np.array([.5, 4.0], dtype=np.float64)
+T0Exts             = np.array([800, 900], dtype=np.float64)
 
 NPerT0             = 1000
 
 Integration        = ' '#'Canteras'
-rtol               = 1.e-15
+rtol               = 1.e-12
 #atol               = 1.e-10
 SOLVER             = 'BDF'#'RK23'#'BDF'#'Radau'
 
@@ -166,7 +167,9 @@ for iIC in range(NICs):
     ### Create Reactor
     gas.TP  = T0, P0
     # gas.set_equivalence_ratio(EqRatio0, 'CH4:1.0', 'O2:0.21, N2:0.79')
-    gas.set_equivalence_ratio(EqRatio0, 'CH4:1.0', 'O2:1.0')
+    # gas.set_equivalence_ratio(EqRatio0, 'CH4:1.0', 'O2:1.0')
+    gas.set_equivalence_ratio(EqRatio0, 'H2:1.0', 'O2:1.0, N2:4.0')
+
     r       = ct.IdealGasConstPressureReactor(gas)
     sim     = ct.ReactorNet([r])
     sim.verbose = False
@@ -177,21 +180,50 @@ for iIC in range(NICs):
     P_      = P0
     y0      = np.array(np.hstack((gas_.T, gas_.Y[0:-1])), dtype=np.float64)
 
+    ############################################################################
+    # ### Initialize Integration 
+    # tAuto    = 10**( (8.75058755*(1000/T0) -9.16120796) )
+    # tMin     = tAuto * 1.e-1
+    # tMax     = tAuto * 1.e1
+    # dt0      = tAuto * 1.e-3
 
-    ### Initialize Integration 
-    tAuto    = 10**( (8.75058755*(1000/T0) -9.16120796) )
-    tMin     = tAuto * 1.e-2
-    tMax     = tAuto * 1.
-    dt0      = tAuto * 1.e-3
+    # tStratch = 1.01
+    # tVec     = [0.0]
+    # t        = tMin
+    # dt       = dt0
+    # while (t <= tMax):
+    #     tVec.append(t)
+    #     t  =   t + dt
+    #     dt = dt0 * tStratch
+    ############################################################################
 
-    tStratch = 1.01
-    tVec     = [0.0]
-    t        = tMin
-    dt       = dt0
-    while (t <= tMax):
-        tVec.append(t)
-        t  =   t + dt
-        dt = dt0 * tStratch
+    ############################################################################
+    TVec  = np.array([700, 800, 900, 1000, 1200, 1500, 1700])
+    tVec1 = np.array([5.e1, 5.e0, 1.e-1, 1.e-4, 1.e-5, 5.e-6, 1.e-6])
+    tVec2 = np.array([5.e0, 1.e0, 1.e-2, 1.e-5, 1.e-6, 5.e-7, 1.e-7])
+    tVec3 = np.array([5.e3, 5.e1, 5.e-1, 5.e-3, 5.e-3, 5.e-3, 5.e-2])
+
+    f1 = interp1d(1000/TVec, np.log10(tVec1), kind='cubic')
+    f2 = interp1d(1000/TVec, np.log10(tVec2), kind='cubic')
+    f3 = interp1d(1000/TVec, np.log10(tVec3), kind='cubic')
+
+    tMin     = f1(1000/T0) #1.e-5
+    dt0      = f2(1000/T0) #1.e-5
+    tMax     = f3(1000/T0) #1.e-3
+
+    # tStratch = 1.3
+    # tVec     = [0.0]
+    # t        = 10**tMin
+    # dt       = 10**dt0
+    # while (t <= 10**tMax):
+    #     tVec.append(t)
+    #     t  =   t + dt
+    #     dt = dt0 * tStratch
+    tVec     = np.concatenate([[0.], np.logspace(tMin, tMax, 3000)])
+    #############################################################################
+
+    
+
 
     gas_             = gas
     states           = ct.SolutionArray(gas, 1, extra={'t': [0.0]})
@@ -223,8 +255,9 @@ for iIC in range(NICs):
             YY               = r.thermo.Y
         else:
             TT               = output.y[0,it]
-            YY               = np.concatenate((np.maximum(output.y[1:,it],0.), [1.0-np.minimum(np.sum(output.y[1:,it]),1.)]), axis=0)
-        
+            # YY               = np.concatenate((np.maximum(output.y[1:,it],0.), [1.0-np.minimum(np.sum(output.y[1:,it]),1.)]), axis=0)
+            YY               = np.concatenate((output.y[1:,it], [1.0-np.sum(output.y[1:,it])]), axis=0)
+
         Vec                  = np.concatenate(([TT],YY), axis=0)
 
         TTdot, YYdot, HR     = IdealGasConstPressureReactor(t, TT, YY)

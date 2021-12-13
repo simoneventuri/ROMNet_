@@ -24,12 +24,14 @@ class ZeroDR(System):
         self.NRODs         = InputData.NRODs
 
         self.mixture_file  = 'gri30.yaml'
-        self.fuel          = 'CH4:1.0'
-        self.oxidizer      = 'O2:1.0, N2:0.0'
-        self.T0_in         = 300.
-        self.P0_in         = ct.one_atm
-        self.eq_ratio_in   = 1.
-        self.v             = 1.0
+        # self.fuel          = 'CH4:1.0'
+        # self.oxidizer      = 'O2:1.0, N2:0.0'
+        self.fuel          = 'H2:1.0'
+        self.oxidizer      = 'O2:1.0, N2:4.0'
+
+        self.T0            = 300.
+        self.P0            = ct.one_atm
+        self.eq_ratio0     = 1.
  
         # Integrator time step
         self.dt0           = 1.e-14
@@ -43,10 +45,10 @@ class ZeroDR(System):
         self.order         = [1]
  
         self.ind_names     = ['t']
-        self.other_names   = ['Rest']
+        self.other_names   = ['T0']#+['PC0_'+str(i) for i in range(self.NRODs)]
  
         self.ind_labels    = ['t [s]']
-        self.other_labels  = ['t_{Res} [s]']
+        self.other_labels  = ['T [K]']#+['PC_{0_{'+str(i)+'}}' for i in range(self.NRODs)]
 
         self.get_variable_locations()
 
@@ -60,7 +62,7 @@ class ZeroDR(System):
 
         if (self.ROM_pred_flg):
             self.f_call     = self.f_pc
-            self.n_dims     = self.n_pc 
+            self.n_dims     = self.n_pc
         else:
             self.f_call     = self.f
             self.n_dims     = self.n_mask
@@ -72,25 +74,20 @@ class ZeroDR(System):
 
 
     #===========================================================================
-    def f_orig(self, t, y_orig, rest):
-        n_points               = y_orig.shape[0]
+    def f_orig(self, t, y_orig, ICs):
+        n_points     = y_orig.shape[0]
 
-        mass                   = np.sum(y_orig[:,1:], axis=1)
-        dy_orig_dt             = np.zeros_like(y_orig)
+        dy_orig_dt   = np.zeros_like(y_orig)
         for i_point in range(n_points):
-            mass_i = mass[i_point]
-            H_i    = y_orig[i_point,0]
-            Y_i    = y_orig[i_point,1:]
-            rest_i = 10.**rest[i_point,0]
 
-            self.gas.HPY           = H_i/mass_i, self.P, Y_i/mass_i
-  
-            rho                    = self.gas.density
+            T                      = y_orig[i_point,0]
+            T                      = y_orig[i_point,1:]
+            self.gas.TPY           = T, self.P0, Y
+                          
             wdot                   = self.gas.net_production_rates
-            mdot                   = self.density_times_v/rest_i
-  
-            dy_orig_dt[i_point,0]  = (mass_i*self.h_in - H_i) / rest_i
-            dy_orig_dt[i_point,1:] = wdot * self.gas.molecular_weights * self.v + (self.y_in - Y_i) * mdot
+
+            dy_orig_dt[i_point,0]  = - np.dot(wdot, self.gas.partial_molar_enthalpies) / self.gas.cp / self.gas.density
+            dy_orig_dt[i_point,1:] = wdot * self.gas.molecular_weights / self.gas.density
    
         return dy_orig_dt
 
@@ -99,27 +96,21 @@ class ZeroDR(System):
 
 
     #===========================================================================
-    def f_temp(self, t, y_masked, rest):
+    def f_temp(self, t, y_masked, ICs):
         n_points               = y_masked.shape[0]
 
         y_orig                 = np.zeros((n_points,self.n_species+1))
         y_orig[:,self.to_orig] = y_masked
-        mass                   = np.sum(y_orig[:,1:], axis=1)
         dy_orig_dt             = np.zeros_like(y_orig)
         for i_point in range(n_points):
-            mass_i = mass[i_point]
-            H_i    = y_orig[i_point,0]
-            Y_i    = y_orig[i_point,1:]
-            rest_i = 10.**rest[i_point,0]
-
-            self.gas.HPY           = H_i/mass_i, self.P, Y_i/mass_i
-  
-            rho                    = self.gas.density
+            T                      = y_orig[i_point,0]
+            Y                      = y_orig[i_point,1:]
+            self.gas.TPY           = T, self.P0, Y
+                          
             wdot                   = self.gas.net_production_rates
-            mdot                   = self.density_times_v/rest_i
-  
-            dy_orig_dt[i_point,0]  = (mass_i*self.h_in - H_i) / rest_i
-            dy_orig_dt[i_point,1:] = wdot * self.gas.molecular_weights * self.v + (self.y_in - Y_i) * mdot
+
+            dy_orig_dt[i_point,0]  = - np.dot(wdot, self.gas.partial_molar_enthalpies) / self.gas.cp / self.gas.density
+            dy_orig_dt[i_point,1:] = wdot * self.gas.molecular_weights / self.gas.density
    
             dy_masked_dt           = dy_orig_dt[:,self.to_orig]
 
@@ -130,28 +121,21 @@ class ZeroDR(System):
 
 
     #===========================================================================
-    def f(self, t, y_masked, rest):
+    def f(self, t, y_masked, ICs):
         n_points               = y_masked.shape[0]
 
         y_orig                 = np.zeros((n_points,self.n_species+1))
-
         y_orig[:,self.to_orig] = y_masked * self.D[0,:] + self.C[0,:]
-        mass                   = np.sum(y_orig[:,1:], axis=1)
         dy_orig_dt             = np.zeros_like(y_orig)
         for i_point in range(n_points):
-            mass_i = mass[i_point]
-            H_i    = y_orig[i_point,0]
-            Y_i    = y_orig[i_point,1:]
-            rest_i = 10.**rest[i_point,0]
-
-            self.gas.HPY           = H_i/mass_i, self.P, Y_i/mass_i
-  
-            rho                    = self.gas.density
+            T                      = y_orig[i_point,0]
+            Y                      = y_orig[i_point,1:]
+            self.gas.TPY           = T, self.P0, Y
+                          
             wdot                   = self.gas.net_production_rates
-            mdot                   = self.density_times_v/rest_i
-  
-            dy_orig_dt[i_point,0]  = (mass_i*self.h_in - H_i) / rest_i
-            dy_orig_dt[i_point,1:] = wdot * self.gas.molecular_weights * self.v + (self.y_in - Y_i) * mdot
+
+            dy_orig_dt[i_point,0]  = - np.dot(wdot, self.gas.partial_molar_enthalpies) / self.gas.cp / self.gas.density
+            dy_orig_dt[i_point,1:] = wdot * self.gas.molecular_weights / self.gas.density
    
         dy_masked_dt           = dy_orig_dt[:,self.to_orig] / self.D[0,:]
 
@@ -162,34 +146,27 @@ class ZeroDR(System):
 
 
     #===========================================================================
-    def f_pc(self, t, y_pc, rest):
-        y_pc                   = y_pc
-        n_points               = y_pc.shape[0]
-
-        y_masked               = np.matmul(y_pc, self.A) * self.D + self.C
+    def f_pc(self, t, y_pc, ICs):
+        n_points                   = y_pc.shape[0]
         
-        y_orig                 = np.zeros((n_points,self.n_species+1))
-        y_orig[:,self.to_orig] = y_masked
-        mass                   = np.sum(y_orig[:,1:], axis=1)
-
-        dy_orig_dt             = np.zeros_like(y_orig)
+        y_masked                   = np.matmul(y_pc, self.A) 
+    
+        y_orig                     = np.zeros((n_points,self.n_species+1))
+        y_orig[:,self.to_orig]     = y_masked * self.D[0,:] + self.C[0,:]
+        dy_orig_dt                 = np.zeros_like(y_orig)
         for i_point in range(n_points):
-            mass_i = mass[i_point]
-            H_i    = y_orig[i_point,0]
-            Y_i    = y_orig[i_point,1:]
-            rest_i = 10.**rest[i_point,0]
-
-            self.gas.HPY           = H_i/mass_i, self.P, Y_i/mass_i
-  
-            rho                    = self.gas.density
+            T                      = y_orig[i_point,0]
+            Y                      = np.maximum(y_orig[i_point,1:], 0.)
+            #Y[-1]                  = np.minimum(1. - np.sum(Y[0:-1]), 1.0)
+            self.gas.TPY           = T, self.P0, Y
+                          
             wdot                   = self.gas.net_production_rates
-            mdot                   = self.density_times_v/rest_i
-  
-            dy_orig_dt[i_point,0]  = (mass_i*self.h_in - H_i) / rest_i
-            dy_orig_dt[i_point,1:] = wdot * self.gas.molecular_weights * self.v + (self.y_in - Y_i) * mdot
+
+            dy_orig_dt[i_point,0]  = - np.dot(wdot, self.gas.partial_molar_enthalpies) / self.gas.cp / self.gas.density
+            dy_orig_dt[i_point,1:] = wdot * self.gas.molecular_weights / self.gas.density
    
-        dy_masked_dt           = dy_orig_dt[:,self.to_orig]
-        dy_pc_dt               = np.matmul(dy_masked_dt/self.D, self.AT)
+        dy_masked_dt               = dy_orig_dt[:,self.to_orig] / self.D[0,:]
+        dy_pc_dt                   = np.matmul(dy_masked_dt, self.AT)
 
         return dy_pc_dt
 
@@ -214,7 +191,7 @@ class ZeroDR(System):
 
 
     #===========================================================================
-    def get_residual(self, rest, t, grads):
+    def get_residual(self, ICs, t, grads):
 
         y, dy_dt = grads
 
@@ -224,7 +201,7 @@ class ZeroDR(System):
         # with open('/Users/sventuri/Desktop/DAJE/Input.csv', "ab") as f:
         #     np.savetxt(f, np.concatenate([t[0].numpy(), y.numpy()], axis=1), delimiter=',')
 
-        dy_ct_dt = self.f_call(t, y.numpy(), rest.numpy()) #* np.exp(t[0].numpy())
+        dy_ct_dt = self.f_call(t, y.numpy(), ICs.numpy()) #* np.exp(t[0].numpy())
 
         if (self.ynorm_flg):
             dy_ct_dt /= self.y_range
@@ -289,23 +266,15 @@ class ZeroDR(System):
     #===========================================================================
     def initialize_reactor(self):
 
-        gas                  = ct.Solution(self.mixture_file)
-        self.n_species       = gas.n_species
+        ### Create Mixture
+        gas            = ct.Solution(self.mixture_file)
+        self.n_species = gas.n_species
 
-        ### Create Inlet
-        gas.TP               = self.T0_in, self.P0_in 
-        gas.set_equivalence_ratio(self.eq_ratio_in, self.fuel, self.oxidizer, basis='mass')
-        self.y_in            = gas.Y
-        self.h_in            = np.dot(gas.X/gas.volume_mole, gas.partial_molar_enthalpies) / gas.density
+        ### Create Reactor
+        #gas.TP         = self.T0, self.P0
+        #gas.set_equivalence_ratio(self.eq_ratio0, self.fuel, self.oxidizer)
+        self.gas       = gas
 
-        ### Create Combustor
-        gas.equilibrate('HP')
-        self.gas             = gas
-        self.P               = gas.P
-        self.h0              = np.dot(gas.X/gas.volume_mole, gas.partial_molar_enthalpies)/gas.density
-        self.gas.HP          = self.h0, gas.P
-
-        self.density_times_v = gas.density * self.v
 
     #===========================================================================
     
