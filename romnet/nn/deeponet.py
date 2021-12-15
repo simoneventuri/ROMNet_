@@ -91,7 +91,10 @@ class DeepONet(NN):
             y = inputsTrunk
             
             for f in self.TrunkLayersVecs[iTrunk]:
-                y = f(y, training=training)
+                if ('dropout' in f.name):
+                    y = f(y, training=(training or self.BranchDropOutPredFlg))
+                else:
+                    y = f(y, training=training)
 
             TrunkVec.append(y)
 
@@ -102,7 +105,10 @@ class DeepONet(NN):
             y      = inputsBranch
 
             for f in self.BranchLayersVecs[iy]:
-                y = f(y, training=training)
+                if ('dropout' in f.name):
+                    y = f(y, training=(training or self.TrunkDropOutPredFlg))
+                else:
+                    y = f(y, training=training)
             
             OutputP = tf.keras.layers.Dot(axes=1)([y, TrunkVec[iTrunk]])
 

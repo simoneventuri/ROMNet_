@@ -19,15 +19,18 @@ from scipy.interpolate import interp1d
 ##########################################################################################
 ### Input Data
 
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_100Cases/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_100Cases_Highest/'
 FigDir             = OutputDir + '/fig/'
 
 MixtureFile        = 'gri30.yaml'
 
+DirName            = 'train'
 NICs               = 100
 P0                 = ct.one_atm
-EqRatio0Exts       = np.array([.5, 4.0], dtype=np.float64)
-T0Exts             = np.array([800, 900], dtype=np.float64)
+EqRatio0Exts       = np.array([.5, 4.], dtype=np.float64)
+T0Exts             = np.array([1000, 2000], dtype=np.float64)
+DirName            = 'test'
+NICs               = 5
 
 NPerT0             = 1000
 
@@ -51,11 +54,11 @@ try:
 except:
     pass
 try:
-    os.makedirs(OutputDir+'/Orig/train/')
+    os.makedirs(OutputDir+'/Orig/'+DirName+'/')
 except:
     pass
 try:
-    os.makedirs(OutputDir+'/Orig/train/ext/')
+    os.makedirs(OutputDir+'/Orig/'+DirName+'/ext/')
 except:
     pass
 
@@ -67,15 +70,17 @@ except:
 def IdealGasConstPressureReactor_SciPY(t, y):
     #print(t)
 
-    YEnd     = np.array([1.-np.sum(y[1:])], dtype=np.float64)
-    Y        = np.concatenate((y[1:], YEnd), axis=0)
+    Y          = y[1:]
+    # YEnd     = np.array([1.-np.sum(y[1:])], dtype=np.float64)
+    # Y        = np.concatenate((y[1:], YEnd), axis=0)
     gas_.TPY = y[0], P_, Y
     
     wdot     = gas_.net_production_rates
 
     ydot     = np.zeros_like(y, dtype=np.float64)
     ydot[0]  = - np.dot(wdot, gas_.partial_molar_enthalpies) / gas_.cp / gas_.density
-    ydot[1:] = wdot[0:-1] * gas_.molecular_weights[0:-1] / gas_.density
+    ydot[1:] = wdot * gas_.molecular_weights / gas_.density
+    # ydot[1:] = wdot[0:-1] * gas_.molecular_weights[0:-1] / gas_.density
     
     return ydot
 
@@ -131,21 +136,36 @@ def IdealGasReactor(t, T, Y):
 ### Generating Training Data
 
 
-MinVals = np.array([EqRatio0Exts[0], T0Exts[0]], dtype=np.float64)
-MaxVals = np.array([EqRatio0Exts[1], T0Exts[1]], dtype=np.float64)
-NDims   = 2
+if (DirName == 'train'):
+    MinVals = np.array([EqRatio0Exts[0], T0Exts[0]], dtype=np.float64)
+    MaxVals = np.array([EqRatio0Exts[1], T0Exts[1]], dtype=np.float64)
+    NDims   = 2
 
-ICs     = pyDOE.lhs(2, samples=NICs, criterion='center')
+    ICs     = pyDOE.lhs(2, samples=NICs, criterion='center')
 
-for i in range(NDims):
-    ICs[:,i] = ICs[:,i] * (MaxVals[i] - MinVals[i]) + MinVals[i]
-ICs = np.concatenate([P0*np.ones((NICs,1)),ICs], axis=1)
+    for i in range(NDims):
+        ICs[:,i] = ICs[:,i] * (MaxVals[i] - MinVals[i]) + MinVals[i]
+    ICs = np.concatenate([P0*np.ones((NICs,1)),ICs], axis=1)
 
 
-### Writing Initial Temperatures
-FileName = OutputDir+'/Orig/train/ext/ICs.csv'
-Header   = 'P,EqRatio,T'
-np.savetxt(FileName, ICs, delimiter=',', header=Header, comments='')
+    ### Writing Initial Temperatures
+    FileName = OutputDir+'/Orig/'+DirName+'/ext/ICs.csv'
+    Header   = 'P,EqRatio,T'
+    np.savetxt(FileName, ICs, delimiter=',', header=Header, comments='')
+
+
+elif (DirName == 'test'):
+    NDims    = 2
+    ICs      = np.zeros((NICs,NDims))
+    ICs[:,0] = [2.5, 1.9, 3.5, 1., 3.6]
+    ICs[:,1] = [1200., 1900., 1300., 1600., 1700.]
+    ICs = np.concatenate([P0*np.ones((NICs,1)), ICs], axis=1)
+
+
+    ### Writing Initial Temperatures
+    FileName = OutputDir+'/Orig/'+DirName+'/ext/ICs.csv'
+    Header   = 'P,EqRatio,T'
+    np.savetxt(FileName, ICs, delimiter=',', header=Header, comments='')
 
 
 
@@ -178,7 +198,8 @@ for iIC in range(NICs):
     mass_   = r.mass
     density_= r.density
     P_      = P0
-    y0      = np.array(np.hstack((gas_.T, gas_.Y[0:-1])), dtype=np.float64)
+    y0      = np.array(np.hstack((gas_.T, gas_.Y)), dtype=np.float64)
+    # y0      = np.array(np.hstack((gas_.T, gas_.Y[0:-1])), dtype=np.float64)
 
     ############################################################################
     # ### Initialize Integration 
@@ -198,10 +219,10 @@ for iIC in range(NICs):
     ############################################################################
 
     ############################################################################
-    TVec  = np.array([700, 800, 900, 1000, 1200, 1500, 1700])
-    tVec1 = np.array([5.e1, 5.e0, 1.e-1, 1.e-4, 1.e-5, 5.e-6, 1.e-6])
-    tVec2 = np.array([5.e0, 1.e0, 1.e-2, 1.e-5, 1.e-6, 5.e-7, 1.e-7])
-    tVec3 = np.array([5.e3, 5.e1, 5.e-1, 5.e-3, 5.e-3, 5.e-3, 5.e-2])
+    TVec  = np.array([700, 800, 900, 1000, 1200, 1500, 1700, 1850, 2000])
+    tVec1 = np.array([5.e1, 5.e0, 1.e-1, 1.e-4, 1.e-5, 5.e-6, 1.e-6, 5.e-7, 5.e-7])
+    tVec2 = np.array([5.e0, 1.e0, 1.e-2, 1.e-5, 1.e-6, 5.e-7, 1.e-7, 5.e-8, 5.e-8])
+    tVec3 = np.array([1.e4, 1.e2, 1.e0, 1.e-1, 5.e-2, 1.e-2, 1.e-1, 5.e-2, 1.e-2])
 
     f1 = interp1d(1000/TVec, np.log10(tVec1), kind='cubic')
     f2 = interp1d(1000/TVec, np.log10(tVec2), kind='cubic')
@@ -255,8 +276,8 @@ for iIC in range(NICs):
             YY               = r.thermo.Y
         else:
             TT               = output.y[0,it]
-            # YY               = np.concatenate((np.maximum(output.y[1:,it],0.), [1.0-np.minimum(np.sum(output.y[1:,it]),1.)]), axis=0)
-            YY               = np.concatenate((output.y[1:,it], [1.0-np.sum(output.y[1:,it])]), axis=0)
+            YY               = output.y[1:,it]
+            # YY               = np.concatenate((output.y[1:,it], [1.0-np.sum(output.y[1:,it])]), axis=0)
 
         Vec                  = np.concatenate(([TT],YY), axis=0)
 
@@ -324,10 +345,10 @@ for iIC in range(NICs):
     for iSpec in range(NSpec):
         Header += ','+gas.species_name(iSpec)
 
-    FileName = OutputDir+'/Orig/train/ext/y.csv.'+str(iIC+1)
+    FileName = OutputDir+'/Orig/'+DirName+'/ext/y.csv.'+str(iIC+1)
     np.savetxt(FileName, yTemp,       delimiter=',', header=Header, comments='')
 
-    FileName = OutputDir+'/Orig/train/ext/ySource.csv.'+str(iIC+1)
+    FileName = OutputDir+'/Orig/'+DirName+'/ext/ySource.csv.'+str(iIC+1)
     np.savetxt(FileName, ySourceTemp, delimiter=',', header=Header, comments='')
 
     # FileName = OutputDir+'/orig_data/Jacobian.csv.'+str(iIC+1)
@@ -335,11 +356,11 @@ for iIC in range(NICs):
 
 
 
-FileName = OutputDir+'/Orig/train/ext/SimIdxs.csv'
+FileName = OutputDir+'/Orig/'+DirName+'/ext/SimIdxs.csv'
 Header   = 'iStart,iEnd'
 np.savetxt(FileName, np.concatenate((iStart[...,np.newaxis], iEnd[...,np.newaxis]), axis=1), delimiter=',', header=Header, comments='')
 
-FileName = OutputDir+'/Orig/train/ext/tAutoIgnition.csv'
+FileName = OutputDir+'/Orig/'+DirName+'/ext/tAutoIgnition.csv'
 Header   = 't'
 np.savetxt(FileName, AutoIgnitionVec, delimiter=',', header=Header, comments='')
 

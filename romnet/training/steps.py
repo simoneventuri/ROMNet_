@@ -129,6 +129,11 @@ def _get_tot_loss_test(net, losses):
     total_loss = 0.
     for data_id, loss in losses.items():
 
+        # if net.pde_loss_weights is not None:
+        #     total_loss += net.pde_loss_weights[data_id] * loss 
+        # else:
+        #     total_loss += loss 
+
         total_loss += loss 
 
     return total_loss

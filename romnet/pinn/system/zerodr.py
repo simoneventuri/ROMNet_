@@ -45,10 +45,10 @@ class ZeroDR(System):
         self.order         = [1]
  
         self.ind_names     = ['t']
-        self.other_names   = ['T0']#+['PC0_'+str(i) for i in range(self.NRODs)]
+        self.other_names   = ['T0']+['PC0_'+str(i) for i in range(self.NRODs)]
  
         self.ind_labels    = ['t [s]']
-        self.other_labels  = ['T [K]']#+['PC_{0_{'+str(i)+'}}' for i in range(self.NRODs)]
+        self.other_labels  = ['T [K]']+['PC_{0_{'+str(i)+'}}' for i in range(self.NRODs)]
 
         self.get_variable_locations()
 
@@ -198,16 +198,16 @@ class ZeroDR(System):
         if (self.ynorm_flg):
             y = y * self.y_range + self.y_min
 
-        # with open('/Users/sventuri/Desktop/DAJE/Input.csv', "ab") as f:
-        #     np.savetxt(f, np.concatenate([t[0].numpy(), y.numpy()], axis=1), delimiter=',')
+        with open('/Users/sventur/Desktop/DAJE/Input.csv', "ab") as f:
+            np.savetxt(f, np.concatenate([t[0].numpy(), y.numpy()], axis=1), delimiter=',')
 
         dy_ct_dt = self.f_call(t, y.numpy(), ICs.numpy()) #* np.exp(t[0].numpy())
 
         if (self.ynorm_flg):
             dy_ct_dt /= self.y_range
 
-        # with open('/Users/sventuri/Desktop/DAJE/Output.csv', "ab") as f:
-        #     np.savetxt(f, np.concatenate([t[0].numpy(), dy_dt.numpy(), dy_ct_dt], axis=1), delimiter=',')
+        with open('/Users/sventur/Desktop/DAJE/Output.csv', "ab") as f:
+            np.savetxt(f, np.concatenate([t[0].numpy(), dy_dt.numpy(), dy_ct_dt], axis=1), delimiter=',')
 
         return dy_dt - dy_ct_dt
 
