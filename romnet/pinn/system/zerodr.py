@@ -45,10 +45,10 @@ class ZeroDR(System):
         self.order         = [1]
  
         self.ind_names     = ['t']
-        self.other_names   = ['T0']+['PC0_'+str(i) for i in range(self.NRODs)]
+        self.other_names   = ['PC0_'+str(i) for i in range(self.NRODs)]
  
         self.ind_labels    = ['t [s]']
-        self.other_labels  = ['T [K]']+['PC_{0_{'+str(i)+'}}' for i in range(self.NRODs)]
+        self.other_labels  = ['PC_{0_{'+str(i)+'}}' for i in range(self.NRODs)]
 
         self.get_variable_locations()
 

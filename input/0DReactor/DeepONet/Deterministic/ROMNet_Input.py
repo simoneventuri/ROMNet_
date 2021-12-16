@@ -42,10 +42,10 @@ class inputdata(object):
         ### Data
         self.DataType            = 'PDE'                                                                    # Module to Be Used for Reading Data
         self.GenerateFlg         = False
-        # self.NTrain              = {'scs': 64, 'res': 128, 'pts': 128}                                                # No of Training Cases
+        self.NTrain              = {'scs': 64, 'res': 128, 'pts': 128}                                                # No of Training Cases
         # self.NTrain              = {'res': 128}                                                             # No of Training Cases
         # self.NTrain              = {'scs': 64, 'pts': 128}                                                             # No of Training Cases
-        self.NTrain              = {'pts': 64}                                                             # No of Training Cases
+        # self.NTrain              = {'pts': 64}                                                             # No of Training Cases
         self.ValidPerc           = 20.0                                                                     # Percentage of Training Data to Be Used for Validation (e.g., = 20.0 => 20%)
         self.DataDist            = 'uniform'                                                                # Distribution for Sampling Independent Variables
         self.NTest               = 2                                                                        # No of Test Cases
@@ -58,16 +58,16 @@ class inputdata(object):
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Branch's Input Data
         # self.BranchToTrunk       = range(self.NRODs)                                                                # Index of the Trunk Corresponding to i-th Branch
         self.BranchToTrunk       = [0]*self.NRODs                                                                # Index of the Trunk Corresponding to i-th Branch
-        self.BranchVars          = ['T0']+['PC0_'+str(i+1) for i in range(self.NRODs)]                                                        # List Containing the Branch's Input Data Column Names
-        self.BranchLayers        = [np.array([64,64,64])]*self.NRODs                                            # List Containing the No of Neurons per Each Branch's Layer
-        self.BranchActFun        = [['sigmoid','sigmoid','sigmoid']]*self.NRODs                                             # List Containing the Activation Funct.s per Each Branch's Layer
-        self.BranchDropOutRate   = 5.e-4                                                                 # Branch's Layers Dropout Rate
+        self.BranchVars          = ['PC0_'+str(i+1) for i in range(self.NRODs)]                                                        # List Containing the Branch's Input Data Column Names
+        self.BranchLayers        = [np.array([128,128,128,128])]*self.NRODs                                            # List Containing the No of Neurons per Each Branch's Layer
+        self.BranchActFun        = [['tanh','tanh','tanh','tanh']]*self.NRODs                                             # List Containing the Activation Funct.s per Each Branch's Layer
+        self.BranchDropOutRate   = 1.e-10#1e-3                                                                 # Branch's Layers Dropout Rate
         self.BranchDropOutPredFlg= True                                                                  # Flag for Using Branch's Dropout during Prediction
         self.BranchSoftmaxFlg    = False                                                                  # Flag for Using Softmax after Branch's Last Layer
         self.TrunkVars           = ['t']                                                                  # List Containing the Trunk's Input Data Column Names
-        self.TrunkLayers         = [np.array([64,64,64])]#*self.NRODs                                                # List Containing the No of Neurons per Each Trunk's Layer
-        self.TrunkActFun         = [['tanh','tanh','tanh']]#*self.NRODs                                             # List Containing the Activation Funct.s per Each Trunk's Layer
-        self.TrunkDropOutRate    = 5.e-4                                                                # Trunk's Layers Dropout Rate  
+        self.TrunkLayers         = [np.array([128,128,128,128])]#*self.NRODs                                                # List Containing the No of Neurons per Each Trunk's Layer
+        self.TrunkActFun         = [['tanh','tanh','tanh','tanh']]#*self.NRODs                                             # List Containing the Activation Funct.s per Each Trunk's Layer
+        self.TrunkDropOutRate    = 1.e-10#5.e-4                                                                # Trunk's Layers Dropout Rate  
         self.TrunkDropOutPredFlg = True                                                                  # Flag for Using Trunk's Dropout during Prediction
         self.TransFun            = {'log': ['t']} 
         self.FinalLayerFlg       = True                                                                   # Flag for Using a Full Linear Layer after Dot-Product Layer
@@ -79,23 +79,23 @@ class inputdata(object):
         self.TransferFlg         = False                                                                  # Flag for Using Transfer Learning
         self.PathToTransFld      = ''                                                                     # Folder Containing the Trained Model to be Used for Transfer Learning 
         self.NEpoch              = 100000                                                                   # Number of Epoches
-        self.BatchSize           = 64                                                                     # Mini-Batch Size
-        self.ValidBatchSize      = 64                                                                   # Validation Mini-Batch Size
-        self.RunEagerlyFlg       = False
-        # self.Losses              = {'scs': {'name': 'mse', 'axis': 0}, 'res': {'name': 'mse', 'axis': 0}, 'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
-        # self.LossWeights         = {'scs': 1.e0, 'res': 1.e-8, 'pts': 1.e0}     
+        self.BatchSize           = 128                                                                     # Mini-Batch Size
+        self.ValidBatchSize      = 128                                                                   # Validation Mini-Batch Size
+        self.RunEagerlyFlg       = True
+        self.Losses              = {'scs': {'name': 'mse', 'axis': 0}, 'res': {'name': 'mse', 'axis': 0}, 'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
+        self.LossWeights         = {'scs': 1.e-1, 'res': 1.e-8, 'pts': 1.e0}     
         # self.Losses              = {'res': {'name': 'mse', 'axis': 0}}                                    # Loss Functions
         # self.LossWeights         = {'res': 1.} 
         # self.Losses              = {'scs': {'name': 'mse', 'axis': 0}, 'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
-        # self.LossWeights         = {'scs': 1., 'pts': 1.}   
-        self.Losses              = {'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
-        self.LossWeights         = {'pts': 1.}     
+        # self.LossWeights         = {'scs': 0.1, 'pts': 1.}   
+        # self.Losses              = {'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
+        # self.LossWeights         = {'pts': 1.}     
         self.Metrics             = None                   
-        self.LR                  = 1.e-5                                                          # Initial Learning Rate
-        self.LRDecay             = ["exponential", 50000, 0.98]
+        self.LR                  = 1.e-6                                                          # Initial Learning Rate
+        self.LRDecay             = ["exponential", 5000, 0.98]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
-        self.WeightDecay         = np.array([1.e-9,1.e-9], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
+        self.WeightDecay         = np.array([1.e-11,1.e-11], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
         self.Callbacks           = {
             'base': {
                 'stateful_metrics': None

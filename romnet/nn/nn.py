@@ -460,7 +460,7 @@ class NN(tf.keras.Model):
                                                activation         = 'linear',
                                                use_bias           = True,
                                                kernel_initializer = WIni,
-                                               #bias_initializer   = bIni,
+                                               bias_initializer   = bIni,
                                                name               = LayerName)
             
             LayersVec.append( OutLayer )
@@ -489,6 +489,8 @@ class NN(tf.keras.Model):
         #                                        use_bias           = True,
         #                                        kernel_initializer = WIni,
         #                                        bias_initializer   = bIni,
+        #                                        kernel_regularizer = WRegul,
+        #                                        #bias_regularizer   = bRegul,
         #                                        name               = LayerName)
             
         #     LayersVec.append( OutLayer )
