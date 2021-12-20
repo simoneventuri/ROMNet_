@@ -15,11 +15,11 @@ from PCAfold import PCA as PCAA
 ##########################################################################################
 ### Input Data
 ###
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_100Cases_Highest/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_100Cases_POD/'
 FigDir             = OutputDir + '/fig/'
 
 DirName            = 'train'
-NICs               = 100
+NICs               = 500
 iSimVec            = range(NICs)
 
 NVarsRed           = 7

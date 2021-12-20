@@ -143,7 +143,7 @@ class Model_Deterministic(Model):
 
         #-----------------------------------------------------------------------
         if (InputData.TransferFlg): 
-            self.NN_Transfer_Model = load_weights_(self.PathToTransFld)
+            self.NN_Transfer_Model = load_weights_(InputData.PathToTransFld)
         else:
             self.NN_Transfer_Model = None
 
@@ -320,7 +320,6 @@ class Model_Deterministic(Model):
             run_eagerly_flg = InputData.RunEagerlyFlg
         except:
             run_eagerly_flg = False
-        print('run_eagerly_flg = ', run_eagerly_flg)
 
         self.net.compile(self.data,
                          optimizer    = opt,
@@ -400,7 +399,7 @@ class Model_Deterministic(Model):
 
         print('\n[ROMNet]:   Loading ML Model Parameters from File: ', FilePath)
 
-        self.net.load_weights(FilePath)
+        self.net.load_weights(FilePath, by_name=True, skip_mismatch=False)
 
     #===========================================================================
 

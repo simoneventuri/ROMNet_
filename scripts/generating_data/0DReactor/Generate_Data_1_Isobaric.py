@@ -19,20 +19,20 @@ from scipy.interpolate import interp1d
 ##########################################################################################
 ### Input Data
 
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_100Cases_Highest/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_100Cases_POD/'
 FigDir             = OutputDir + '/fig/'
 
 MixtureFile        = 'gri30.yaml'
 
 DirName            = 'train'
-NICs               = 100
+NICs               = 500
 P0                 = ct.one_atm
 EqRatio0Exts       = np.array([.5, 4.], dtype=np.float64)
 T0Exts             = np.array([1000, 2000], dtype=np.float64)
 DirName            = 'test'
 NICs               = 5
 
-NPerT0             = 1000
+NPerT0             = 5000
 
 Integration        = ' '#'Canteras'
 rtol               = 1.e-12
@@ -231,6 +231,7 @@ for iIC in range(NICs):
     tMin     = f1(1000/T0) #1.e-5
     dt0      = f2(1000/T0) #1.e-5
     tMax     = f3(1000/T0) #1.e-3
+    tMaxAll  = f1(1.) #1.e-5
 
     # tStratch = 1.3
     # tVec     = [0.0]
@@ -240,7 +241,10 @@ for iIC in range(NICs):
     #     tVec.append(t)
     #     t  =   t + dt
     #     dt = dt0 * tStratch
-    tVec     = np.concatenate([[0.], np.logspace(tMin, tMax, 3000)])
+    # tVec     = np.concatenate([[0.], np.logspace(tMin, tMax, 3000)])
+    #tVec     = np.concatenate([[0.], np.logspace(-12, tMin, 50), np.logspace(tMin, tMax, 1948)[1:]])
+    tVec     = np.concatenate([[0.], np.logspace(-12, -8, 100), np.logspace(-7.99999999, -2, 4899)])
+    #tVec     = np.concatenate([[0.], np.linspace(1.e-10, 1.e-2, 4999)])
     #############################################################################
 
     

@@ -58,6 +58,8 @@ class FNN(NN):
         except:
             self.TransFun      = None
 
+        self.PathToPODFile     = None
+
 
         self.FNNLayersVecs = {}
         for iFNN in range(self.NFNNs):
