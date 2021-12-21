@@ -9,10 +9,10 @@ class inputdata(object):
     def __init__(self, WORKSPACE_PATH, ROMNetFldr):
 
         self.NRODs               = 7
-        #self.iROD                = 1
-        POD_NAME                 = 'All' #str(self.iROD)
+        self.iROD                = 1
+        POD_NAME                 = str(self.iROD) #'All'
 
-        self.NPODs               = 128
+        self.NPODs               = 64
 
 
 
@@ -34,9 +34,9 @@ class inputdata(object):
         ### Paths
         self.WORKSPACE_PATH      = WORKSPACE_PATH                                                         # os.getenv('WORKSPACE_PATH')      
         self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
-        self.PathToRunFld        = self.ROMNetFldr   + '/../0DReact_Isobaric_100Cases_POD_'+POD_NAME+'/'           # Path To Training Folder
+        self.PathToRunFld        = self.ROMNetFldr   + '/../0DReact_Isobaric_100Cases_POD_'+POD_NAME+'_Trunk/'           # Path To Training Folder
         self.PathToLoadFld       = None                                                                   # Path To Pre-Trained Model Folder
-        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_100Cases_POD/'+str(self.NRODs)+'PC/POD_'+POD_NAME+'/'           # Path To Training Data Folder 
+        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_100Cases_POD/'+str(self.NRODs)+'PC/OneByOne/POD_'+POD_NAME+'/Trunk/'           # Path To Training Data Folder 
 
         #=======================================================================================================================================
         ### Physical System
@@ -61,7 +61,7 @@ class inputdata(object):
         self.OutputVars          = ['POD_'+str(iPOD+1) for iPOD in range(self.NPODs)]                                                              # List Containing the Output Data Column Names
         self.TransFun            = {'log': ['t']} 
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Input Data
-        self.Layers              = [np.array([32,128,128,128,self.NPODs])]                                           # List Containing the No of Neurons per Each NN's Layer
+        self.Layers              = [np.array([32,64,64,64,self.NPODs])]                                           # List Containing the No of Neurons per Each NN's Layer
         self.ActFun              = [['tanh','tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
         self.DropOutRate         = 5.e-5                                                                  # NN's Layers Dropout Rate
         self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction

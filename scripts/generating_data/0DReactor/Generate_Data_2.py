@@ -233,7 +233,7 @@ with open(FileName, 'w') as the_file:
 #['['level', 'pareto', 'range', 'std', 'vast']', 'pareto', 'range', 'std', 'vast']
 
 ### 
-pca        = PCAA(yMat, scaling='pareto', n_components=NVarsRed)
+pca        = PCAA(yMat, scaling='range', n_components=NVarsRed)
 C          = pca.X_center
 D          = pca.X_scale
 A          = pca.A[:,0:NVarsRed].T

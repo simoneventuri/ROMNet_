@@ -29,8 +29,8 @@ NICs               = 500
 P0                 = ct.one_atm
 EqRatio0Exts       = np.array([.5, 4.], dtype=np.float64)
 T0Exts             = np.array([1000, 2000], dtype=np.float64)
-DirName            = 'test'
-NICs               = 5
+# DirName            = 'test'
+# NICs               = 5
 
 NPerT0             = 5000
 

@@ -107,6 +107,15 @@ def zero(*args):
     return tf.constant(0., dtype=K.floatx())
 
 
+@tf.keras.utils.register_keras_serializable(package='ROMNet', name='NLL')
+def nll(axis): 
+    def negative_log_likelihood(y, distr, attention_mask=None):
+        #y_true   = tf.cast(y_true, y_pred.dtype)
+        return K.sum( -distr.log_prob(y), axis=-1)
+    return negative_log_likelihood
+
+
+
 
 def get_loss(name, axis=-1):
 
@@ -179,6 +188,9 @@ def get_loss(name, axis=-1):
 
     elif (LF == 'zero'):
         return zero
+
+    elif (LF == 'nll'):
+        return nll(axis)
 
     elif (LF == None):
         return None
