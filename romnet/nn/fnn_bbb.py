@@ -69,11 +69,24 @@ class FNN_BbB(NN):
         except:
             self.CalibrateSigmaLFlg = True
 
+
+
+
+        # self.FNNLayersVecs = {}
+        # for iFNN in range(self.NFNNs):
+
+        #     ## FNN Block
+        #     self.FNNLayersVecs[iFNN] = self.fnn_block_tfp(self.xnorm, '', 'NN', iFNN, self.InputVars)
+
+
+
+        self.PreLayersVecs = self.fnn_first_half_block_tfp(self.xnorm, '', 'NN', 0, self.InputVars)
+
         self.FNNLayersVecs = {}
         for iFNN in range(self.NFNNs):
 
             ## FNN Block
-            self.FNNLayersVecs[iFNN] = self.fnn_block_tfp(self.xnorm, '', 'NN', iFNN, self.InputVars)
+            self.FNNLayersVecs[iFNN] = self.fnn_second_half_block_tfp('', 'NN', iFNN)
 
 
     #===================================================================================================================================
@@ -83,35 +96,50 @@ class FNN_BbB(NN):
     #===================================================================================================================================
     def call(self, inputs, training=False):
 
+        y0 = inputs
+        for f in self.PreLayersVecs:
+            y0 = f(y0, training=training)
+
         OutputVec = []
         for iFNN in range(self.NFNNs):
-            y  = inputs
-    
+            y = y0
+
             for f in self.FNNLayersVecs[iFNN]:
                 y = f(y, training=training)
 
             OutputVec.append(y)
 
-        if (self.NFNNs > 1):
-            OutputConcat = tf.keras.layers.Concatenate(axis=1)(OutputVec)
-        else:
-            OutputConcat = OutputVec[0]
+
+
+        # OutputVec = []
+        # for iFNN in range(self.NFNNs):
+        #     y  = inputs
+    
+        #     for f in self.FNNLayersVecs[iFNN]:
+        #         y = f(y, training=training)
+
+        #     OutputVec.append(y)
+
 
 
         if (self.CalibrateSigmaLFlg):
 
-            def normal_sp(params): 
+            def normal_sp(OutputVec): 
+                # params_1 = OutputVec[0]
+                # params_2 = OutputVec[1]
+                params_1, params_2 = tf.split(OutputVec[0], 2, axis=1)
                 #dist = tfp.distributions.Normal(loc=params[:,0:1], scale=1e-3 + tf.math.softplus(0.05 * params[:,1:2])) 
-                dist = tfp.distributions.MultivariateNormalDiag(loc=params[:,0:self.NVarsy], scale_diag=1e-8 + tf.math.softplus(0.05 * params[:,self.NVarsy:])) 
+                dist = tfp.distributions.MultivariateNormalDiag(loc=params_1, scale_diag=(1e-8 + tf.math.softplus(0.05 * params_2)) )
                 return dist
         else:
 
-            def normal_sp(params): 
+            def normal_sp(OutputVec): 
+                params_1 = OutputVec[0]
                 #dist = tfp.distributions.Normal(loc=params[:,0:1], scale=1e-3 + tf.math.softplus(0.05 * params[:,1:2])) 
-                dist = tfp.distributions.MultivariateNormalDiag(loc=params, scale_diag=self.SigmaLike)
+                dist = tfp.distributions.MultivariateNormalDiag(loc=params_1, scale_diag=self.SigmaLike)
                 return dist
 
-        OutputFinal = tfp.layers.DistributionLambda(normal_sp)(OutputConcat) 
+        OutputFinal = tfp.layers.DistributionLambda(normal_sp)(OutputVec) 
 
 
         return OutputFinal

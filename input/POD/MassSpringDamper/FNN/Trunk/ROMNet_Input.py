@@ -8,11 +8,10 @@ class inputdata(object):
 
     def __init__(self, WORKSPACE_PATH, ROMNetFldr):
 
-        self.NRODs               = 7
         self.iROD                = 1
         POD_NAME                 = str(self.iROD) #'All'
 
-        self.NPODs               = 64
+        self.NPODs               = 2
 
 
 
@@ -34,9 +33,9 @@ class inputdata(object):
         ### Paths
         self.WORKSPACE_PATH      = WORKSPACE_PATH                                                         # os.getenv('WORKSPACE_PATH')      
         self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
-        self.PathToRunFld        = self.ROMNetFldr   + '/../0DReact_Isobaric_100Cases_POD_'+POD_NAME+'_Trunk/'           # Path To Training Folder
+        self.PathToRunFld        = self.ROMNetFldr   + '/../MSD_100Cases_POD_'+POD_NAME+'_Trunk/'           # Path To Training Folder
         self.PathToLoadFld       = None                                                                   # Path To Pre-Trained Model Folder
-        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_100Cases_POD/'+str(self.NRODs)+'PC/OneByOne/POD_'+POD_NAME+'/Trunk/'           # Path To Training Data Folder 
+        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/MSD_100Cases/Orig/OneByOne/POD_'+POD_NAME+'/Trunk/'           # Path To Training Data Folder 
 
         #=======================================================================================================================================
         ### Physical System
@@ -55,18 +54,16 @@ class inputdata(object):
 
         #=======================================================================================================================================
         ## NN Model Structure
-        self.SurrogateType       = 'FNN_BbB'                                                                  # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
+        self.SurrogateType       = 'FNN'                                                                  # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
         self.ProbApproach        = 'Deterministic'                                                        # Probabilistic Technique for Training the BNN (if Any)
         self.InputVars           = ['t']                                                                 # List Containing the Input Data Column Names 
         self.OutputVars          = ['POD_'+str(iPOD+1) for iPOD in range(self.NPODs)]                                                              # List Containing the Output Data Column Names
-        self.TransFun            = {'log': ['t']} 
+        self.TransFun            = None#{'log': ['t']} 
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Input Data
-        self.Layers              = [np.array([32,64,128,128,self.NPODs*2])]                                           # List Containing the No of Neurons per Each NN's Layer
-        self.ActFun              = [['tanh','tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-        self.DropOutRate         = 5.e-5                                                                  # NN's Layers Dropout Rate
+        self.Layers              = [np.array([32,32,32,self.NPODs])]                                           # List Containing the No of Neurons per Each NN's Layer
+        self.ActFun              = [['tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+        self.DropOutRate         = 1.e-5                                                                  # NN's Layers Dropout Rate
         self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
-        #self.SigmaLike           = [1.e-10]*self.NPODs
-        self.RunEagerlyFlg       = True
 
         #=======================================================================================================================================
         ### Training Quanties
@@ -75,16 +72,16 @@ class inputdata(object):
         self.NEpoch              = 100000                                                                 # Number of Epoches
         self.BatchSize           = 64                                                                    # Batch Size for Training
         self.ValidBatchSize      = 64                                                                    # Batch Size for Validation
-        self.Losses              = {'pts': {'name': 'NLL', 'axis': 0}} # Loss Functions
+        self.Losses              = {'pts': {'name': 'MSE', 'axis': 0}} # Loss Functions
         self.LossWeights         = {'pts': 1.}  
         # self.Losses              = {'ics': {'name': 'MSE', 'axis': 0}, 'res': {'name': 'MSE', 'axis': 0}} # Loss Functions
         # self.LossWeights         = {'ics': 1., 'res': 1.}     
         self.Metrics             = None                                                                   # List of Metric Functions
-        self.LR                  = 5.e-4                                                                  # Initial Learning Rate
-        self.LRDecay             = ["exponential", 5000, 0.98]
+        self.LR                  = 1.e-3                                                                 # Initial Learning Rate
+        self.LRDecay             = ["exponential", 3000, 0.95]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
-        self.WeightDecay         = np.array([1.e-17, 1.e-17], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
+        self.WeightDecay         = np.array([1.e-9, 1.e-9], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
         self.Callbacks           = {
             'base': {
                 'stateful_metrics': None

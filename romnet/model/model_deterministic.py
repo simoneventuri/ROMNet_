@@ -227,18 +227,18 @@ class Model_Deterministic(Model):
         #-----------------------------------------------------------------------
         print('\n[ROMNet]:   Creating the Models Graph')
 
-        # self.graph = self.net.get_graph()
+        self.graph = self.net.get_graph()
 
-        # self.graph.summary()
+        self.graph.summary()
 
-        # with open(self.PathToRunFld+'/Model/Model_Summary.txt', 'w') as f:
-        #     self.graph.summary(print_fn=lambda x: f.write(x + '\n'))
+        with open(self.PathToRunFld+'/Model/Model_Summary.txt', 'w') as f:
+            self.graph.summary(print_fn=lambda x: f.write(x + '\n'))
         
-        # tf.keras.utils.plot_model(self.graph, self.PathToRunFld + 
-        #                                                      "/Model/Model.png")
+        tf.keras.utils.plot_model(self.graph, self.PathToRunFld + 
+                                                             "/Model/Model.png")
 
-        # ModelFile = self.PathToRunFld + '/Model/' + self.net.Name + '/'
-        # self.graph.save(ModelFile)
+        ModelFile = self.PathToRunFld + '/Model/' + self.net.Name + '/'
+        self.graph.save(ModelFile)
 
         #-----------------------------------------------------------------------
 
@@ -398,7 +398,7 @@ class Model_Deterministic(Model):
 
         print('\n[ROMNet]:   Loading ML Model Parameters from File: ', FilePath)
 
-        self.net.load_weights(FilePath, by_name=True, skip_mismatch=False)
+        self.net.load_weights(FilePath, by_name=True)#, skip_mismatch=False)
 
     #===========================================================================
 

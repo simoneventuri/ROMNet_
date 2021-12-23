@@ -131,7 +131,8 @@ class NN(tf.keras.Model):
         self.attention_mask    = None
         self.residual          = None
 
-        self.TrainTrunkFlg     = False
+        self.TrainTrunkFlg     = True
+        self.TrainBranchFlg    = True
         
 
     # Configuration update
@@ -481,9 +482,12 @@ class NN(tf.keras.Model):
             #         print(Key_, ': x0.shape = ', x0.shape, '; b0.shape = ', b0.shape)
             #         Layer_.set_weights([x0, b0])
 
-            if (BlockName == 'Trunk'):
-                if (not self.TrainTrunkFlg):
-                    Layer_.trainable = False
+            if (BlockName == 'Trunk') and (not self.TrainTrunkFlg):# and (iLayer < NLayers-1):
+                Layer_.trainable = False
+
+            if (BlockName == 'Branch') and (not self.TrainBranchFlg) and (iLayer < NLayers-1):
+                Layer_.trainable = False
+
             LayersVec.append(Layer_)
 
 
@@ -547,6 +551,122 @@ class NN(tf.keras.Model):
 
 
     #=======================================================================================================================================
+    def fnn_first_half_block_tfp(self, xnorm, BlockName, NNName, Idx, InputVars, LayersVec=[]):
+
+        if (BlockName != ''):
+            VarName = ''
+        else:
+            VarName = '_' + self.OutputVars[Idx]
+            
+        if ('POD' in self.OutputVars[Idx]):
+            VarName = ''
+            NNName  = 'Trunk_'+str(Idx+1)
+
+
+        ### Transform Layer
+
+        if (self.TransFun):
+            for ifun, fun in enumerate(self.TransFun):
+                vars_list = self.TransFun[fun]
+
+                indxs = []
+                for ivar, var in enumerate(InputVars):
+                    if var in vars_list:
+                        indxs.append(ivar)
+
+                if (len(indxs) > 0):
+                    layer_name = NNName + VarName + '_Transformation_' + fun
+                    LayersVec.append( TransLayer(fun, len(InputVars), indxs, name=layer_name) )
+            
+
+        ### Normalizer Layer
+
+        if (self.NormalizeInput):
+            # if (self.NN_Transfer_Model is not None): 
+            #     Mean        = self.NN_Transfer_Model.get_layer('normalization').mean.numpy()
+            #     Variance    = self.NN_Transfer_Model.get_layer('normalization').variance.numpy()
+            #     normalizer  = tf.keras.layers.Normalization(mean=Mean, variance=Variance)
+            # else:
+            #     normalizer  = tf.keras.layers.Normalization()
+            #     normalizer.adapt(np.array(xnorm))
+            # LayersVec.append( normalizer )
+            layer_name = NNName + VarName + '_Normalization'
+            if ( (BlockName == 'Trunk') and (self.PathToPODFile) ):
+                with h5py.File(self.PathToPODFile, "r") as f:
+                    Key_       = 'NN_POD_1_Normalization'
+                    Mean       = np.array(f[Key_+'/mean:0'][:])
+                    Variance   = np.array(f[Key_+'/variance:0'][:])[...,np.newaxis]
+                    MinVals    = np.array(f[Key_+'/min_vals:0'][:])[...,np.newaxis]
+                    MaxVals    = np.array(f[Key_+'/max_vals:0'][:])[...,np.newaxis]
+                    normalizer = CustomNormalization(mean=Mean, variance=Variance, min_vals=MinVals, max_vals=MaxVals, name=layer_name)
+            elif (self.NN_Transfer_Model is not None): 
+                Mean        = self.NN_Transfer_Model.get_layer(layer_name).mean.numpy()
+                Variance    = self.NN_Transfer_Model.get_layer(layer_name).variance.numpy()
+                MinVals     = self.NN_Transfer_Model.get_layer(layer_name).min_vals.numpy()
+                MaxVals     = self.NN_Transfer_Model.get_layer(layer_name).max_vals.numpy()
+                normalizer  = CustomNormalization(mean=Mean, variance=Variance, min_vals=MinVals, max_vals=MaxVals, name=layer_name)
+            else:
+                normalizer  = CustomNormalization(name=layer_name)
+                normalizer.adapt(np.array(xnorm))
+            LayersVec.append( normalizer )
+        return LayersVec
+
+    #=======================================================================================================================================
+
+
+
+    #=======================================================================================================================================
+    def fnn_second_half_block_tfp(self, BlockName, NNName, Idx, LayersVec=[]):
+
+        kernel_divergence_fn = lambda q, p, _: tfp.distributions.kl_divergence(q, p) / (self.BatchSize * 1.0)
+        bias_divergence_fn   = lambda q, p, _: tfp.distributions.kl_divergence(q, p) / (self.BatchSize * 1.0)
+    
+        if (BlockName != ''):
+            VarName = ''
+        else:
+            VarName = '_' + self.OutputVars[Idx]
+            
+        if ('POD' in self.OutputVars[Idx]):
+            VarName = ''
+            NNName  = 'Trunk_'+str(Idx+1)
+
+
+        ### Hidden Layers
+
+        kW1      = self.WeightDecay[0]
+        kW2      = self.WeightDecay[1]
+        NNLayers = getattr(self, BlockName+'Layers')[Idx]
+        NLayers  = len(NNLayers)
+        ActFun   = getattr(self, BlockName+'ActFun')[Idx]
+
+        for iLayer in range(NLayers):
+            WeightsName = NNName + VarName + '_HL' + str(iLayer+1) 
+            layer_name   = WeightsName 
+
+            Layer_ = tfp.layers.DenseFlipout(units                = np.int32(NNLayers[iLayer]),
+                                           activation           = ActFun[iLayer],
+                                           bias_posterior_fn    = tfp.layers.util.default_mean_field_normal_fn(),
+                                           bias_prior_fn        = tfp.layers.default_multivariate_normal_fn,
+                                           kernel_divergence_fn = kernel_divergence_fn,
+                                           bias_divergence_fn   = bias_divergence_fn,
+                                           name                 = layer_name)
+            
+
+            if (BlockName == 'Trunk') and (not self.TrainTrunkFlg):
+                Layer_.trainable = False
+
+            if (BlockName == 'Branch') and (not self.TrainBranchFlg):
+                Layer_.trainable = False
+
+            LayersVec.append(Layer_)
+
+        return LayersVec
+
+    #=======================================================================================================================================
+
+
+
+    #=======================================================================================================================================
     def fnn_block_tfp(self, xnorm, BlockName, NNName, Idx, InputVars, LayersVec=[]):
 
         kernel_divergence_fn = lambda q, p, _: tfp.distributions.kl_divergence(q, p) / (self.BatchSize * 1.0)
@@ -559,7 +679,7 @@ class NN(tf.keras.Model):
             
         if ('POD' in self.OutputVars[Idx]):
             VarName = ''
-            NNName  = 'Trunk_1'
+            NNName  = 'Trunk_'+str(Idx+1)
 
 
         ### Transform Layer
@@ -631,9 +751,12 @@ class NN(tf.keras.Model):
                                            name                 = layer_name)
             
 
-            if (BlockName == 'Trunk'):
-                if (not self.TrainTrunkFlg):
-                    Layer_.trainable = False
+            if (BlockName == 'Trunk') and (not self.TrainTrunkFlg):
+                Layer_.trainable = False
+
+            if (BlockName == 'Branch') and (not self.TrainBranchFlg):
+                Layer_.trainable = False
+
             LayersVec.append(Layer_)
 
         return LayersVec

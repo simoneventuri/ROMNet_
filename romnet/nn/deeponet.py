@@ -80,7 +80,10 @@ class DeepONet(NN):
         except:
             self.TrainTrunkFlg    = True
 
-
+        try:
+            self.TrainBranchFlg   = InputData.TrainBranchFlg
+        except:
+            self.TrainBranchFlg   = True
 
 
         ### Trunks
