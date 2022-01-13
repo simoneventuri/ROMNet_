@@ -76,9 +76,9 @@ class inputdata(object):
         self.OutputVars          = ['POD_'+str(iPOD+1) for iPOD in range(self.NPODs)]                                                              # List Containing the Output Data Column Names
         self.TransFun            = None#{'log': ['t']} 
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Input Data
-        self.Layers              = [np.array([2,64,64,64,self.NPODs])]                                           # List Containing the No of Neurons per Each NN's Layer
-        self.ActFun              = [['tanh','tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-        self.DropOutRate         = 1.e-4                                                                 # NN's Layers Dropout Rate
+        self.Layers              = [np.array([2,64,64,64,64,64,self.NPODs])]                                           # List Containing the No of Neurons per Each NN's Layer
+        self.ActFun              = [['linear','tanh','tanh','tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+        self.DropOutRate         = 1.e-4                                                                # NN's Layers Dropout Rate
         self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
         self.NormalizeOutput     = True      
 
@@ -88,18 +88,18 @@ class inputdata(object):
         self.TransferFlg         = False                                                                  # Flag for Using Transfer Learning
         self.PathToTransFld      = ''                                                                     # Folder Containing the Trained Model to be Used for Transfer Learning 
         self.NEpoch              = 100000                                                                 # Number of Epoches
-        self.BatchSize           = 16                                                                    # Batch Size for Training
-        self.ValidBatchSize      = 16                                                                    # Batch Size for Validation
+        self.BatchSize           = 32                                                                    # Batch Size for Training
+        self.ValidBatchSize      = 32                                                                    # Batch Size for Validation
         self.Losses              = {'pts': {'name': 'MSE', 'axis': 0}} # Loss Functions
         self.LossWeights         = {'pts': 1.}  
         # self.Losses              = {'ics': {'name': 'MSE', 'axis': 0}, 'res': {'name': 'MSE', 'axis': 0}} # Loss Functions
         # self.LossWeights         = {'ics': 1., 'res': 1.}     
         self.Metrics             = None                                                                   # List of Metric Functions
-        self.LR                  = 1.e-3                                                                 # Initial Learning Rate
+        self.LR                  = 5.e-4                                                                 # Initial Learning Rate
         self.LRDecay             = ["exponential", 5000, 0.98]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
-        self.WeightDecay         = np.array([1.e-7, 1.e-17], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
+        self.WeightDecay         = np.array([1.e-17, 1.e-17], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
         self.Callbacks           = {
             'base': {
                 'stateful_metrics': None

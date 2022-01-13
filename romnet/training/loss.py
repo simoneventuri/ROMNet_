@@ -89,6 +89,18 @@ def mse(axis):
     return mean_squared_error
 
 
+@tf.keras.utils.register_keras_serializable(package='ROMNet', name='CCE')
+def cce(axis):
+    def categorical_crossentropy(y_true, y_pred, attention_mask=None):
+        #n_points = tf.cast(tf.shape(y_true)[0], tf.float64)
+        y_pred     = tf.convert_to_tensor(y_pred)
+        y_pred_log = tf.math.log(y_pred)
+        y_true     = tf.cast(y_true, y_pred.dtype)
+        return - K.sum(y_true * y_pred_log , axis=-1) #/ (n_points)
+
+    return categorical_crossentropy
+
+
 @tf.keras.utils.register_keras_serializable(package='ROMNet', name='MSLE')
 def msle(axis):
     def mean_squared_logarithmic_error(y_true, y_pred):
@@ -185,6 +197,9 @@ def get_loss(name, axis=-1):
 
     elif (LF == 'msle'):
         return mae(axis)
+
+    elif (LF == 'cce'):
+        return cce(axis)
 
     elif (LF == 'zero'):
         return zero

@@ -41,6 +41,11 @@ class FNN(NN):
         self.WeightDecay       = InputData.WeightDecay
         self.NFNNs             = len(InputData.Layers)
 
+        try:
+            self.SoftMaxFlg    = InputData.SoftMaxFlg
+        except:
+            self.SoftMaxFlg    = False
+
         self.DropOutRate       = InputData.DropOutRate
         self.DropOutPredFlg    = InputData.DropOutPredFlg
 
@@ -102,7 +107,7 @@ class FNN(NN):
 
     #===================================================================================================================================
     def get_graph(self):
-            input_  = tf.keras.Input(shape=[self.NVarsx,])
-            return tf.keras.Model(inputs=[input_], outputs=[self.call(input_)] )
+        input_  = tf.keras.Input(shape=[self.NVarsx,])
+        return tf.keras.Model(inputs=[input_], outputs=[self.call(input_)] )
 
     #===================================================================================================================================

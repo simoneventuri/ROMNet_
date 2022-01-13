@@ -9,7 +9,8 @@ class inputdata(object):
     def __init__(self, WORKSPACE_PATH, ROMNetFldr):
 
         self.iROD                = 1
-        POD_NAME                 = str(self.iROD) #'All'
+        # POD_NAME                 = str(self.iROD)
+        POD_NAME                 = 'All'
 
         self.NPODs               = 2
 
@@ -35,7 +36,8 @@ class inputdata(object):
         self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
         self.PathToRunFld        = self.ROMNetFldr   + '/../MSD_100Cases_POD_'+POD_NAME+'_Trunk/'           # Path To Training Folder
         self.PathToLoadFld       = None                                                                   # Path To Pre-Trained Model Folder
-        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/MSD_100Cases/Orig/OneByOne/POD_'+POD_NAME+'/Trunk/'           # Path To Training Data Folder 
+        # self.PathToDataFld       = self.ROMNetFldr   + '/../Data/MSD_100Cases/Orig/OneByOne/POD_'+POD_NAME+'/Trunk/'           # Path To Training Data Folder 
+        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/MSD_100Cases/Orig/All/POD_'+POD_NAME+'/Trunk/'           # Path To Training Data Folder 
 
         #=======================================================================================================================================
         ### Physical System
@@ -62,7 +64,7 @@ class inputdata(object):
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Input Data
         self.Layers              = [np.array([32,32,32,self.NPODs])]                                           # List Containing the No of Neurons per Each NN's Layer
         self.ActFun              = [['tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-        self.DropOutRate         = 1.e-5                                                                  # NN's Layers Dropout Rate
+        self.DropOutRate         = 1.e-10                                                                  # NN's Layers Dropout Rate
         self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
 
         #=======================================================================================================================================
@@ -81,7 +83,7 @@ class inputdata(object):
         self.LRDecay             = ["exponential", 3000, 0.95]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
-        self.WeightDecay         = np.array([1.e-9, 1.e-9], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
+        self.WeightDecay         = np.array([1.e-6, 1.e-6], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
         self.Callbacks           = {
             'base': {
                 'stateful_metrics': None

@@ -123,6 +123,7 @@ class NN(tf.keras.Model):
         self.DropOutRate       = 0.
         self.DropOutPredFlg    = False
         self.BranchSoftmaxFlg  = False
+        self.SoftMaxFlg        = False
 
         self.BatchSize         = 0
  
@@ -458,7 +459,10 @@ class NN(tf.keras.Model):
                 WRegul = L1L2Regularizer(kW1_, kW2_, x0)
                 bRegul = L1L2Regularizer(kb1_, kWb_, b0)
             else:
-                WIni   = 'glorot_normal'
+                if (ActFun[iLayer] == 'relu'):
+                    WIni   = 'he_normal'
+                else:
+                    WIni   = 'glorot_normal'
                 bIni   = 'zeros'
                 WRegul = regularizers.l1_l2(l1=kW1_, l2=kW2_)
                 bRegul = regularizers.l1_l2(l1=kb1_, l2=kb2_)
@@ -482,11 +486,15 @@ class NN(tf.keras.Model):
             #         print(Key_, ': x0.shape = ', x0.shape, '; b0.shape = ', b0.shape)
             #         Layer_.set_weights([x0, b0])
 
-            if (BlockName == 'Trunk') and (not self.TrainTrunkFlg):# and (iLayer < NLayers-1):
+            if (BlockName == 'Trunk') and (not self.TrainTrunkFlg) and (iLayer < NLayers):
                 Layer_.trainable = False
 
-            if (BlockName == 'Branch') and (not self.TrainBranchFlg) and (iLayer < NLayers-1):
-                Layer_.trainable = False
+            if (BlockName == 'Branch') and (not self.TrainBranchFlg):
+                if (not self.BranchSoftmaxFlg):
+                    if (iLayer < NLayers):
+                        Layer_.trainable = False
+                else:
+                    Layer_.trainable = False
 
             LayersVec.append(Layer_)
 
@@ -537,7 +545,7 @@ class NN(tf.keras.Model):
 
 
 
-        if ((BlockName == 'Branch') and (self.BranchSoftmaxFlg)):
+        if ( ((BlockName == 'Branch') and (self.BranchSoftmaxFlg)) or (self.SoftMaxFlg) ):
 
             ### SoftMax Layer 
 
@@ -616,7 +624,46 @@ class NN(tf.keras.Model):
 
 
     #=======================================================================================================================================
-    def fnn_second_half_block_tfp(self, BlockName, NNName, Idx, LayersVec=[]):
+    def fnn_second_half_block_tfp(self, BlockName, NNName, Idx, Type, LayersVec=[]):
+        Idx_ = Idx//2
+
+        if (Type != ''):
+            Type = '_'+Type
+
+        # Define the prior weight distribution as Normal of mean=0 and stddev=1.
+        # Note that, in this example, the we prior distribution is not trainable,
+        # as we fix its parameters.
+        def prior(kernel_size, bias_size, pars0, dtype=tf.float64):
+            n = kernel_size + bias_size
+            prior_model = tf.keras.Sequential(
+                [
+                    tfp.layers.DistributionLambda(
+                        lambda t: tfp.distributions.MultivariateNormalDiag(
+                            loc=pars0, scale_diag=tf.ones(n, dtype=dtype)
+                        )
+                    )
+                ]
+            )
+            return prior_model
+
+        # Define variational posterior weight distribution as multivariate Gaussian.
+        # Note that the learnable parameters for this distribution are the means,
+        # variances, and covariances.
+        def posterior(kernel_size, bias_size, dtype=tf.float64):
+            n = kernel_size + bias_size
+            posterior_model = tf.keras.Sequential(
+                [
+                    # tfp.layers.VariableLayer(
+                    #     tfp.layers.MultivariateNormalTriL.params_size(n), dtype=dtype
+                    # ),
+                    # tfp.layers.MultivariateNormalTriL(n),
+                    tfp.layers.VariableLayer(
+                        tfp.layers.IndependentNormal.params_size(n), dtype=dtype
+                    ),
+                    tfp.layers.IndependentNormal(n),
+                ]
+            )
+            return posterior_model
 
         kernel_divergence_fn = lambda q, p, _: tfp.distributions.kl_divergence(q, p) / (self.BatchSize * 1.0)
         bias_divergence_fn   = lambda q, p, _: tfp.distributions.kl_divergence(q, p) / (self.BatchSize * 1.0)
@@ -624,11 +671,11 @@ class NN(tf.keras.Model):
         if (BlockName != ''):
             VarName = ''
         else:
-            VarName = '_' + self.OutputVars[Idx]
+            VarName = '_' + self.OutputVars[Idx_]
             
-        if ('POD' in self.OutputVars[Idx]):
+        if ('POD' in self.OutputVars[Idx_]):
             VarName = ''
-            NNName  = 'Trunk_'+str(Idx+1)
+            NNName  = 'Trunk_'+str(Idx_+1)+Type
 
 
         ### Hidden Layers
@@ -641,121 +688,90 @@ class NN(tf.keras.Model):
 
         for iLayer in range(NLayers):
             WeightsName = NNName + VarName + '_HL' + str(iLayer+1) 
-            layer_name   = WeightsName 
-
-            Layer_ = tfp.layers.DenseFlipout(units                = np.int32(NNLayers[iLayer]),
-                                           activation           = ActFun[iLayer],
-                                           bias_posterior_fn    = tfp.layers.util.default_mean_field_normal_fn(),
-                                           bias_prior_fn        = tfp.layers.default_multivariate_normal_fn,
-                                           kernel_divergence_fn = kernel_divergence_fn,
-                                           bias_divergence_fn   = bias_divergence_fn,
-                                           name                 = layer_name)
-            
-
-            if (BlockName == 'Trunk') and (not self.TrainTrunkFlg):
-                Layer_.trainable = False
-
-            if (BlockName == 'Branch') and (not self.TrainBranchFlg):
-                Layer_.trainable = False
-
-            LayersVec.append(Layer_)
-
-        return LayersVec
-
-    #=======================================================================================================================================
-
-
-
-    #=======================================================================================================================================
-    def fnn_block_tfp(self, xnorm, BlockName, NNName, Idx, InputVars, LayersVec=[]):
-
-        kernel_divergence_fn = lambda q, p, _: tfp.distributions.kl_divergence(q, p) / (self.BatchSize * 1.0)
-        bias_divergence_fn   = lambda q, p, _: tfp.distributions.kl_divergence(q, p) / (self.BatchSize * 1.0)
-    
-        if (BlockName != ''):
-            VarName = ''
-        else:
-            VarName = '_' + self.OutputVars[Idx]
-            
-        if ('POD' in self.OutputVars[Idx]):
-            VarName = ''
-            NNName  = 'Trunk_'+str(Idx+1)
-
-
-        ### Transform Layer
-
-        if (self.TransFun):
-            for ifun, fun in enumerate(self.TransFun):
-                vars_list = self.TransFun[fun]
-
-                indxs = []
-                for ivar, var in enumerate(InputVars):
-                    if var in vars_list:
-                        indxs.append(ivar)
-
-                if (len(indxs) > 0):
-                    layer_name = NNName + VarName + '_Transformation_' + fun
-                    LayersVec.append( TransLayer(fun, len(InputVars), indxs, name=layer_name) )
-            
-
-        ### Normalizer Layer
-
-        if (self.NormalizeInput):
-            # if (self.NN_Transfer_Model is not None): 
-            #     Mean        = self.NN_Transfer_Model.get_layer('normalization').mean.numpy()
-            #     Variance    = self.NN_Transfer_Model.get_layer('normalization').variance.numpy()
-            #     normalizer  = tf.keras.layers.Normalization(mean=Mean, variance=Variance)
-            # else:
-            #     normalizer  = tf.keras.layers.Normalization()
-            #     normalizer.adapt(np.array(xnorm))
-            # LayersVec.append( normalizer )
-            layer_name = NNName + VarName + '_Normalization'
-            if ( (BlockName == 'Trunk') and (self.PathToPODFile) ):
-                with h5py.File(self.PathToPODFile, "r") as f:
-                    Key_       = 'NN_POD_1_Normalization'
-                    Mean       = np.array(f[Key_+'/mean:0'][:])
-                    Variance   = np.array(f[Key_+'/variance:0'][:])[...,np.newaxis]
-                    MinVals    = np.array(f[Key_+'/min_vals:0'][:])[...,np.newaxis]
-                    MaxVals    = np.array(f[Key_+'/max_vals:0'][:])[...,np.newaxis]
-                    normalizer = CustomNormalization(mean=Mean, variance=Variance, min_vals=MinVals, max_vals=MaxVals, name=layer_name)
-            elif (self.NN_Transfer_Model is not None): 
-                Mean        = self.NN_Transfer_Model.get_layer(layer_name).mean.numpy()
-                Variance    = self.NN_Transfer_Model.get_layer(layer_name).variance.numpy()
-                MinVals     = self.NN_Transfer_Model.get_layer(layer_name).min_vals.numpy()
-                MaxVals     = self.NN_Transfer_Model.get_layer(layer_name).max_vals.numpy()
-                normalizer  = CustomNormalization(mean=Mean, variance=Variance, min_vals=MinVals, max_vals=MaxVals, name=layer_name)
+            layer_name  = WeightsName 
+            if (iLayer == 0):
+                NIn = self.NVarsx
             else:
-                normalizer  = CustomNormalization(name=layer_name)
-                normalizer.adapt(np.array(xnorm))
-            LayersVec.append( normalizer )
+                NIn = NNLayers[iLayer-1]
+            NOut = NNLayers[iLayer]
 
+            if (Type == '') and (iLayer<NLayers-1):
+                Layer_ = tfp.layers.DenseLocalReparameterization(units              = np.int32(NNLayers[iLayer]),
+                                                                 activation           = ActFun[iLayer],
+                                                                 bias_posterior_fn    = tfp.layers.util.default_mean_field_normal_fn(),
+                                                                 bias_prior_fn        = tfp.layers.default_multivariate_normal_fn,
+                                                                 kernel_divergence_fn = kernel_divergence_fn,
+                                                                 bias_divergence_fn   = bias_divergence_fn,
+                                                                 name                 = layer_name)
 
-        ### Hidden Layers
+                # Layer_ = tfp.layers.DenseFlipout(units              = np.int32(NNLayers[iLayer]),
+                #                                activation           = ActFun[iLayer],
+                #                                bias_posterior_fn    = tfp.layers.util.default_mean_field_normal_fn(),
+                #                                bias_prior_fn        = tfp.layers.default_multivariate_normal_fn,
+                #                                kernel_divergence_fn = kernel_divergence_fn,
+                #                                bias_divergence_fn   = bias_divergence_fn,
+                #                                name                 = layer_name)
+                
+                # if (self.PathToLoadFile is not None):
+                #     f       = h5py.File(self.PathToLoadFile, 'r')
+                #     dset    = f[layer_name+'/'+layer_name+'/']
+                #     x0      = dset['kernel:0'][...].flatten()
+                #     b0      = dset['bias:0'][...]
+                #     f.close()
+                # else:
+                #     x0      = np.zeros(np.int32(NIn*NOut), dtype=np.float64)
+                #     b0      = np.zeros(np.int32(NOut),     dtype=np.float64)
+                # Layer_  = DenseVariational_Mod(     units             = NOut,
+                #                                     kernel0           = x0,
+                #                                     bias0             = b0, 
+                #                                     make_prior_fn     = prior,
+                #                                     make_posterior_fn = posterior,
+                #                                     kl_weight         = 1. / self.BatchSize,
+                #                                     activation        = ActFun[iLayer],
+                #                                     name              = layer_name)
 
-        kW1      = self.WeightDecay[0]
-        kW2      = self.WeightDecay[1]
-        NNLayers = getattr(self, BlockName+'Layers')[Idx]
-        NLayers  = len(NNLayers)
-        ActFun   = getattr(self, BlockName+'ActFun')[Idx]
+            else:
+                kW1_ = kW1
+                kW2_ = kW2
+                kb1_ = kW1
+                kb2_ = kW2
 
-        for iLayer in range(NLayers):
-            WeightsName = NNName + VarName + '_HL' + str(iLayer+1) 
-            layer_name   = WeightsName 
+                if (self.NN_Transfer_Model is not None):
+                    x0     = self.NN_Transfer_Model.get_layer(layer_name).kernel.numpy()
+                    b0     = self.NN_Transfer_Model.get_layer(layer_name).bias.numpy()
+                    WIni   = tf.keras.initializers.RandomNormal(mean=x0, stddev=1.e-10)
+                    bIni   = tf.keras.initializers.RandomNormal(mean=b0, stddev=1.e-10)
+                    WRegul = L1L2Regularizer(kW1_, kW2_, x0)
+                    bRegul = L1L2Regularizer(kb1_, kWb_, b0)
+                else:
+                    if (ActFun[iLayer] == 'relu'):
+                        WIni   = 'he_normal'
+                    else:
+                        WIni   = 'glorot_normal'
+                    bIni   = 'zeros'
+                    WRegul = regularizers.l1_l2(l1=kW1_, l2=kW2_)
+                    bRegul = regularizers.l1_l2(l1=kb1_, l2=kb2_)
 
-            Layer_ = tfp.layers.DenseFlipout(units                = np.int32(NNLayers[iLayer]),
-                                           activation           = ActFun[iLayer],
-                                           bias_posterior_fn    = tfp.layers.util.default_mean_field_normal_fn(),
-                                           bias_prior_fn        = tfp.layers.default_multivariate_normal_fn,
-                                           kernel_divergence_fn = kernel_divergence_fn,
-                                           bias_divergence_fn   = bias_divergence_fn,
-                                           name                 = layer_name)
-            
+                Layer_ = tf.keras.layers.Dense(units              = NOut,
+                                               activation         = ActFun[iLayer],
+                                               use_bias           = True,
+                                               kernel_initializer = WIni,
+                                               bias_initializer   = bIni,
+                                               kernel_regularizer = WRegul,
+                                               #bias_regularizer   = bRegul,
+                                               name               = layer_name)
+                
+                
 
-            if (BlockName == 'Trunk') and (not self.TrainTrunkFlg):
+            if (BlockName == 'Trunk') and (not self.TrainTrunkFlg) and (iLayer < NLayers):
                 Layer_.trainable = False
 
             if (BlockName == 'Branch') and (not self.TrainBranchFlg):
-                Layer_.trainable = False
+                if (not self.BranchSoftmaxFlg):
+                    if (iLayer < NLayers):
+                        Layer_.trainable = False
+                else:
+                    Layer_.trainable = False
 
             LayersVec.append(Layer_)
 
@@ -766,17 +782,17 @@ class NN(tf.keras.Model):
 
 
     #=======================================================================================================================================
-    def deeponet_final_layer(self, Idx):
+    def deeponet_final_layer(self, Idx, Name):
 
-        layer_name      = 'FinalScaling_' + self.OutputVars[Idx]
-        if (self.FinalLayerFlg):
+        layer_name      = Name + self.OutputVars[Idx]
+        if (self.FinalLayerFlg == 'Linear'):
             if (self.NN_Transfer_Model is not None):
                 x0     = self.NN_Transfer_Model.get_layer(layer_name).kernel.numpy()
                 b0     = self.NN_Transfer_Model.get_layer(layer_name).bias.numpy()
                 WIni   = tf.keras.initializers.RandomNormal(mean=x0, stddev=1.e-10)
                 bIni   = tf.keras.initializers.RandomNormal(mean=b0, stddev=1.e-10)
             else:
-                WIni   = 'glorot_normal'
+                WIni   = 'he_normal'
                 bIni   = 'zeros'
             OutLayer   = tf.keras.layers.Dense(units              = 1,
                                                activation         = 'linear',
@@ -784,7 +800,7 @@ class NN(tf.keras.Model):
                                                kernel_initializer = WIni,
                                                bias_initializer   = bIni,
                                                name               = layer_name)
-        else:
+        elif (self.FinalLayerFlg == 'Shift'):
             b0 = 0
             if (self.NN_Transfer_Model is not None): 
                 b0 = self.NN_Transfer_Model.get_layer(layer_name).bias.numpy()[0]
@@ -795,40 +811,162 @@ class NN(tf.keras.Model):
     #=======================================================================================================================================
 
 
+#===================================================================================================================================
+class DenseVariational_Mod(tf.keras.layers.Layer):
+    """Dense layer with random `kernel` and `bias`.
+    This layer uses variational inference to fit a "surrogate" posterior to the
+    distribution over both the `kernel` matrix and the `bias` terms which are
+    otherwise used in a manner similar to `tf.keras.layers.Dense`.
+    This layer fits the "weights posterior" according to the following generative
+    process:
+    ```none
+    [K, b] ~ Prior()
+    M = matmul(X, K) + b
+    Y ~ Likelihood(M)
+    ```
+    """
 
-    #=======================================================================================================================================
-    def deeponet_final_layer_tfp(self, Idx, OutputVars):
+    def __init__(self,
+                 units,
+                 kernel0,
+                 bias0,
+                 make_posterior_fn,
+                 make_prior_fn,
+                 kl_weight=None,
+                 kl_use_exact=False,
+                 activation=None,
+                 use_bias=True,
+                 activity_regularizer=None,
+                 **kwargs):
+        """Creates the `DenseVariational` layer.
+        Args:
+            units: Positive integer, dimensionality of the output space.
+            make_posterior_fn: Python callable taking `tf.size(kernel)`,
+                `tf.size(bias)`, `dtype` and returns another callable which takes an
+                input and produces a `tfd.Distribution` instance.
+            make_prior_fn: Python callable taking `tf.size(kernel)`, `tf.size(bias)`,
+                `dtype` and returns another callable which takes an input and produces a
+                `tfd.Distribution` instance.
+            kl_weight: Amount by which to scale the KL divergence loss between prior
+                and posterior.
+            kl_use_exact: Python `bool` indicating that the analytical KL divergence
+                should be used rather than a Monte Carlo approximation.
+            activation: Activation function to use.
+                If you don't specify anything, no activation is applied
+                (ie. "linear" activation: `a(x) = x`).
+            use_bias: Boolean, whether the layer uses a bias vector.
+            activity_regularizer: Regularizer function applied to
+                the output of the layer (its "activation")..
+            **kwargs: Extra arguments forwarded to `tf.keras.layers.Layer`.
+        """
+        if 'input_shape' not in kwargs and 'input_dim' in kwargs:
+            kwargs['input_shape'] = (kwargs.pop('input_dim'),)
+        super(DenseVariational_Mod, self).__init__(activity_regularizer=tf.keras.regularizers.get(activity_regularizer), **kwargs)
+        self.units = int(units)
 
-        kernel_divergence_fn = lambda q, p, _: tfp.distributions.kl_divergence(q, p) / (self.BatchSize * 1.0)
-        bias_divergence_fn   = lambda q, p, _: tfp.distributions.kl_divergence(q, p) / (self.BatchSize * 1.0)
+        self.kernel0            = kernel0
+        self.bias0              = bias0
+        self.pars0              = tf.concat([self.kernel0, self.bias0], 0)
 
-        ### Final Layer
-        layer_name      = 'FinalScaling_' + OutputVars[Idx]
-        # if (self.FinalLayerFlg):
-        OutLayer       = tfp.layers.DenseFlipout(units                = 1,
-                                                 activation           = 'linear',
-                                                 bias_posterior_fn    = tfp.layers.util.default_mean_field_normal_fn(),
-                                                 bias_prior_fn        = tfp.layers.default_multivariate_normal_fn,
-                                                 kernel_divergence_fn = kernel_divergence_fn,
-                                                 bias_divergence_fn   = bias_divergence_fn,
-                                                 name                 = layer_name)
+        self._make_posterior_fn = make_posterior_fn
+        self._make_prior_fn     = make_prior_fn
+        self._kl_divergence_fn  = _make_kl_divergence_penalty(kl_use_exact, weight=kl_weight)
 
-
-        # else:
-        #     b0 = 0
-        #     if (self.NN_Transfer_Model is not None): 
-        #         b0 = self.NN_Transfer_Model.get_layer(layer_name).bias.numpy()[0]
-        #     output_net = bias_layer(b0=b0, layer_name=layer_name)(output_P)
-
-        return OutLayer
-
-    #=======================================================================================================================================
+        self.activation         = tf.keras.activations.get(activation)
+        self.use_bias           = use_bias
+        self.supports_masking   = False
+        self.input_spec         = tf.keras.layers.InputSpec(min_ndim=2)
 
 
+    def build(self, input_shape):
+        dtype = tf.as_dtype(self.dtype or tf.keras.backend.floatx())
+        if not (dtype.is_floating or dtype.is_complex):
+            raise TypeError('Unable to build `Dense` layer with non-floating point dtype %s' % (dtype,))
+
+        input_shape = tf.TensorShape(input_shape)
+        last_dim    = tf.compat.dimension_value(input_shape[-1])
+        if last_dim is None:
+            raise ValueError('The last dimension of the inputs to `DenseVariational` should be defined. Found `None`.')
+        self.input_spec = tf.keras.layers.InputSpec(min_ndim=2, axes={-1: last_dim})
+
+        self._posterior = self._make_posterior_fn(
+                last_dim * self.units,
+                self.units if self.use_bias else 0,
+                dtype)
+
+        #pars0 = tf.zeros(tf.int32(last_dim * self.units + self.units), dtype=dtype)
+        self._prior = self._make_prior_fn(
+                last_dim * self.units,
+                self.units if self.use_bias else 0,
+                self.pars0, dtype)
+
+        self.built = True
 
 
+    def call(self, inputs):
+        dtype  = tf.as_dtype(self.dtype or tf.keras.backend.floatx())
+        inputs = tf.cast(inputs, dtype, name='inputs')
+
+        q = self._posterior(inputs)
+        r = self._prior(inputs)
+        self.add_loss(self._kl_divergence_fn(q, r))
+
+        w = tf.convert_to_tensor(value=q)
+        prev_units = self.input_spec.axes[-1]
+        if self.use_bias:
+            split_sizes = [prev_units * self.units, self.units]
+            kernel, bias = tf.split(w, split_sizes, axis=-1)
+        else:
+            kernel, bias = w, None
+
+        kernel = tf.reshape(kernel, shape=tf.concat([
+                tf.shape(kernel)[:-1],
+                [prev_units, self.units],
+        ], axis=0))
+        outputs = tf.matmul(inputs, kernel)
+
+        if self.use_bias:
+            outputs = tf.nn.bias_add(outputs, bias)
+
+        if self.activation is not None:
+            outputs = self.activation(outputs)  # pylint: disable=not-callable
+
+        return outputs
 
 
+def _make_kl_divergence_penalty(
+        use_exact_kl=False,
+        test_points_reduce_axis=(),  # `None` == "all"; () == "none".
+        test_points_fn=tf.convert_to_tensor,
+        weight=None):
+    """Creates a callable computing `KL[a,b]` from `a`, a `tfd.Distribution`."""
 
+    if use_exact_kl:
+        kl_divergence_fn = kullback_leibler.kl_divergence
+    else:
+        def kl_divergence_fn(distribution_a, distribution_b):
+            z = test_points_fn(distribution_a)
+            return tf.reduce_mean(
+                    distribution_a.log_prob(z) - distribution_b.log_prob(z),
+                    axis=test_points_reduce_axis)
 
-#=======================================================================================================================================
+    # Closure over: kl_divergence_fn, weight.
+    def _fn(distribution_a, distribution_b):
+        """Closure that computes KLDiv as a function of `a` as in `KL[a, b]`."""
+        with tf.name_scope('kldivergence_loss'):
+            kl = kl_divergence_fn(distribution_a, distribution_b)
+            if weight is not None:
+                kl = tf.cast(weight, dtype=kl.dtype) * kl
+            # Losses appended with the model.add_loss and are expected to be a single
+            # scalar, unlike model.loss, which is expected to be the loss per sample.
+            # Therefore, we reduce over all dimensions, regardless of the shape.
+            # We take the sum because (apparently) Keras will add this to the *post*
+            # `reduce_sum` (total) loss.
+            # TODO(b/126259176): Add end-to-end Keras/TFP test to ensure the API's
+            # align, particularly wrt how losses are aggregated (across batch
+            # members).
+            return tf.reduce_sum(kl, name='batch_total_kl_divergence')
+
+    return _fn
+#===================================================================================================================================
+

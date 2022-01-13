@@ -3,7 +3,10 @@ import tensorflow             as tf
 import tensorflow_probability as tfp
 import pandas                 as pd
 
+from tensorflow_probability.python.distributions import kullback_leibler
+
 from .nn                  import NN
+
 
 class FNN_BbB(NN):
     """Fully-connected neural network.
@@ -61,6 +64,10 @@ class FNN_BbB(NN):
 
         self.PathToPODFile          = None
 
+        try:
+            self.PathToLoadFile     = InputData.PathToLoadFile
+        except:
+            self.PathToLoadFile     = None
 
         self.BatchSize              = InputData.BatchSize
         try:
@@ -70,24 +77,13 @@ class FNN_BbB(NN):
             self.CalibrateSigmaLFlg = True
 
 
-
-
-        # self.FNNLayersVecs = {}
-        # for iFNN in range(self.NFNNs):
-
-        #     ## FNN Block
-        #     self.FNNLayersVecs[iFNN] = self.fnn_block_tfp(self.xnorm, '', 'NN', iFNN, self.InputVars)
-
-
-
         self.PreLayersVecs = self.fnn_first_half_block_tfp(self.xnorm, '', 'NN', 0, self.InputVars)
 
-        self.FNNLayersVecs = {}
-        for iFNN in range(self.NFNNs):
-
-            ## FNN Block
-            self.FNNLayersVecs[iFNN] = self.fnn_second_half_block_tfp('', 'NN', iFNN)
-
+        ## FNN Block
+        self.FNNLayersVecs_Mu    = []
+        self.FNNLayersVecs_Mu    = self.fnn_second_half_block_tfp('', 'NN', 0, '', LayersVec=self.FNNLayersVecs_Mu)
+        self.FNNLayersVecs_Sigma = []
+        self.FNNLayersVecs_Sigma = self.fnn_second_half_block_tfp('', 'NN', 1, 'Sigma', LayersVec=self.FNNLayersVecs_Sigma)
 
     #===================================================================================================================================
 
@@ -96,48 +92,43 @@ class FNN_BbB(NN):
     #===================================================================================================================================
     def call(self, inputs, training=False):
 
-        y0 = inputs
-        for f in self.PreLayersVecs:
-            y0 = f(y0, training=training)
-
-        OutputVec = []
-        for iFNN in range(self.NFNNs):
-            y = y0
-
-            for f in self.FNNLayersVecs[iFNN]:
-                y = f(y, training=training)
-
-            OutputVec.append(y)
-
-
-
-        # OutputVec = []
-        # for iFNN in range(self.NFNNs):
-        #     y  = inputs
-    
-        #     for f in self.FNNLayersVecs[iFNN]:
-        #         y = f(y, training=training)
-
-        #     OutputVec.append(y)
-
-
-
         if (self.CalibrateSigmaLFlg):
-
             def normal_sp(OutputVec): 
-                # params_1 = OutputVec[0]
-                # params_2 = OutputVec[1]
-                params_1, params_2 = tf.split(OutputVec[0], 2, axis=1)
-                #dist = tfp.distributions.Normal(loc=params[:,0:1], scale=1e-3 + tf.math.softplus(0.05 * params[:,1:2])) 
-                dist = tfp.distributions.MultivariateNormalDiag(loc=params_1, scale_diag=(1e-8 + tf.math.softplus(0.05 * params_2)) )
+                # params_1, params_2 = tf.split(OutputVec[0], 2, axis=1)
+                # dist = tfp.distributions.Normal(loc=params[:,0:1], scale=1e-3 + tf.math.softplus(0.05 * params[:,1:2])) 
+                dist = tfp.distributions.MultivariateNormalDiag(loc=OutputVec[0], scale_diag=(1e-8 + tf.math.softplus(0.05 * OutputVec[1])) )
+                #dist = tfp.distributions.MultivariateNormalDiag(loc=OutputVec[0], scale_diag=(OutputVec[1]) )
+                # dist = tfp.distributions.MultivariateNormalDiag(loc=OutputVec[0], scale_diag=(OutputVec[1]) )
                 return dist
         else:
-
             def normal_sp(OutputVec): 
                 params_1 = OutputVec[0]
                 #dist = tfp.distributions.Normal(loc=params[:,0:1], scale=1e-3 + tf.math.softplus(0.05 * params[:,1:2])) 
                 dist = tfp.distributions.MultivariateNormalDiag(loc=params_1, scale_diag=self.SigmaLike)
                 return dist
+
+        y0 = inputs
+        for f in self.PreLayersVecs:
+            y0 = f(y0, training=training)
+
+        y = y0 
+        for f in self.FNNLayersVecs_Mu:
+            y = f(y, training=training)
+        params_mu = y
+
+        if (self.CalibrateSigmaLFlg):
+
+            y = y0
+            for f in self.FNNLayersVecs_Sigma:
+                y = f(y, training=training)
+            #params_sigma = tfp.bijectors.Softplus(hinge_softness=np.array([5.e-2, 5.e-2]), low=1.e-5, name='softplus')(y)
+            params_sigma = y#tfp.bijectors.Exp(name='exp')(y) #tfp.bijectors.Softplus(hinge_softness=np.array([5.e-2, 5.e-2]), low=1.e-5, name='softplus')(y)
+
+            OutputVec = [params_mu] + [params_sigma]
+
+        else:
+
+            OutputVec = [params_mu]
 
         OutputFinal = tfp.layers.DistributionLambda(normal_sp)(OutputVec) 
 
@@ -150,7 +141,7 @@ class FNN_BbB(NN):
 
     #===================================================================================================================================
     def get_graph(self):
-            input_  = tf.keras.Input(shape=[self.NVarsx,])
-            return tf.keras.Model(inputs=[input_], outputs=[self.call(input_)] )
+        input_  = tf.keras.Input(shape=[self.NVarsx,])
+        return tf.keras.Model(inputs=[input_], outputs=[self.call(input_)] )
 
     #===================================================================================================================================

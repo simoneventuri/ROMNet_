@@ -61,9 +61,9 @@ class inputdata(object):
         self.OutputVars          = ['POD_'+str(iPOD+1) for iPOD in range(self.NPODs)]                                                              # List Containing the Output Data Column Names
         self.TransFun            = {'log': ['t']} 
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Input Data
-        self.Layers              = [np.array([32,64,64,64,self.NPODs])]                                           # List Containing the No of Neurons per Each NN's Layer
-        self.ActFun              = [['tanh','tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-        self.DropOutRate         = 5.e-5                                                                  # NN's Layers Dropout Rate
+        self.Layers              = [np.array([128,128,128,128,128,self.NPODs])]                                           # List Containing the No of Neurons per Each NN's Layer
+        self.ActFun              = [['tanh','tanh','tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+        self.DropOutRate         = 1.e-10                                                                  # NN's Layers Dropout Rate
         self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
 
         #=======================================================================================================================================
@@ -71,8 +71,8 @@ class inputdata(object):
         self.TransferFlg         = False                                                                  # Flag for Using Transfer Learning
         self.PathToTransFld      = ''                                                                     # Folder Containing the Trained Model to be Used for Transfer Learning 
         self.NEpoch              = 100000                                                                 # Number of Epoches
-        self.BatchSize           = 64                                                                    # Batch Size for Training
-        self.ValidBatchSize      = 64                                                                    # Batch Size for Validation
+        self.BatchSize           = 32                                                                    # Batch Size for Training
+        self.ValidBatchSize      = 32                                                                    # Batch Size for Validation
         self.Losses              = {'pts': {'name': 'MSE', 'axis': 0}} # Loss Functions
         self.LossWeights         = {'pts': 1.}  
         # self.Losses              = {'ics': {'name': 'MSE', 'axis': 0}, 'res': {'name': 'MSE', 'axis': 0}} # Loss Functions

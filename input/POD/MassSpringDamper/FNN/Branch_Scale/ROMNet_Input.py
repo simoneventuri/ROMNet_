@@ -9,8 +9,7 @@ class inputdata(object):
     def __init__(self, WORKSPACE_PATH, ROMNetFldr):
 
         self.iROD                = 1
-        # POD_NAME                 = str(self.iROD)
-        POD_NAME                 = 'All'
+        POD_NAME                 = str(self.iROD) #'All'
 
         self.NPODs               = 2
         self.NICs                = 100
@@ -34,11 +33,10 @@ class inputdata(object):
         ### Paths
         self.WORKSPACE_PATH      = WORKSPACE_PATH                                                         # os.getenv('WORKSPACE_PATH')      
         self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
-        self.PathToRunFld        = self.ROMNetFldr   + '/../MSD_100Cases_POD_'+POD_NAME+'_Branch_'+str(self.iROD)+'/'           # Path To Training Folder
+        self.PathToRunFld        = self.ROMNetFldr   + '/../MSD_100Cases_POD_'+POD_NAME+'_Branch_Scale/'           # Path To Training Folder
         self.PathToLoadFld       = None                                                                   # Path To Pre-Trained Model Folder
-        # self.PathToDataFld       = self.ROMNetFldr   + '/../Data/MSD_100Cases/Orig/OneByOne/POD_'+POD_NAME+'/Branch/'           # Path To Training Data Folder 
-        # self.PathToDataFld       = self.ROMNetFldr   + '/../Data/MSD_100Cases/Orig/OneByOne/POD_'+POD_NAME+'/Branch_ICs/'           # Path To Training Data Folder 
-        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/MSD_100Cases/Orig/All/POD_'+POD_NAME+'/Branch_'+str(self.iROD)+'/'           # Path To Training Data Folder 
+        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/MSD_100Cases/Orig/OneByOne/POD_'+POD_NAME+'/Branch/'           # Path To Training Data Folder 
+        #self.PathToDataFld       = self.ROMNetFldr   + '/../Data/MSD_100Cases/Orig/OneByOne/POD_'+POD_NAME+'/Branch_ICs/'           # Path To Training Data Folder 
 
         #=======================================================================================================================================
         ### Physical System
@@ -74,15 +72,14 @@ class inputdata(object):
         self.SurrogateType       = 'FNN'                                                                  # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
         self.ProbApproach        = 'Deterministic'                                                        # Probabilistic Technique for Training the BNN (if Any)
         self.InputVars           = ['x','v']                                                                 # List Containing the Input Data Column Names 
-        self.OutputVars          = ['POD_'+str(iPOD+1) for iPOD in range(self.NPODs)]+['C']                                                              # List Containing the Output Data Column Names
+        self.OutputVars          = ['C','D']                                                              # List Containing the Output Data Column Names
         #self.OutputVars          = ['IC_'+str(iC+1) for iC in range(self.NICs)]                                                              # List Containing the Output Data Column Names
         self.TransFun            = None#{'log': ['t']} 
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Input Data
-        self.Layers              = [np.array([32,32,32,self.NPODs+1])]                                           # List Containing the No of Neurons per Each NN's Layer
+        self.Layers              = [np.array([32,32,2])]                                           # List Containing the No of Neurons per Each NN's Layer
         #self.Layers              = [np.array([32,32,32,self.NICs])]                                           # List Containing the No of Neurons per Each NN's Layer
-        self.ActFun              = [['tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-        #self.ActFun              = [['sigmoid','sigmoid','sigmoid','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-        self.DropOutRate         = 1.e-3                                                               # NN's Layers Dropout Rate
+        self.ActFun              = [['relu','relu','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+        self.DropOutRate         = 1.e-10                                                              # NN's Layers Dropout Rate
         self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
         self.NormalizeOutput     = False
         self.SoftMaxFlg          = False      
@@ -100,7 +97,7 @@ class inputdata(object):
         self.LossWeights         = {'pts': 1.}  
         self.Metrics             = None                                                                   # List of Metric Functions
         self.LR                  = 1.e-3                                                                # Initial Learning Rate
-        self.LRDecay             = ["exponential", 500, 0.95]
+        self.LRDecay             = ["exponential", 3000, 0.95]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
         self.WeightDecay         = np.array([1.e-10, 1.e-10], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations

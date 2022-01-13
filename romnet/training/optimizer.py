@@ -56,7 +56,7 @@ def get_optimizer(InputData):
     
     elif (MTD == 'sgd'):
         opt_name = 'SGD'
-        args     = {'learning_rate': LearningRate, 'momentum': InputData.OptimizerParams[0], 'nesterov': NestFlg, 'name': "SGD"}
+        args     = {'learning_rate': LearningRate, 'name': "SGD", 'momentum': InputData.OptimizerParams[0], 'nesterov': True}
     
     else:
         raise ValueError("Unrecognized Optimizer!   InputData.Optimizer = ", InputData.Optimizer)

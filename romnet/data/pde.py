@@ -28,7 +28,7 @@ class PDE(Data):
         self.PathToLoadFld       = InputData.PathToLoadFld
 
         self.SurrogateType       = InputData.SurrogateType
-        if (self.SurrogateType == 'DeepONet'):
+        if ('DeepONet' in self.SurrogateType):
             self.BranchVars      = InputData.BranchVars
             self.TrunkVars       = InputData.TrunkVars
             self.InputVars       = self.BranchVars + self.TrunkVars

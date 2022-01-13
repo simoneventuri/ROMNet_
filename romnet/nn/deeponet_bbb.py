@@ -1,6 +1,7 @@
-import numpy        as np
-import tensorflow   as tf
-import pandas       as pd
+import numpy                  as np
+import tensorflow             as tf
+import tensorflow_probability as tfp
+import pandas                 as pd
 
 from tensorflow.python.keras.layers.merge import _Merge
 
@@ -16,90 +17,106 @@ from tensorflow.python.util.tf_export import keras_export
 from .nn        import NN
 
 
-class DeepONet(NN):
+class DeepONet_BbB(NN):
     """Deep operator network 
     """
 
     #===================================================================================================================================
     def __init__(self, InputData, xnorm, NN_Transfer_Model):
-        super(DeepONet, self).__init__()
+        super(DeepONet_BbB, self).__init__()
 
-        self.Name                 = 'DeepONet'
+        self.Name                      = 'DeepONet'
 
-        self.BranchVars           = InputData.BranchVars
-        self.TrunkVars            = InputData.TrunkVars
-        self.NVarsx               = len(InputData.BranchVars + InputData.TrunkVars)
+        self.BranchVars                = InputData.BranchVars
+        self.TrunkVars                 = InputData.TrunkVars
+        self.NVarsx                    = len(InputData.BranchVars + InputData.TrunkVars)
 
         if (xnorm is None):
             xnorm = pd.DataFrame(np.zeros((1,self.NVarsx)), columns=self.BranchVars+self.TrunkVars)
 
-        self.xnormBranch          = xnorm[InputData.BranchVars]
-        self.xnormTrunk           = xnorm[InputData.TrunkVars] 
-        self.NN_Transfer_Model    = NN_Transfer_Model
+        self.xnormBranch               = xnorm[InputData.BranchVars]
+        self.xnormTrunk                = xnorm[InputData.TrunkVars] 
+        self.NN_Transfer_Model         = NN_Transfer_Model
+     
+        self.OutputVars                = InputData.OutputVars
+        self.NVarsy                    = len(InputData.OutputVars)
+     
+        self.NormalizeInput            = InputData.NormalizeInput
+        self.WeightDecay               = InputData.WeightDecay
+     
+        self.NTrunks                   = len(InputData.TrunkLayers)
+        self.NVarsTrunk                = len(InputData.TrunkVars)
 
-        self.OutputVars           = InputData.OutputVars
-        self.NVarsy               = len(InputData.OutputVars)
+        self.TrunkLayers               = InputData.TrunkLayers
+        self.TrunkActFun               = InputData.TrunkActFun
+        self.TrunkDropOutRate          = InputData.TrunkDropOutRate
+        self.TrunkDropOutPredFlg       = InputData.TrunkDropOutPredFlg
+        self.TrunkSigmaLayers          = InputData.TrunkSigmaLayers
+        self.TrunkSigmaActFun          = InputData.TrunkSigmaActFun
+        self.TrunkSigmaDropOutRate     = InputData.TrunkSigmaDropOutRate
+        self.TrunkSigmaDropOutPredFlg  = InputData.TrunkSigmaDropOutPredFlg
 
-        self.NormalizeInput       = InputData.NormalizeInput
-        self.WeightDecay          = InputData.WeightDecay
+        self.NBranches                 = len(InputData.BranchLayers)
+        self.NVarsBranch               = len(InputData.BranchVars)
+        
+        self.BranchLayers              = InputData.BranchLayers
+        self.BranchActFun              = InputData.BranchActFun
+        self.BranchDropOutRate         = InputData.BranchDropOutRate
+        self.BranchDropOutPredFlg      = InputData.BranchDropOutPredFlg
+        self.BranchSigmaLayers         = InputData.BranchSigmaLayers
+        self.BranchSigmaActFun         = InputData.BranchSigmaActFun
+        self.BranchSigmaDropOutRate    = InputData.BranchSigmaDropOutRate
+        self.BranchSigmaDropOutPredFlg = InputData.BranchSigmaDropOutPredFlg
 
-        self.NTrunks              = len(InputData.TrunkLayers)
-        self.NVarsTrunk           = len(InputData.TrunkVars)
-        self.TrunkLayers          = InputData.TrunkLayers
-        self.TrunkActFun          = InputData.TrunkActFun
-        self.TrunkDropOutRate     = InputData.TrunkDropOutRate
-        self.TrunkDropOutPredFlg  = InputData.TrunkDropOutPredFlg
-
-        self.NBranches            = len(InputData.BranchLayers)
-        self.NVarsBranch          = len(InputData.BranchVars)
-        self.BranchLayers         = InputData.BranchLayers
-        self.BranchActFun         = InputData.BranchActFun
-        self.BranchDropOutRate    = InputData.BranchDropOutRate
-        self.BranchDropOutPredFlg = InputData.BranchDropOutPredFlg
-        self.BranchSoftmaxFlg     = InputData.BranchSoftmaxFlg
-        self.SoftMaxFlg           = False
-        self.BranchToTrunk        = InputData.BranchToTrunk
-
-        self.FinalLayerFlg        = InputData.FinalLayerFlg
-
-        self.TransFun             = InputData.TransFun
+        self.BranchSoftmaxFlg          = InputData.BranchSoftmaxFlg
+        self.SoftMaxFlg                = False
+        self.BranchToTrunk             = InputData.BranchToTrunk
+     
+        self.FinalLayerFlg             = InputData.FinalLayerFlg
+     
+        self.TransFun                  = InputData.TransFun
 
         if (np.sum(np.array(self.WeightDecay)) > 0.):
-            self.RegularizeFlg    = True
-        else:   
-            self.RegularizeFlg    = False
-   
-        self.attention_mask       = None
-
-        try:
-            self.PathToPODFile    = InputData.PathToPODFile
-        except:
-            self.PathToPODFile    = None
-
-        try:
-            self.TrainTrunkFlg    = InputData.TrainTrunkFlg
-        except:
-            self.TrainTrunkFlg    = True
-
-        try:
-            self.TrainBranchFlg   = InputData.TrainBranchFlg
-        except:
-            self.TrainBranchFlg   = True
+            self.RegularizeFlg         = True
+        else:        
+            self.RegularizeFlg         = False
+        
+        self.attention_mask            = None
+     
+        try:     
+            self.PathToPODFile         = InputData.PathToPODFile
+        except:     
+            self.PathToPODFile         = None
+     
+        try:     
+            self.TrainTrunkFlg         = InputData.TrainTrunkFlg
+        except:     
+            self.TrainTrunkFlg         = True
+     
+        try:     
+            self.TrainBranchFlg        = InputData.TrainBranchFlg
+        except:     
+            self.TrainBranchFlg        = True
 
 
         ### Trunks
-        self.TrunkLayersVecs = {}
+        self.TrunkLayersVecs_Mu    = {}
+        self.TrunkLayersVecs_Sigma = {}
         for iTrunk in range(self.NTrunks):
-            self.TrunkLayersVecs[iTrunk] = self.fnn_block(self.xnormTrunk, 'Trunk', 'Trunk_'+str(iTrunk+1), iTrunk, self.TrunkVars, LayersVec=[])
+            self.TrunkLayersVecs_Mu[iTrunk]    = self.fnn_block(self.xnormTrunk, 'Trunk',      'Trunk_'+str(iTrunk+1),      iTrunk, self.TrunkVars, LayersVec=[])
+            self.TrunkLayersVecs_Sigma[iTrunk] = self.fnn_block(self.xnormTrunk, 'TrunkSigma', 'TrunkSigma_'+str(iTrunk+1), iTrunk, self.TrunkVars, LayersVec=[])
 
 
-        self.BranchLayersVecs = {}
-        self.FinalLayersVecs  = {}
-        self.NDot             = InputData.TrunkLayers[0][-1]
+        self.BranchLayersVecs_Mu    = {}
+        self.BranchLayersVecs_Sigma = {}
+        self.FinalLayersVecs_Mu     = {}
+        self.FinalLayersVecs_Sigma  = {}
+        self.NDot                   = InputData.TrunkLayers[0][-1]
         for iy in range(self.NVarsy):
 
             ### Branches
-            self.BranchLayersVecs[iy] = self.fnn_block(self.xnormBranch, 'Branch', 'Branch_'+InputData.OutputVars[iy], iy, self.BranchVars, LayersVec=[])
+            self.BranchLayersVecs_Mu[iy]    = self.fnn_block(self.xnormBranch, 'Branch',      'Branch_'+InputData.OutputVars[iy],      iy, self.BranchVars, LayersVec=[])
+            self.BranchLayersVecs_Sigma[iy] = self.fnn_block(self.xnormBranch, 'BranchSigma', 'BranchSigma_'+InputData.OutputVars[iy], iy, self.BranchVars, LayersVec=[])
 
             if (self.BranchSoftmaxFlg):
 
@@ -108,11 +125,13 @@ class DeepONet(NN):
                                                use_bias           = False,
                                                name               = 'Branch_'+InputData.OutputVars[iy]+'_POD')
                 Layer_.trainable = False
-                self.BranchLayersVecs[iy].append(Layer_)
+                self.BranchLayersVecs_Mu[iy].append(Layer_)
+                self.BranchLayersVecs_Sigma[iy].append(Layer_)
        
-            ### Final Layer
+            ### Final Layer 
             if (self.FinalLayerFlg):
-                self.FinalLayersVecs[iy]  = self.deeponet_final_layer(iy, 'FinalScaling_')
+                self.FinalLayersVecs_Mu[iy]    = self.deeponet_final_layer(iy, 'FinalScaling_')
+                self.FinalLayersVecs_Sigma[iy] = self.deeponet_final_layer(iy, 'FinalScalingSigma_')
 
     #===================================================================================================================================
 
@@ -121,52 +140,80 @@ class DeepONet(NN):
     #===================================================================================================================================
     def call(self, inputs, training=False):
 
+
+        def normal_sp(OutputVec): 
+            dist = tfp.distributions.MultivariateNormalDiag(loc=OutputVec[0], scale_diag=(1e-8 + tf.math.softplus(0.05 * OutputVec[1])) )
+            return dist
+
+
         inputsBranch, inputsTrunk = tf.split(inputs, num_or_size_splits=[len(self.BranchVars), len(self.TrunkVars)], axis=1)
     
 
-        TrunkVec = []
+        TrunkVec_Mu    = []
+        TrunkVec_Sigma = []
         for iTrunk in range(self.NTrunks):
-            y = inputsTrunk
-            
-            for f in self.TrunkLayersVecs[iTrunk]:
+
+            y = inputsTrunk            
+            for f in self.TrunkLayersVecs_Mu[iTrunk]:
                 if ('dropout' in f.name):
                     y = f(y, training=(training or self.TrunkDropOutPredFlg))
                 else:
                     y = f(y, training=training)
+            TrunkVec_Mu.append(y)
 
-            TrunkVec.append(y)
+            y = inputsTrunk
+            for f in self.TrunkLayersVecs_Sigma[iTrunk]:
+                if ('dropout' in f.name):
+                    y = f(y, training=(training or self.TrunkDropOutPredFlg))
+                else:
+                    y = f(y, training=training)
+            TrunkVec_Sigma.append(y)
 
 
-        OutputVec = []        
+        OutputVec_Mu    = []
+        OutputVec_Sigma = []
         for iy in range(self.NVarsy):
             iTrunk = self.BranchToTrunk[iy]
+            
             y      = inputsBranch
-
-            for f in self.BranchLayersVecs[iy]:
+            for f in self.BranchLayersVecs_Mu[iy]:
                 if ('dropout' in f.name):
                     y = f(y, training=(training or self.BranchDropOutPredFlg))
                 else:
                     y = f(y, training=training)
-
-            OutputP = Dot_Add(axes=1, n_out=self.NDot)([y, TrunkVec[iTrunk]])
-            #OutputP = tf.keras.layers.Dot(axes=1)([y, TrunkVec[iTrunk]])
+            OutputP_Mu   = Dot_Add(axes=1, n_out=self.NDot)([y, TrunkVec_Mu[iTrunk]])
 
             if (self.FinalLayerFlg):
-                OutputVec.append( self.FinalLayersVecs[iy](OutputP, training=training) )
+                OutputVec_Mu.append( self.FinalLayersVecs_Mu[iy](OutputP_Mu, training=training) )
             else:
-                OutputVec.append( OutputP )
+                OutputVec_Mu.append( OutputP_Mu )
+
+            if (self.NVarsy > 1):
+                self.OutputConcat_Mu = tf.keras.layers.Concatenate(axis=1)(OutputVec_Mu)
+            else:
+                self.OutputConcat_Mu = OutputVec_Mu[0]
+
+            y      = inputsBranch
+            for f in self.BranchLayersVecs_Sigma[iy]:
+                if ('dropout' in f.name):
+                    y = f(y, training=(training or self.BranchDropOutPredFlg))
+                else:
+                    y = f(y, training=training)
+            OutputP_Sigma   = Dot_Add(axes=1, n_out=self.NDot)([y, TrunkVec_Sigma[iTrunk]])
+
+            if (self.FinalLayerFlg):
+                OutputVec_Sigma.append( self.FinalLayersVecs_Sigma[iy](OutputP_Sigma, training=training) )
+            else:
+                OutputVec_Sigma.append( OutputP_Sigma )
                 
 
-        if (self.NVarsy > 1):
-            OutputConcat = tf.keras.layers.Concatenate(axis=1)(OutputVec)
-        else:
-            OutputConcat = OutputVec[0]
+            if (self.NVarsy > 1):
+                self.OutputConcat_Sigma = tf.keras.layers.Concatenate(axis=1)(OutputVec_Sigma)
+            else:
+                self.OutputConcat_Sigma = OutputVec_Sigma[0]
 
-
-        if (self.AntiPCA_flg):
-            OutputFinal = ROM.AntiPCALayer(A0=self.A_AntiPCA, C0=self.C_AntiPCA, D0=self.D_AntiPCA)(OutputConcat)
-        else:
-            OutputFinal = OutputConcat
+        OutputVec   = [self.OutputConcat_Mu] + [self.OutputConcat_Sigma]
+        OutputFinal = tfp.layers.DistributionLambda(normal_sp)(OutputVec) 
 
 
         return OutputFinal

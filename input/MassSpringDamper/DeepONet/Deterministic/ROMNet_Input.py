@@ -26,9 +26,10 @@ class inputdata(object):
         ### Paths
         self.WORKSPACE_PATH      = WORKSPACE_PATH                                                         # os.getenv('WORKSPACE_PATH')      
         self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
-        self.PathToRunFld        = self.ROMNetFldr   + '/../MSD_10Cases/'                                 # Path To Training Folder
-        self.PathToLoadFld       = '/Users/sventur/WORKSPACE/ROMNet/Data/MSD_100Cases/Orig/OneByOne/FNN/Final.h5'                                                                 # Path To Pre-Trained Model Folder
-        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/MSD_10Cases/'                            # Path To Training Data Folder 
+        self.PathToRunFld        = self.ROMNetFldr   + '/../MSD_100Cases_All/'                                 # Path To Training Folder
+        # self.PathToLoadFld       = '/Users/sventuri/WORKSPACE/ROMNet/Data/MSD_100Cases/Orig/OneByOne/FNN/Final.h5'           # Path To Pre-Trained Model Folder
+        self.PathToLoadFld       = '/Users/sventuri/WORKSPACE/ROMNet/Data/MSD_100Cases/Orig/All/FNN/Final.h5'             # Path To Pre-Trained Model Folder
+        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/MSD_100Cases/Orig/'                            # Path To Training Data Folder 
 
         #=======================================================================================================================================
         ### Physical System
@@ -52,19 +53,22 @@ class inputdata(object):
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Branch's Input Data
         self.BranchToTrunk       = [0,0]                                                                  # Index of the Trunk Corresponding to i-th Branch
         self.BranchVars          = ['x','v']                                                              # List Containing the Branch's Input Data Column Names
-        self.BranchLayers        = [np.array([32,32,32,2]), np.array([32,32,32,2])]                           # List Containing the No of Neurons per Each Branch's Layer
-        self.BranchActFun        = [['tanh','tanh','tanh','linear'], ['tanh','tanh','tanh','linear']]                      # List Containing the Activation Funct.s per Each Branch's Layer
+        self.BranchLayers        = [np.array([32,32,32,3]), np.array([32,32,32,3])]                           # List Containing the No of Neurons per Each Branch's Layer
+        self.BranchActFun        = [['tanh','tanh','tanh','linear']]*2                      # List Containing the Activation Funct.s per Each Branch's Layer
+        # self.BranchLayers        = [np.array([32,32,32,100]), np.array([32,32,32,100])]                           # List Containing the No of Neurons per Each Branch's Layer
+        # self.BranchActFun        = [['relu','relu','relu','linear']]*2                      # List Containing the Activation Funct.s per Each Branch's Layer
         self.BranchDropOutRate   = 1.e-10                                                                 # Branch's Layers Dropout Rate
         self.BranchDropOutPredFlg= False                                                                  # Flag for Using Branch's Dropout during Prediction
+        # self.BranchSoftmaxFlg    = False                                                                  # Flag for Using Softmax after Branch's Last Layer
         self.BranchSoftmaxFlg    = False                                                                  # Flag for Using Softmax after Branch's Last Layer
         self.TrunkVars           = ['t']                                                                  # List Containing the Trunk's Input Data Column Names
-        self.TrunkLayers         = [np.array([32,32,32,2])]*2                                                 # List Containing the No of Neurons per Each Trunk's Layer
-        self.TrunkActFun         = [['tanh','tanh','tanh','linear'],
-                                    ['tanh','tanh','tanh','linear']]                                               # List Containing the Activation Funct.s per Each Trunk's Layer
+        self.TrunkLayers         = [np.array([32,32,32,2])]                                                 # List Containing the No of Neurons per Each Trunk's Layer
+        self.TrunkActFun         = [['tanh','tanh','tanh','linear']]#,
+                                    #['tanh','tanh','tanh','linear']]                                               # List Containing the Activation Funct.s per Each Trunk's Layer
         self.TrunkDropOutRate    = 1.e-10                                                                  # Trunk's Layers Dropout Rate  
         self.TrunkDropOutPredFlg = False                                                                  # Flag for Using Trunk's Dropout during Prediction
         self.TransFun            = None
-        self.FinalLayerFlg       = True                                                                   # Flag for Using a Full Linear Layer after Dot-Product Layer
+        self.FinalLayerFlg       = None                                                                   # Flag for Using a Full Linear Layer after Dot-Product Layer
         self.OutputVars          = ['x','v']                                                              # List Containing the Output Data Column Names
 
         #=======================================================================================================================================
@@ -81,11 +85,11 @@ class inputdata(object):
         self.Losses              = {'pts': {'name': 'MSE', 'axis': 0}} # Loss Functions
         self.LossWeights         = {'pts': 1.}     
         self.Metrics             = None                                                                   # List of Metric Functions
-        self.LR                  = 1.e-3                                                                  # Initial Learning Rate
+        self.LR                  = 1.e-4                                                               # Initial Learning Rate
         self.LRDecay             = ["exponential", 10000, 0.98]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
-        self.WeightDecay         = np.array([1.e-9, 1.e-9], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
+        self.WeightDecay         = np.array([1.e-10, 1.e-10], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
         self.Callbacks           = {
             'base': {
                 'stateful_metrics': None
