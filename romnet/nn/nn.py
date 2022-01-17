@@ -695,7 +695,7 @@ class NN(tf.keras.Model):
                 NIn = NNLayers[iLayer-1]
             NOut = NNLayers[iLayer]
 
-            if (Type == '') and (iLayer<NLayers-1):
+            if (Type == '_') and (iLayer<NLayers-1):
                 Layer_ = tfp.layers.DenseLocalReparameterization(units              = np.int32(NNLayers[iLayer]),
                                                                  activation           = ActFun[iLayer],
                                                                  bias_posterior_fn    = tfp.layers.util.default_mean_field_normal_fn(),

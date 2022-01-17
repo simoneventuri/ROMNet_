@@ -8,9 +8,10 @@ class inputdata(object):
 
     def __init__(self, WORKSPACE_PATH, ROMNetFldr):
 
-        self.NRODs               = 7
+        self.NRODs               = 10
         self.iROD                = 1
-        POD_NAME                 = str(self.iROD) #'All'
+        #POD_NAME                 = str(self.iROD) #'All'
+        POD_NAME                 = 'All'
 
         self.NPODs               = 64
 
@@ -34,9 +35,11 @@ class inputdata(object):
         ### Paths
         self.WORKSPACE_PATH      = WORKSPACE_PATH                                                         # os.getenv('WORKSPACE_PATH')      
         self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
-        self.PathToRunFld        = self.ROMNetFldr   + '/../0DReact_Isobaric_100Cases_POD_'+POD_NAME+'_Branch/'           # Path To Training Folder
+        # self.PathToRunFld        = self.ROMNetFldr   + '/../0DReact_Isobaric_500Cases_Simple_POD_'+POD_NAME+'_Branch/'           # Path To Training Folder
+        self.PathToRunFld        = self.ROMNetFldr   + '/../0DReact_Isobaric_500Cases_Simple_POD_'+POD_NAME+'_Branch_'+str(self.iROD)+'/'           # Path To Training Folder
         self.PathToLoadFld       = None #self.ROMNetFldr   + '/../0DReact_Isobaric_100Cases_POD_'+POD_NAME+'_Branch/FNN_BbB/Deterministic/Run_25/'                                                                   # Path To Pre-Trained Model Folder
-        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_100Cases_POD/'+str(self.NRODs)+'PC/OneByOne/POD_'+POD_NAME+'/Branch/'           # Path To Training Data Folder 
+        # self.PathToDataFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_500Cases_Simple/'+str(self.NRODs)+'PC/OneByOne/POD_'+POD_NAME+'/Branch/'           # Path To Training Data Folder 
+        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_500Cases_Simple/'+str(self.NRODs)+'PC/All/POD_'+str(self.iROD)+'/Branch/'           # Path To Training Data Folder 
 
         #=======================================================================================================================================
         ### Physical System
@@ -73,16 +76,16 @@ class inputdata(object):
         self.SurrogateType       = 'FNN_BbB'                                                              # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
         self.ProbApproach        = 'Deterministic'                                                        # Probabilistic Technique for Training the BNN (if Any)
         self.InputVars           = ['PC_'+str(iPC+1) for iPC in range(self.NRODs)]                                                                 # List Containing the Input Data Column Names 
-        self.OutputVars          = ['POD_'+str(iPOD+1) for iPOD in range(self.NPODs)]                                                              # List Containing the Output Data Column Names
+        self.OutputVars          = ['POD_'+str(iPOD+1) for iPOD in range(self.NPODs)]+['C']                                                              # List Containing the Output Data Column Names
         self.TransFun            = None#{'log': ['t']} 
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Input Data
-        self.Layers              = [np.array([2,64,64,64,self.NPODs*2])]                                  # List Containing the No of Neurons per Each NN's Layer
-        self.ActFun              = [['tanh','tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-        self.DropOutRate         = 1.e-4                                                                  # NN's Layers Dropout Rate
+        self.Layers              = [np.array([64,64,64,64,self.NPODs+1]), np.array([64,64,64,self.NPODs+1])]                                  # List Containing the No of Neurons per Each NN's Layer
+        self.ActFun              = [['tanh','tanh','tanh','tanh','linear'], ['tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+        self.DropOutRate         = 1.e-17                                                                 # NN's Layers Dropout Rate
         self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
-        self.NormalizeOutput     = True      
+        self.NormalizeOutput     = False      
         #self.SigmaLike           = [1.e-10]*self.NPODs
-        self.RunEagerlyFlg       = True
+        self.RunEagerlyFlg       = False
 
         #=======================================================================================================================================
         ### Training Quanties
@@ -96,11 +99,11 @@ class inputdata(object):
         # self.Losses              = {'ics': {'name': 'MSE', 'axis': 0}, 'res': {'name': 'MSE', 'axis': 0}} # Loss Functions
         # self.LossWeights         = {'ics': 1., 'res': 1.}     
         self.Metrics             = None                                                                   # List of Metric Functions
-        self.LR                  = 1.e-3                                                                # Initial Learning Rate
+        self.LR                  = 5.e-4                                                                # Initial Learning Rate
         self.LRDecay             = ["exponential", 5000, 0.98]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
-        self.WeightDecay         = np.array([1.e-17, 1.e-17], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
+        self.WeightDecay         = np.array([1.e-7, 1.e-7], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
         self.Callbacks           = {
             'base': {
                 'stateful_metrics': None

@@ -282,7 +282,7 @@ class Dot_Add(_Merge):
                 axes = [self.axes] * 2
         else:
             axes = self.axes
-        if shape1[axes[0]] != shape2[axes[1]]+1:
+        if shape1[axes[0]] != shape2[axes[1]]+2:
             raise ValueError(
                     'Incompatible input shapes: '
                     f'axis values {shape1[axes[0]]} (at axis {axes[0]}) != '
@@ -296,9 +296,9 @@ class Dot_Add(_Merge):
             raise ValueError(
                     'A `Dot` layer should be called on exactly 2 inputs. '
                     f'Received: inputs={inputs}')
-        x1     = inputs[1]
-        print()
-        x2, x3 = tf.split(inputs[0], num_or_size_splits=[self.n_out, 1], axis=1)
+        x1         = inputs[1]
+        x2, x3, x4 = tf.split(inputs[0], num_or_size_splits=[self.n_out, 1, 1], axis=1)
+        print(x4)
         if isinstance(self.axes, int):
             if self.axes < 0:
                 axes = [self.axes % backend.ndim(x1), self.axes % backend.ndim(x2)]
@@ -315,7 +315,7 @@ class Dot_Add(_Merge):
             x1 = tf.linalg.l2_normalize(x1, axis=axes[0])
             x2 = tf.linalg.l2_normalize(x2, axis=axes[1])
 
-        output = tf.math.reduce_sum( tf.math.multiply(x1, x2), axis=1, keepdims=True) + x3
+        output = tf.math.reduce_sum( tf.math.multiply(x1, x2), axis=1, keepdims=True)*x4 + x3
         return output
 
 

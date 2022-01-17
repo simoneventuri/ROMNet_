@@ -15,11 +15,11 @@ from PCAfold import PCA as PCAA
 ##########################################################################################
 ### Input Data
 ###
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_100Cases_POD/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_200Cases_Up/'
 FigDir             = OutputDir + '/fig/'
 
 DirName            = 'train'
-NICs               = 500
+NICs               = 200
 iSimVec            = range(NICs)
 
 NVarsRed           = 7
@@ -233,7 +233,7 @@ with open(FileName, 'w') as the_file:
 #['['level', 'pareto', 'range', 'std', 'vast']', 'pareto', 'range', 'std', 'vast']
 
 ### 
-pca        = PCAA(yMat, scaling='range', n_components=NVarsRed)
+pca        = PCAA(yMat, scaling='pareto', n_components=NVarsRed)
 C          = pca.X_center
 D          = pca.X_scale
 A          = pca.A[:,0:NVarsRed].T

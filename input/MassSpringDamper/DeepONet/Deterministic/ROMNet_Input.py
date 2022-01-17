@@ -28,7 +28,7 @@ class inputdata(object):
         self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
         self.PathToRunFld        = self.ROMNetFldr   + '/../MSD_100Cases_All/'                                 # Path To Training Folder
         # self.PathToLoadFld       = '/Users/sventuri/WORKSPACE/ROMNet/Data/MSD_100Cases/Orig/OneByOne/FNN/Final.h5'           # Path To Pre-Trained Model Folder
-        self.PathToLoadFld       = '/Users/sventuri/WORKSPACE/ROMNet/Data/MSD_100Cases/Orig/All/FNN/Final.h5'             # Path To Pre-Trained Model Folder
+        self.PathToLoadFld       = None#'/Users/sventuri/WORKSPACE/ROMNet/Data/MSD_100Cases/Orig/All/FNN/Final.h5'             # Path To Pre-Trained Model Folder
         self.PathToDataFld       = self.ROMNetFldr   + '/../Data/MSD_100Cases/Orig/'                            # Path To Training Data Folder 
 
         #=======================================================================================================================================

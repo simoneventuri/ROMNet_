@@ -9,9 +9,10 @@ class inputdata(object):
     def __init__(self, WORKSPACE_PATH, ROMNetFldr):
 
         self.NRODs               = 7
-        #self.iRODSel             = [6]
-        self.iRODSel             = range(self.NRODs)
+        self.iRODSel             = [0]#range(self.NRODs)
         self.NRODsSel            = len(self.iRODSel)
+
+        self.NPODs               = 20
 
         #=======================================================================================================================================
         ### Case Name
@@ -31,15 +32,16 @@ class inputdata(object):
         ### Paths
         self.WORKSPACE_PATH      = WORKSPACE_PATH                                                         # os.getenv('WORKSPACE_PATH')      
         self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
-        self.PathToRunFld        = self.ROMNetFldr   + '/../0DReact_Isobaric_100Cases_Log/'                                 # Path To Training Folder
+        self.PathToRunFld        = self.ROMNetFldr   + '/../0DReact_Isobaric_200Cases_Up/'                                 # Path To Training Folder
         self.ROMPred_Flg         = True
-        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_100Cases_Log/'+str(self.NRODs)+'PC/'            # Path To Training Data Folder 
-        # self.PathToDataFld       = self.ROMNetFldr   + '/../Data/PSR_100Cases_Highest/Orig/'                        # Path To Training Data Folder 
+        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_200Cases_Up/'+str(self.NRODs)+'PC/'            # Path To Training Data Folder 
 
-        self.PathToLoadFld       = self.ROMNetFldr   + '/../0DReact_Isobaric_100Cases_POD_All/FNN/Deterministic/Run_2/'                            # Path To Pre-Trained Model Folder
+        self.PathToLoadFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_500Cases_Up/7PC/OneByOne/FNN/Final.h5'            # Path To Training Data Folder 
+        #self.PathToLoadFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_500Cases_Simple/10PC/All/FNN/Final.h5'            # Path To Training Data Folder 
         self.PathToPODFile       = None
-        self.TransferFlg         = False                                                                  # Flag for Using Transfer Learning
         self.PathToTransFld      = None
+        self.TransferFlg         = False                                                                  # Flag for Using Transfer Learning
+        self.TrainBranchFlg      = True
         self.TrainTrunkFlg       = False
 
         #=======================================================================================================================================
@@ -65,20 +67,20 @@ class inputdata(object):
         self.ProbApproach        = 'Deterministic'                                                        # Probabilistic Technique for Training the BNN (if Any)
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Branch's Input Data
         #self.BranchToTrunk       = range(self.NRODs)                                                                # Index of the Trunk Corresponding to i-th Branch
-        self.BranchToTrunk       = [0]*self.NRODsSel                                                                # Index of the Trunk Corresponding to i-th Branch
+        self.BranchToTrunk       = [0]                                                                         # Index of the Trunk Corresponding to i-th Branch
         self.BranchVars          = ['PC0_'+str(i+1) for i in range(self.NRODs)]                                                        # List Containing the Branch's Input Data Column Names
-        self.BranchLayers        = [np.array([32,64,64,128,128])]*self.NRODsSel                                            # List Containing the No of Neurons per Each Branch's Layer
-        self.BranchActFun        = [['tanh','tanh','tanh','tanh','linear']]*self.NRODsSel                                             # List Containing the Activation Funct.s per Each Branch's Layer
-        self.BranchDropOutRate   = 1.e-4                                                                 # Branch's Layers Dropout Rate
+        self.BranchLayers        = [np.array([64,64,64,self.NPODs+2])]                                            # List Containing the No of Neurons per Each Branch's Layer
+        self.BranchActFun        = [['tanh','tanh','tanh','linear']]                                             # List Containing the Activation Funct.s per Each Branch's Layer
+        self.BranchDropOutRate   = 1.e-10                                                                 # Branch's Layers Dropout Rate
         self.BranchDropOutPredFlg= False                                                                  # Flag for Using Branch's Dropout during Prediction
         self.BranchSoftmaxFlg    = False                                                                  # Flag for Using Softmax after Branch's Last Layer
         self.TrunkVars           = ['t']                                                                  # List Containing the Trunk's Input Data Column Names
-        self.TrunkLayers         = [np.array([32,128,128,128,128])]#*self.NRODs                                                # List Containing the No of Neurons per Each Trunk's Layer
-        self.TrunkActFun         = [['tanh','tanh','tanh','tanh','linear']]#*self.NRODs                                             # List Containing the Activation Funct.s per Each Trunk's Layer
+        self.TrunkLayers         = [np.array([64,64,64,64,64,self.NPODs])]#*self.NRODs                                                # List Containing the No of Neurons per Each Trunk's Layer
+        self.TrunkActFun         = [['tanh','tanh','tanh','tanh','tanh','linear']]#*self.NRODs                                             # List Containing the Activation Funct.s per Each Trunk's Layer
         self.TrunkDropOutRate    = 1.e-10                                                                # Trunk's Layers Dropout Rate  
         self.TrunkDropOutPredFlg = False                                                                  # Flag for Using Trunk's Dropout during Prediction
         self.TransFun            = {'log': ['t']} 
-        self.FinalLayerFlg       = True                                                                   # Flag for Using a Full Linear Layer after Dot-Product Layer
+        self.FinalLayerFlg       = None                                                                   # Flag for Using a Full Linear Layer after Dot-Product Layer
         self.OutputVars          = ['PC_'+str(i+1) for i in self.iRODSel]
         self.NormalizeOutput     = False                                                                   # Flag for Normalizing Branch's Input Data
 
@@ -97,8 +99,8 @@ class inputdata(object):
         self.Losses              = {'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
         self.LossWeights         = {'pts': 1.}     
         self.Metrics             = None                   
-        self.LR                  = 1.e-3                                                          # Initial Learning Rate
-        self.LRDecay             = ["exponential", 20000, 0.98]
+        self.LR                  = 5.e-4                                                          # Initial Learning Rate
+        self.LRDecay             = ["exponential", 100000, 0.98]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
         self.WeightDecay         = np.array([1.e-11,1.e-11], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations

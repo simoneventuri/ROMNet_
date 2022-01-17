@@ -19,24 +19,24 @@ from scipy.interpolate import interp1d
 ##########################################################################################
 ### Input Data
 
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_100Cases_POD/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_200Cases_Up/'
 FigDir             = OutputDir + '/fig/'
 
 MixtureFile        = 'gri30.yaml'
 
-DirName            = 'train'
-NICs               = 500
 P0                 = ct.one_atm
-EqRatio0Exts       = np.array([.5, 4.], dtype=np.float64)
-T0Exts             = np.array([1000, 2000], dtype=np.float64)
+DirName            = 'train'
+NICs               = 200
+EqRatio0Exts       = np.array([.7, 1.3], dtype=np.float64)
+T0Exts             = np.array([1000, 1500], dtype=np.float64)
 # DirName            = 'test'
 # NICs               = 5
 
-NPerT0             = 5000
+NPerT0             = 2000
 
 Integration        = ' '#'Canteras'
 rtol               = 1.e-12
-#atol               = 1.e-10
+atol               = 1.e-20
 SOLVER             = 'BDF'#'RK23'#'BDF'#'Radau'
 
 ##########################################################################################
@@ -157,8 +157,10 @@ if (DirName == 'train'):
 elif (DirName == 'test'):
     NDims    = 2
     ICs      = np.zeros((NICs,NDims))
-    ICs[:,0] = [2.5, 1.9, 3.5, 1., 3.6]
-    ICs[:,1] = [1200., 1900., 1300., 1600., 1700.]
+    # ICs[:,0] = [2.5, 1.9, 3.5, 1., 3.6]
+    # ICs[:,1] = [1200., 1900., 1300., 1600., 1700.]
+    ICs[:,0] = [0.8, 0.9, 1.0, 1.1, 1.2]
+    ICs[:,1] = [1300., 1200., 1400., 1500., 1250.]
     ICs = np.concatenate([P0*np.ones((NICs,1)), ICs], axis=1)
 
 
@@ -235,16 +237,19 @@ for iIC in range(NICs):
 
     # tStratch = 1.3
     # tVec     = [0.0]
-    # t        = 10**tMin
-    # dt       = 10**dt0
-    # while (t <= 10**tMax):
+    # t        = 1.e-12 #10**tMin
+    # dt0      = 1.e-6  #10**dt0
+    # dt       = dt0
+    # while (t <= 1.e-2):#10**tMax):
     #     tVec.append(t)
     #     t  =   t + dt
     #     dt = dt0 * tStratch
+    # print(len(tVec))
     # tVec     = np.concatenate([[0.], np.logspace(tMin, tMax, 3000)])
     #tVec     = np.concatenate([[0.], np.logspace(-12, tMin, 50), np.logspace(tMin, tMax, 1948)[1:]])
-    tVec     = np.concatenate([[0.], np.logspace(-12, -8, 100), np.logspace(-7.99999999, -2, 4899)])
-    #tVec     = np.concatenate([[0.], np.linspace(1.e-10, 1.e-2, 4999)])
+    #tVec     = np.concatenate([[0.], np.logspace(-12, -6, 100), np.logspace(-5.99999999, -1., 4899)])
+    tVec     = np.concatenate([np.logspace(-6., -1., NPerT0)])
+    #tVec     = np.concatenate([[0.], np.linspace(1.e-12, 1.e-2, 4999)])
     #############################################################################
 
     
