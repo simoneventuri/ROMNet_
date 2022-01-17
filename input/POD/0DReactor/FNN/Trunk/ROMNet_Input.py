@@ -13,7 +13,7 @@ class inputdata(object):
         POD_NAME                 = str(self.iROD) #'All'
         #POD_NAME                 = 'All'
 
-        self.NPODs               = 20
+        self.NPODs               = 24
 
 
 
@@ -63,11 +63,16 @@ class inputdata(object):
         self.OutputVars          = ['POD_'+str(iPOD+1) for iPOD in range(self.NPODs)]                                                             # List Containing the Output Data Column Names
         self.TransFun            = {'log': ['t']} 
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Input Data
-        self.Layers              = [np.array([64,64,64,64,64,self.NPODs])]                                           # List Containing the No of Neurons per Each NN's Layer
-        self.ActFun              = [['tanh','tanh','tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+        self.Layers              = [np.array([100,100,100,self.NPODs])]                                           # List Containing the No of Neurons per Each NN's Layer
+        self.ActFun              = [['sigmoid','sigmoid','sigmoid','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
         self.DropOutRate         = 1.e-15                                                                  # NN's Layers Dropout Rate
         self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
         self.NormalizeOutput     = False      
+
+        self.ULayers             = [np.array([100])]
+        self.UActFun             = [['tanh']]
+        self.VLayers             = [np.array([100])]
+        self.VActFun             = [['tanh']]
 
         #=======================================================================================================================================
         ### Training Quanties
