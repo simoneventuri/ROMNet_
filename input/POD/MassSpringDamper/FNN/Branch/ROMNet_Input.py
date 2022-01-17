@@ -80,13 +80,17 @@ class inputdata(object):
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Input Data
         self.Layers              = [np.array([32,32,32,self.NPODs+1])]                                           # List Containing the No of Neurons per Each NN's Layer
         #self.Layers              = [np.array([32,32,32,self.NICs])]                                           # List Containing the No of Neurons per Each NN's Layer
-        self.ActFun              = [['tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+        self.ActFun              = [['sigmoid','sigmoid','sigmoid','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
         #self.ActFun              = [['sigmoid','sigmoid','sigmoid','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
         self.DropOutRate         = 1.e-3                                                               # NN's Layers Dropout Rate
         self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
         self.NormalizeOutput     = False
         self.SoftMaxFlg          = False      
 
+        # self.ULayers             = [np.array([32])]                                           # List Containing the No of Neurons per Each NN's Layer
+        # self.UActFun             = [['tanh']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+        # self.VLayers             = [np.array([32])]                                           # List Containing the No of Neurons per Each NN's Layer
+        # self.VActFun             = [['tanh']]                                 # List Containing the Activation Funct.s per Each NN's Layer
 
         #=======================================================================================================================================
         ### Training Quanties

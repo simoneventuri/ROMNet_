@@ -53,8 +53,8 @@ class inputdata(object):
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Branch's Input Data
         self.BranchToTrunk       = [0,0]                                                                  # Index of the Trunk Corresponding to i-th Branch
         self.BranchVars          = ['x','v']                                                              # List Containing the Branch's Input Data Column Names
-        self.BranchLayers        = [np.array([32,32,32,3]), np.array([32,32,32,3])]                           # List Containing the No of Neurons per Each Branch's Layer
-        self.BranchActFun        = [['tanh','tanh','tanh','linear']]*2                      # List Containing the Activation Funct.s per Each Branch's Layer
+        self.BranchLayers        = [np.array([32,32,32,4]), np.array([32,32,32,4])]                           # List Containing the No of Neurons per Each Branch's Layer
+        self.BranchActFun        = [['sigmoid','sigmoid','sigmoid','linear']]*2                      # List Containing the Activation Funct.s per Each Branch's Layer
         # self.BranchLayers        = [np.array([32,32,32,100]), np.array([32,32,32,100])]                           # List Containing the No of Neurons per Each Branch's Layer
         # self.BranchActFun        = [['relu','relu','relu','linear']]*2                      # List Containing the Activation Funct.s per Each Branch's Layer
         self.BranchDropOutRate   = 1.e-10                                                                 # Branch's Layers Dropout Rate
@@ -63,7 +63,7 @@ class inputdata(object):
         self.BranchSoftmaxFlg    = False                                                                  # Flag for Using Softmax after Branch's Last Layer
         self.TrunkVars           = ['t']                                                                  # List Containing the Trunk's Input Data Column Names
         self.TrunkLayers         = [np.array([32,32,32,2])]                                                 # List Containing the No of Neurons per Each Trunk's Layer
-        self.TrunkActFun         = [['tanh','tanh','tanh','linear']]#,
+        self.TrunkActFun         = [['sigmoid','sigmoid','sigmoid','linear']]#,
                                     #['tanh','tanh','tanh','linear']]                                               # List Containing the Activation Funct.s per Each Trunk's Layer
         self.TrunkDropOutRate    = 1.e-10                                                                  # Trunk's Layers Dropout Rate  
         self.TrunkDropOutPredFlg = False                                                                  # Flag for Using Trunk's Dropout during Prediction
@@ -71,10 +71,20 @@ class inputdata(object):
         self.FinalLayerFlg       = None                                                                   # Flag for Using a Full Linear Layer after Dot-Product Layer
         self.OutputVars          = ['x','v']                                                              # List Containing the Output Data Column Names
 
+        # self.BranchULayers       = [np.array([32]),np.array([32])]                                           # List Containing the No of Neurons per Each NN's Layer
+        # self.BranchUActFun       = [['tanh'],['tanh']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+        # self.BranchVLayers       = [np.array([32]),np.array([32])]                                           # List Containing the No of Neurons per Each NN's Layer
+        # self.BranchVActFun       = [['tanh'],['tanh']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+
+        # self.TrunkULayers        = [np.array([32])]                                           # List Containing the No of Neurons per Each NN's Layer
+        # self.TrunkUActFun        = [['tanh']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+        # self.TrunkVLayers        = [np.array([32])]                                           # List Containing the No of Neurons per Each NN's Layer
+        # self.TrunkVActFun        = [['tanh']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+
         #=======================================================================================================================================
         ### Training Quanties
-        self.TrainBranchFlg      = False
-        self.TrainTrunkFlg       = False
+        self.TrainBranchFlg      = True
+        self.TrainTrunkFlg       = True
         self.TransferFlg         = False                                                                  # Flag for Using Transfer Learning
         self.PathToTransFld      = ''                                                                     # Folder Containing the Trained Model to be Used for Transfer Learning 
         self.NEpoch              = 10000                                                                  # Number of Epoches

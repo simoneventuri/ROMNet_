@@ -67,6 +67,11 @@ class inputdata(object):
         self.DropOutRate         = 1.e-10                                                                  # NN's Layers Dropout Rate
         self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
 
+        # self.ULayers             = [np.array([32])]                                           # List Containing the No of Neurons per Each NN's Layer
+        # self.UActFun             = [['tanh']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+        # self.VLayers             = [np.array([32])]                                           # List Containing the No of Neurons per Each NN's Layer
+        # self.VActFun             = [['tanh']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+
         #=======================================================================================================================================
         ### Training Quanties
         self.TransferFlg         = False                                                                  # Flag for Using Transfer Learning

@@ -42,6 +42,18 @@ class FNN(NN):
         self.NFNNs             = len(InputData.Layers)
 
         try:
+            self.ULayers       = InputData.ULayers                          
+            self.UActFun       = InputData.UActFun                          
+            self.VLayers       = InputData.VLayers                          
+            self.VActFun       = InputData.VActFun 
+        except:
+            self.ULayers       = None                
+            self.UActFun       = None                
+            self.VLayers       = None                
+            self.VActFun       = None       
+
+
+        try:
             self.SoftMaxFlg    = InputData.SoftMaxFlg
         except:
             self.SoftMaxFlg    = False
@@ -67,11 +79,12 @@ class FNN(NN):
 
 
         self.FNNLayersVecs = {}
+        self.FNNLayers_U   = {}
+        self.FNNLayers_V   = {}
         for iFNN in range(self.NFNNs):
 
             ## FNN Block
-            self.FNNLayersVecs[iFNN] = self.fnn_block(self.xnorm, '', 'NN', iFNN, self.InputVars)
-        
+            self.FNNLayersVecs[iFNN], self.FNNLayers_U[iFNN], self.FNNLayers_V[iFNN] = self.fnn_block(self.xnorm, '', 'NN', iFNN, self.InputVars)
 
     #===================================================================================================================================
 
@@ -82,10 +95,26 @@ class FNN(NN):
 
         OutputVec = []
         for iFNN in range(self.NFNNs):
-            y  = inputs
-    
-            for f in self.FNNLayersVecs[iFNN]:
+            NLayers = len(self.FNNLayersVecs[iFNN])
+
+            y = inputs
+            if (self.NormalizeInput):
+                iStart = 1
+                y      = self.FNNLayersVecs[iFNN][0](y, training=training)
+            else:
+                iStart = 0 
+
+            if (self.FNNLayers_U[iFNN]):
+                y_U = self.FNNLayers_U[iFNN](y, training=training)
+                y_V = self.FNNLayers_V[iFNN](y, training=training)
+
+            for iLayer, f in enumerate(self.FNNLayersVecs[iFNN][iStart::]):
                 y = f(y, training=training)
+                if ( (self.FNNLayers_U[iFNN]) and (iLayer < NLayers-(1+iStart)) and (not 'dropout' in f.name) ):
+                    yo = tf.keras.layers.Lambda(lambda x: 1.-x)(y)
+                    ya = tf.keras.layers.multiply([yo, y_U])
+                    yb = tf.keras.layers.multiply([   y, y_V])
+                    y  = tf.keras.layers.add([ya, yb])
 
             OutputVec.append(y)
 

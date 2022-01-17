@@ -424,10 +424,98 @@ class NN(tf.keras.Model):
             LayersVec.append( normalizer )
 
 
-        ### Hidden Layers
 
-        kW1      = self.WeightDecay[0]
-        kW2      = self.WeightDecay[1]
+        kW1  = self.WeightDecay[0]
+        kW2  = self.WeightDecay[1]
+        kW1_ = kW1
+        kW2_ = kW2
+        kb1_ = kW1
+        kb2_ = kW2
+
+
+
+        ### U and V Blocks
+
+        try:
+            NNLayers_U = getattr(self, BlockName+'ULayers')[Idx]
+            ActFun_U   = getattr(self, BlockName+'UActFun')[Idx]
+            NNLayers_V = getattr(self, BlockName+'VLayers')[Idx]
+            ActFun_V   = getattr(self, BlockName+'VActFun')[Idx]
+            print('NNLayers_U = ', NNLayers_U[0])
+            print('ActFun_U   = ', ActFun_U[0])
+
+    
+            if ( (NNLayers_U is None) or (ActFun_U is None) or (NNLayers_V is None) or (ActFun_V is None) ):
+                Layer_U = None
+                Layer_V = None
+            else:
+
+
+                WeightsName = NNName + VarName + '_U' 
+                layer_name  = WeightsName 
+
+                if (self.NN_Transfer_Model is not None):
+                    x0     = self.NN_Transfer_Model.get_layer(layer_name).kernel.numpy()
+                    b0     = self.NN_Transfer_Model.get_layer(layer_name).bias.numpy()
+                    WIni   = tf.keras.initializers.RandomNormal(mean=x0, stddev=1.e-10)
+                    bIni   = tf.keras.initializers.RandomNormal(mean=b0, stddev=1.e-10)
+                    WRegul = L1L2Regularizer(kW1_, kW2_, x0)
+                    bRegul = L1L2Regularizer(kb1_, kWb_, b0)
+                else:
+                    if (ActFun_U[0] == 'relu'):
+                        WIni   = 'he_normal'
+                    else:
+                        WIni   = 'glorot_normal'
+                    bIni   = 'zeros'
+                    WRegul = regularizers.l1_l2(l1=kW1_, l2=kW2_)
+                    bRegul = regularizers.l1_l2(l1=kb1_, l2=kb2_)
+
+                Layer_U = tf.keras.layers.Dense(units              = NNLayers_U[0],
+                                                activation         = ActFun_U[0],
+                                                use_bias           = True,
+                                                kernel_initializer = WIni,
+                                                bias_initializer   = bIni,
+                                                kernel_regularizer = WRegul,
+                                                #bias_regularizer   = bRegul,
+                                                name               = layer_name)
+
+
+                WeightsName = NNName + VarName + '_V' 
+                layer_name  = WeightsName 
+
+                if (self.NN_Transfer_Model is not None):
+                    x0     = self.NN_Transfer_Model.get_layer(layer_name).kernel.numpy()
+                    b0     = self.NN_Transfer_Model.get_layer(layer_name).bias.numpy()
+                    WIni   = tf.keras.initializers.RandomNormal(mean=x0, stddev=1.e-10)
+                    bIni   = tf.keras.initializers.RandomNormal(mean=b0, stddev=1.e-10)
+                    WRegul = L1L2Regularizer(kW1_, kW2_, x0)
+                    bRegul = L1L2Regularizer(kb1_, kWb_, b0)
+                else:
+                    if (ActFun_V[0] == 'relu'):
+                        WIni   = 'he_normal'
+                    else:
+                        WIni   = 'glorot_normal'
+                    bIni   = 'zeros'
+                    WRegul = regularizers.l1_l2(l1=kW1_, l2=kW2_)
+                    bRegul = regularizers.l1_l2(l1=kb1_, l2=kb2_)
+
+                Layer_V = tf.keras.layers.Dense(units              = NNLayers_V[0],
+                                                activation         = ActFun_V[0],
+                                                use_bias           = True,
+                                                kernel_initializer = WIni,
+                                                bias_initializer   = bIni,
+                                                kernel_regularizer = WRegul,
+                                                #bias_regularizer   = bRegul,
+                                                name               = layer_name)
+
+        except:
+            Layer_U = None
+            Layer_V = None
+
+
+
+        ### Hidden Layers of the Main Block
+
         NNLayers = getattr(self, BlockName+'Layers')[Idx]
         NLayers  = len(NNLayers)
         ActFun   = getattr(self, BlockName+'ActFun')[Idx]
@@ -435,21 +523,6 @@ class NN(tf.keras.Model):
         for iLayer in range(NLayers):
             WeightsName = NNName + VarName + '_HL' + str(iLayer+1) 
             layer_name   = WeightsName 
-
-            #if (iLayer < NLayers-1):
-            kW1_ = kW1
-            kW2_ = kW2
-            kb1_ = kW1
-            kb2_ = kW2
-            # else:
-            #     kb1_ = kW1
-            #     kb2_ = kW2
-            #     if (BlockName == 'Branch'):
-            #         kW1_ = 1.e-7
-            #         kW2_ = 0.
-            #     else:
-            #         kW1_ = kW1
-            #         kW2_ = kW2
 
             if (self.NN_Transfer_Model is not None):
                 x0     = self.NN_Transfer_Model.get_layer(layer_name).kernel.numpy()
@@ -475,16 +548,6 @@ class NN(tf.keras.Model):
                                            kernel_regularizer = WRegul,
                                            #bias_regularizer   = bRegul,
                                            name               = layer_name)
-            
-            # if ( (BlockName == 'Trunk') and (self.PathToPODFile) ):
-            #     with h5py.File(self.PathToPODFile, "r") as f:
-            #         Key_   = 'NN_POD_1_HL' + str(iLayer+1) 
-            #         x0     = np.array(f[Key_+'/'+Key_+'/kernel:0'][:])
-            #         if (iLayer == 0):
-            #             x0 = x0[0,:]
-            #         b0     = np.array(f[Key_+'/'+Key_+'/bias:0'][:])[...,np.newaxis]
-            #         print(Key_, ': x0.shape = ', x0.shape, '; b0.shape = ', b0.shape)
-            #         Layer_.set_weights([x0, b0])
 
             if (BlockName == 'Trunk') and (not self.TrainTrunkFlg) and (iLayer < NLayers):
                 Layer_.trainable = False
@@ -553,9 +616,10 @@ class NN(tf.keras.Model):
 
 
 
-        return LayersVec
+        return LayersVec, Layer_U, Layer_V
 
     #=======================================================================================================================================
+
 
 
     #=======================================================================================================================================

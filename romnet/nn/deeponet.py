@@ -49,6 +49,18 @@ class DeepONet(NN):
         self.TrunkActFun          = InputData.TrunkActFun
         self.TrunkDropOutRate     = InputData.TrunkDropOutRate
         self.TrunkDropOutPredFlg  = InputData.TrunkDropOutPredFlg
+        self.NDotTrunk            = [InputData.TrunkLayers[i][-1] for i in range(self.NTrunks)]
+
+        try:
+            self.TrunkULayers       = InputData.TrunkULayers                          
+            self.TrunkUActFun       = InputData.TrunkUActFun                          
+            self.TrunkVLayers       = InputData.TrunkVLayers                          
+            self.TrunkVActFun       = InputData.TrunkVActFun 
+        except: 
+            self.TrunkULayers       = None                
+            self.TrunkUActFun       = None                
+            self.TrunkVLayers       = None                
+            self.TrunkVActFun       = None   
 
         self.NBranches            = len(InputData.BranchLayers)
         self.NVarsBranch          = len(InputData.BranchVars)
@@ -59,6 +71,18 @@ class DeepONet(NN):
         self.BranchSoftmaxFlg     = InputData.BranchSoftmaxFlg
         self.SoftMaxFlg           = False
         self.BranchToTrunk        = InputData.BranchToTrunk
+        self.NDotBranch           = [InputData.BranchLayers[i][-1] for i in range(self.NBranches)]
+
+        try:
+            self.BranchULayers       = InputData.BranchULayers                          
+            self.BranchUActFun       = InputData.BranchUActFun                          
+            self.BranchVLayers       = InputData.BranchVLayers                          
+            self.BranchVActFun       = InputData.BranchVActFun 
+        except: 
+            self.BranchULayers       = None                
+            self.BranchUActFun       = None                
+            self.BranchVLayers       = None                
+            self.BranchVActFun       = None   
 
         self.FinalLayerFlg        = InputData.FinalLayerFlg
 
@@ -89,17 +113,21 @@ class DeepONet(NN):
 
         ### Trunks
         self.TrunkLayersVecs = {}
+        self.TrunkLayers_U   = {}
+        self.TrunkLayers_V   = {}
         for iTrunk in range(self.NTrunks):
-            self.TrunkLayersVecs[iTrunk] = self.fnn_block(self.xnormTrunk, 'Trunk', 'Trunk_'+str(iTrunk+1), iTrunk, self.TrunkVars, LayersVec=[])
+            self.TrunkLayersVecs[iTrunk], self.TrunkLayers_U[iTrunk], self.TrunkLayers_V[iTrunk] = self.fnn_block(self.xnormTrunk, 'Trunk', 'Trunk_'+str(iTrunk+1), iTrunk, self.TrunkVars, LayersVec=[])
 
 
         self.BranchLayersVecs = {}
+        self.BranchLayers_U   = {}
+        self.BranchLayers_V   = {}
         self.FinalLayersVecs  = {}
         self.NDot             = InputData.TrunkLayers[0][-1]
         for iy in range(self.NVarsy):
 
             ### Branches
-            self.BranchLayersVecs[iy] = self.fnn_block(self.xnormBranch, 'Branch', 'Branch_'+InputData.OutputVars[iy], iy, self.BranchVars, LayersVec=[])
+            self.BranchLayersVecs[iy], self.BranchLayers_U[iy], self.BranchLayers_V[iy] = self.fnn_block(self.xnormBranch, 'Branch', 'Branch_'+InputData.OutputVars[iy], iy, self.BranchVars, LayersVec=[])
 
             if (self.BranchSoftmaxFlg):
 
@@ -126,30 +154,74 @@ class DeepONet(NN):
 
         TrunkVec = []
         for iTrunk in range(self.NTrunks):
+            NLayers = len(self.TrunkLayersVecs[iTrunk])
+
             y = inputsTrunk
-            
-            for f in self.TrunkLayersVecs[iTrunk]:
+            if (self.NormalizeInput):
+                iStart = 1
+                y      = self.TrunkLayersVecs[iTrunk][0](y, training=training)
+            else:
+                iStart = 0 
+
+            if (self.TrunkLayers_U[iTrunk]):
+                y_U = self.TrunkLayers_U[iTrunk](y, training=training)
+                y_V = self.TrunkLayers_V[iTrunk](y, training=training)
+
+            for iLayer, f in enumerate(self.TrunkLayersVecs[iTrunk][iStart::]):
                 if ('dropout' in f.name):
                     y = f(y, training=(training or self.TrunkDropOutPredFlg))
                 else:
                     y = f(y, training=training)
+                if ( (self.TrunkLayers_U[iTrunk]) and (iLayer < NLayers-(1+iStart)) and (not 'dropout' in f.name) ):
+                    yo = tf.keras.layers.Lambda(lambda x: 1.-x)(y)
+                    ya = tf.keras.layers.multiply([yo, y_U])
+                    yb = tf.keras.layers.multiply([   y, y_V])
+                    y  = tf.keras.layers.add([ya, yb])
 
             TrunkVec.append(y)
 
 
         OutputVec = []        
         for iy in range(self.NVarsy):
-            iTrunk = self.BranchToTrunk[iy]
-            y      = inputsBranch
+            iTrunk  = self.BranchToTrunk[iy]
+            NLayers = len(self.BranchLayersVecs[iy])
 
-            for f in self.BranchLayersVecs[iy]:
+            y = inputsBranch
+            if (self.NormalizeInput):
+                iStart = 1
+                y      = self.BranchLayersVecs[iy][0](y, training=training)
+            else:
+                iStart = 0 
+
+            if (self.BranchLayers_U[iy]):
+                y_U = self.BranchLayers_U[iy](y, training=training)
+                y_V = self.BranchLayers_V[iy](y, training=training)
+
+            for iLayer, f in enumerate(self.BranchLayersVecs[iy][iStart::]):
                 if ('dropout' in f.name):
                     y = f(y, training=(training or self.BranchDropOutPredFlg))
                 else:
                     y = f(y, training=training)
+                if ( (self.BranchLayers_U[iy]) and (iLayer < NLayers-(1+iStart)) and (not 'dropout' in f.name) ):
+                    yo = tf.keras.layers.Lambda(lambda x: 1.-x)(y)
+                    ya = tf.keras.layers.multiply([yo, y_U])
+                    yb = tf.keras.layers.multiply([   y, y_V])
+                    y  = tf.keras.layers.add([ya, yb])
+
 
             OutputP = Dot_Add(axes=1, n_out=self.NDot)([y, TrunkVec[iTrunk]])
-            #OutputP = tf.keras.layers.Dot(axes=1)([y, TrunkVec[iTrunk]])
+            # if (self.NDotTrunk[iTrunk] == self.NDotBranch[iy]):
+            #     OutputP = tf.keras.layers.Dot(axes=1)([TrunkVec[iTrunk], y])
+            # elif (self.NDotTrunk[iTrunk] == self.NDotBranch[iy]-1):
+            #     y1, y2  = tf.split(y, num_or_size_splits=[self.NDotTrunk[iTrunk], 1], axis=1)
+            #     yDot    = tf.keras.layers.Dot(axes=1)([TrunkVec[iTrunk], y1])
+            #     OutputP = tf.keras.layers.add([yDot, y2])
+            # elif (self.NDotTrunk[iTrunk] == self.NDotBranch[iy]-2):
+            #     y1, y2, y3 = tf.split(y, num_or_size_splits=[self.NDotTrunk[iTrunk], 1, 1], axis=1)
+            #     yDot       = tf.keras.layers.Dot(axes=1)([TrunkVec[iTrunk], y1])
+            #     yScaled    = tf.keras.layers.multiply([yDot, y3])
+            #     OutputP    = tf.keras.layers.add([yScaled, y2])
+
 
             if (self.FinalLayerFlg):
                 OutputVec.append( self.FinalLayersVecs[iy](OutputP, training=training) )
@@ -282,7 +354,10 @@ class Dot_Add(_Merge):
                 axes = [self.axes] * 2
         else:
             axes = self.axes
-        if shape1[axes[0]] != shape2[axes[1]]+2:
+        
+        self.n_branch = shape1[axes[0]]
+        self.n_trunk  = shape2[axes[1]]
+        if (self.n_trunk < self.n_branch - 2) or (self.n_trunk > self.n_branch) or (self.n_trunk != self.n_out):
             raise ValueError(
                     'Incompatible input shapes: '
                     f'axis values {shape1[axes[0]]} (at axis {axes[0]}) != '
@@ -297,8 +372,13 @@ class Dot_Add(_Merge):
                     'A `Dot` layer should be called on exactly 2 inputs. '
                     f'Received: inputs={inputs}')
         x1         = inputs[1]
-        x2, x3, x4 = tf.split(inputs[0], num_or_size_splits=[self.n_out, 1, 1], axis=1)
-        print(x4)
+        if (self.n_trunk == self.n_branch):
+            x2 = inputs[0]
+        elif (self.n_trunk == self.n_branch-1):
+            x2, x3 = tf.split(inputs[0], num_or_size_splits=[self.n_out, 1], axis=1)
+        elif (self.n_trunk == self.n_branch-2):
+            x2, x3, x4 = tf.split(inputs[0], num_or_size_splits=[self.n_out, 1, 1], axis=1)
+
         if isinstance(self.axes, int):
             if self.axes < 0:
                 axes = [self.axes % backend.ndim(x1), self.axes % backend.ndim(x2)]
@@ -315,7 +395,13 @@ class Dot_Add(_Merge):
             x1 = tf.linalg.l2_normalize(x1, axis=axes[0])
             x2 = tf.linalg.l2_normalize(x2, axis=axes[1])
 
-        output = tf.math.reduce_sum( tf.math.multiply(x1, x2), axis=1, keepdims=True)*x4 + x3
+        if (self.n_trunk == self.n_branch):
+            output = tf.math.reduce_sum( tf.math.multiply(x1, x2), axis=1, keepdims=True)
+        elif (self.n_trunk == self.n_branch-1):
+            output = tf.math.reduce_sum( tf.math.multiply(x1, x2), axis=1, keepdims=True) + x3
+        elif (self.n_trunk == self.n_branch-2):
+            output = tf.math.reduce_sum( tf.math.multiply(x1, x2), axis=1, keepdims=True)*x4 + x3
+
         return output
 
 
