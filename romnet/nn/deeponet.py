@@ -60,7 +60,7 @@ class DeepONet(NN):
             self.TrunkULayers       = None                
             self.TrunkUActFun       = None                
             self.TrunkVLayers       = None                
-            self.TrunkVActFun       = None   
+            self.TrunkVActFun       = None  
 
         self.NBranches            = len(InputData.BranchLayers)
         self.NVarsBranch          = len(InputData.BranchVars)
@@ -83,6 +83,29 @@ class DeepONet(NN):
             self.BranchUActFun       = None                
             self.BranchVLayers       = None                
             self.BranchVActFun       = None   
+
+        try:
+            self.tShiftLayers         = InputData.tShiftLayers
+            self.tShiftActFun         = InputData.tShiftActFun
+            self.tShiftDropOutRate    = InputData.tShiftDropOutRate
+            self.tShiftDropOutPredFlg = InputData.tShiftDropOutPredFlg
+        except:
+            self.tShiftLayers         = None
+            self.tShiftActFun         = None
+            self.tShiftDropOutRate    = None
+            self.tShiftDropOutPredFlg = None
+
+        try:
+            self.tShiftULayers       = InputData.tShiftULayers                          
+            self.tShiftUActFun       = InputData.tShiftUActFun                          
+            self.tShiftVLayers       = InputData.tShiftVLayers                          
+            self.tShiftVActFun       = InputData.tShiftVActFun 
+        except: 
+            self.tShiftULayers       = None                
+            self.tShiftUActFun       = None                
+            self.tShiftVLayers       = None                
+            self.tShiftVActFun       = None  
+
 
         self.FinalLayerFlg        = InputData.FinalLayerFlg
 
@@ -110,13 +133,21 @@ class DeepONet(NN):
         except:
             self.TrainBranchFlg   = True
 
+        self.ShiftTrunkFlg     = (not self.tShiftLayers is None)
+        self.NormalizeTrunkFlg = self.NormalizeInput and (not self.ShiftTrunkFlg)
 
         ### Trunks
-        self.TrunkLayersVecs = {}
-        self.TrunkLayers_U   = {}
-        self.TrunkLayers_V   = {}
+        self.TrunkLayersVecs  = {}
+        self.TrunkLayers_U    = {}
+        self.TrunkLayers_V    = {}
+        self.tShiftLayersVecs = {}
+        self.tShiftLayers_U   = {}
+        self.tShiftLayers_V   = {}
         for iTrunk in range(self.NTrunks):
-            self.TrunkLayersVecs[iTrunk], self.TrunkLayers_U[iTrunk], self.TrunkLayers_V[iTrunk] = self.fnn_block(self.xnormTrunk, 'Trunk', 'Trunk_'+str(iTrunk+1), iTrunk, self.TrunkVars, LayersVec=[])
+            self.TrunkLayersVecs[iTrunk], self.TrunkLayers_U[iTrunk], self.TrunkLayers_V[iTrunk]    = self.fnn_block(self.xnormTrunk, 'Trunk', 'Trunk_'+str(iTrunk+1), iTrunk, self.TrunkVars, self.NormalizeTrunkFlg, LayersVec=[])
+
+        if (self.ShiftTrunkFlg):
+            self.tShiftLayersVecs[0], self.tShiftLayers_U[0], self.tShiftLayers_V[0] = self.fnn_block(self.xnormBranch, 'tShift', 'tShift_'+str(0+1), 0, self.BranchVars, self.NormalizeInput, LayersVec=[])
 
 
         self.BranchLayersVecs = {}
@@ -127,7 +158,8 @@ class DeepONet(NN):
         for iy in range(self.NVarsy):
 
             ### Branches
-            self.BranchLayersVecs[iy], self.BranchLayers_U[iy], self.BranchLayers_V[iy] = self.fnn_block(self.xnormBranch, 'Branch', 'Branch_'+InputData.OutputVars[iy], iy, self.BranchVars, LayersVec=[])
+            self.BranchLayersVecs[iy], self.BranchLayers_U[iy], self.BranchLayers_V[iy] = self.fnn_block(self.xnormBranch, 'Branch', 'Branch_'+InputData.OutputVars[iy], iy, self.BranchVars, self.NormalizeInput, LayersVec=[])
+
 
             if (self.BranchSoftmaxFlg):
 
@@ -152,16 +184,76 @@ class DeepONet(NN):
         inputsBranch, inputsTrunk = tf.split(inputs, num_or_size_splits=[len(self.BranchVars), len(self.TrunkVars)], axis=1)
     
 
+        if (self.ShiftTrunkFlg):
+            NLayers_tShift = len(self.tShiftLayersVecs[0])
+            
+            y = inputsBranch
+            if (self.NormalizeInput):
+                iStart = 1
+                y      = self.BranchLayersVecs[0][0](y, training=training)
+            else:
+                iStart = 0 
+
+            if (self.tShiftLayers_U[0]):
+                y_U = self.tShiftLayers_U[0](y, training=training)
+                y_V = self.tShiftLayers_V[0](y, training=training)
+
+            for iLayer, f in enumerate(self.tShiftLayersVecs[0][iStart::]):
+                if ('dropout' in f.name):
+                    y = f(y, training=(training or self.tShiftDropOutPredFlg))
+                else:
+                    y = f(y, training=training)
+                if ( (self.tShiftLayers_U[0]) and (iLayer < NLayers_tShift-(1+iStart)) and (not 'dropout' in f.name) ):
+                    yo     = tf.keras.layers.Lambda(lambda x: 1.-x)(y)
+                    ya     = tf.keras.layers.multiply([yo, y_U])
+                    yb     = tf.keras.layers.multiply([   y, y_V])
+                    y      = tf.keras.layers.add([ya, yb])
+            tShift = tf.split(y, num_or_size_splits=[1]*self.NVarsy, axis=1)
+            print('tShift = ', tShift)
+
+
         TrunkVec = []
         for iTrunk in range(self.NTrunks):
-            NLayers = len(self.TrunkLayersVecs[iTrunk])
+            NLayers_Trunk  = len(self.TrunkLayersVecs[iTrunk])
+            
+            # if (self.ShiftTrunkFlg):
+            #     NLayers_tShift = len(self.tShiftLayersVecs[iTrunk])
+                
+            #     y = inputsBranch
+            #     if (self.NormalizeInput):
+            #         iStart = 1
+            #         y      = self.BranchLayersVecs[0][0](y, training=training)
+            #     else:
+            #         iStart = 0 
+
+            #     if (self.tShiftLayers_U[iTrunk]):
+            #         y_U = self.tShiftLayers_U[iTrunk](y, training=training)
+            #         y_V = self.tShiftLayers_V[iTrunk](y, training=training)
+
+            #     for iLayer, f in enumerate(self.tShiftLayersVecs[iTrunk][iStart::]):
+            #         if ('dropout' in f.name):
+            #             y = f(y, training=(training or self.tShiftDropOutPredFlg))
+            #         else:
+            #             y = f(y, training=training)
+            #         if ( (self.tShiftLayers_U[iTrunk]) and (iLayer < NLayers_tShift-(1+iStart)) and (not 'dropout' in f.name) ):
+            #             yo     = tf.keras.layers.Lambda(lambda x: 1.-x)(y)
+            #             ya     = tf.keras.layers.multiply([yo, y_U])
+            #             yb     = tf.keras.layers.multiply([   y, y_V])
+            #             y      = tf.keras.layers.add([ya, yb])
+            #     tShift = y
+
 
             y = inputsTrunk
-            if (self.NormalizeInput):
+            if (self.NormalizeTrunkFlg):
                 iStart = 1
                 y      = self.TrunkLayersVecs[iTrunk][0](y, training=training)
             else:
                 iStart = 0 
+
+            if (self.ShiftTrunkFlg):
+                iStart = 1
+                y      = self.TrunkLayersVecs[iTrunk][0](y, training=training)    
+                y      = tf.keras.layers.subtract([y, tShift[iTrunk]])
 
             if (self.TrunkLayers_U[iTrunk]):
                 y_U = self.TrunkLayers_U[iTrunk](y, training=training)
@@ -172,7 +264,7 @@ class DeepONet(NN):
                     y = f(y, training=(training or self.TrunkDropOutPredFlg))
                 else:
                     y = f(y, training=training)
-                if ( (self.TrunkLayers_U[iTrunk]) and (iLayer < NLayers-(1+iStart)) and (not 'dropout' in f.name) ):
+                if ( (self.TrunkLayers_U[iTrunk]) and (iLayer < NLayers_Trunk-(1+iStart)) and (not 'dropout' in f.name) ):
                     yo = tf.keras.layers.Lambda(lambda x: 1.-x)(y)
                     ya = tf.keras.layers.multiply([yo, y_U])
                     yb = tf.keras.layers.multiply([   y, y_V])

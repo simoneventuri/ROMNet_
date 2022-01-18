@@ -364,7 +364,7 @@ class NN(tf.keras.Model):
 
 
     #=======================================================================================================================================
-    def fnn_block(self, xnorm, BlockName, NNName, Idx, InputVars, LayersVec=[]):
+    def fnn_block(self, xnorm, BlockName, NNName, Idx, InputVars, NormalizeFlg, LayersVec=[]):
 
         if (BlockName != ''):
             VarName = ''
@@ -394,7 +394,7 @@ class NN(tf.keras.Model):
 
         ### Normalizer Layer
 
-        if (self.NormalizeInput):
+        if (NormalizeFlg):
             # if (self.NN_Transfer_Model is not None): 
             #     Mean        = self.NN_Transfer_Model.get_layer('normalization').mean.numpy()
             #     Variance    = self.NN_Transfer_Model.get_layer('normalization').variance.numpy()
@@ -441,9 +441,6 @@ class NN(tf.keras.Model):
             ActFun_U   = getattr(self, BlockName+'UActFun')[Idx]
             NNLayers_V = getattr(self, BlockName+'VLayers')[Idx]
             ActFun_V   = getattr(self, BlockName+'VActFun')[Idx]
-            print('NNLayers_U = ', NNLayers_U[0])
-            print('ActFun_U   = ', ActFun_U[0])
-
     
             if ( (NNLayers_U is None) or (ActFun_U is None) or (NNLayers_V is None) or (ActFun_V is None) ):
                 Layer_U = None
@@ -569,42 +566,6 @@ class NN(tf.keras.Model):
                 DropOutLayer           = tf.keras.layers.Dropout(DropOutRate, input_shape=(NNLayers[iLayer],))
                 DropOutLayer.trainable = DropOutPredFlg
                 LayersVec.append( DropOutLayer )
-
-
-
-        # #if (BlockName in ['','Trunk']):
-        # if (BlockName in ['']):
-
-        #     ### Final Layer
-
-        #     NNNs        = len(self.Layers)
-        #     NOutputsNN  = len(self.OutputVars)
-        #     if (NNNs > 1):
-        #         NOutputsNN = 1
-     
-        #     layer_name      = 'FinalScaling_' + str(Idx+1)
-        #     if (self.NN_Transfer_Model is not None):
-        #         if (self.NN_Transfer_POD_Flg):
-        #             layer_name_ = 'FinalScaling_' + str(Idx+1)
-        #         else:
-        #             layer_name_ = layer_name
-        #         x0     = self.NN_Transfer_Model.get_layer(layer_name_).kernel.numpy()
-        #         b0     = self.NN_Transfer_Model.get_layer(layer_name_).bias.numpy()
-        #         WIni   = tf.keras.initializers.RandomNormal(mean=x0, stddev=1.e-10)
-        #         bIni   = tf.keras.initializers.RandomNormal(mean=b0, stddev=1.e-10)
-        #         WRegul = L1L2Regularizer(kW1, kW2, x0)
-        #     else:
-        #         WIni   = 'glorot_normal'
-        #         bIni   = 'zeros'
-        #     OutLayer   = tf.keras.layers.Dense(units              = NOutputsNN,
-        #                                        activation         = 'linear',
-        #                                        use_bias           = True,
-        #                                        kernel_initializer = WIni,
-        #                                        kernel_regularizer = WRegul,
-        #                                        bias_initializer   = bIni,
-        #                                        name               = layer_name)
-            
-        #     LayersVec.append( OutLayer )
 
 
 

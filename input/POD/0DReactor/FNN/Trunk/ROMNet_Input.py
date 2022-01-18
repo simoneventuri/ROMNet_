@@ -87,7 +87,7 @@ class inputdata(object):
         # self.LossWeights         = {'ics': 1., 'res': 1.}     
         self.Metrics             = None                                                                   # List of Metric Functions
         self.LR                  = 5.e-4                                                                 # Initial Learning Rate
-        self.LRDecay             = ["exponential", 3000, 0.98]
+        self.LRDecay             = ["exponential", 10000, 0.98]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
         self.WeightDecay         = np.array([1.e-9, 1.e-9], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
