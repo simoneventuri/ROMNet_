@@ -15,14 +15,16 @@ from PCAfold import PCA as PCAA
 ##########################################################################################
 ### Input Data
 ###
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_1000Cases_Diff/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_2000Cases_Diff/'
 FigDir             = OutputDir + '/fig/'
 
-DirName            = 'train'
-NICs               = 1000
+# DirName            = 'train'
+# NICs               = 1000
+DirName            = 'test'
+NICs               = 5
 iSimVec            = range(NICs)
 
-NVarsRed           = 10
+NVarsRed           = 7
 ##########################################################################################
 
 
@@ -37,7 +39,7 @@ try:
 except:
     pass
 try:
-    os.makedirs(OutputDir+'/' + str(NVarsRed) + 'PC/train/')
+    os.makedirs(OutputDir+'/' + str(NVarsRed) + 'PC/'+DirName+'/')
 except:
     pass
 try:
@@ -45,7 +47,7 @@ try:
 except:
     pass
 try:
-    os.makedirs(OutputDir+'/' + str(NVarsRed) + 'PC/train/ext/')
+    os.makedirs(OutputDir+'/' + str(NVarsRed) + 'PC/'+DirName+'/ext/')
 except:
     pass
 
@@ -94,27 +96,40 @@ ySourceTemp  = SourceMatCSV[:,1:]
 
 yMat         = yMatTemp[:,0][...,np.newaxis]
 ySource      = ySourceTemp[:,0][...,np.newaxis]
-VarsName    = ['T']
+
 print('[PCA] Original (', len(SpeciesNames), ') Species: ', SpeciesNames)
-for iSpec in range(1, yMatTemp.shape[1]):
-    if (np.amax(np.abs(yMatTemp[1:,iSpec] - yMatTemp[:-1,iSpec])) > 1.e-10):
+VarsName    = ['T']
+if (DirName == 'train'):
+    
+    for iSpec in range(1, yMatTemp.shape[1]):
+        if (np.amax(np.abs(yMatTemp[1:,iSpec] - yMatTemp[:-1,iSpec])) > 1.e-10):
+            yMat    = np.concatenate((yMat,    yMatTemp[:,iSpec][...,np.newaxis]), axis=1)
+            ySource = np.concatenate((ySource, ySourceTemp[:,iSpec][...,np.newaxis]), axis=1)
+            #print(gas.species_name(i-1))
+            VarsName.append(SpeciesNames[iSpec])  
+
+    ToOrig = []
+    for Var in VarsName:
+        ToOrig.append(SpeciesNames.index(Var))
+    ToOrig = np.array(ToOrig, dtype=int)
+
+    FileName = OutputDir+'/'+str(NVarsRed)+'PC/ROM/ToOrig_Mask.csv'
+    np.savetxt(FileName, ToOrig, delimiter=',')
+
+else:
+
+    Data     = pd.read_csv(OutputDir+'/'+str(NVarsRed)+'PC/ROM/ToOrig_Mask.csv', header=None)
+    ToOrig   = Data.to_numpy(int)[:,0]
+    for iSpec in ToOrig[1:]:
         yMat    = np.concatenate((yMat,    yMatTemp[:,iSpec][...,np.newaxis]), axis=1)
         ySource = np.concatenate((ySource, ySourceTemp[:,iSpec][...,np.newaxis]), axis=1)
         #print(gas.species_name(i-1))
-        VarsName.append(SpeciesNames[iSpec])        
+        VarsName.append(SpeciesNames[iSpec])  
+
 KeptSpeciesNames = VarsName
 #print('yMat = ', yMat)
 print('[PCA] Final (', len(KeptSpeciesNames), ') Variables: ', KeptSpeciesNames)
 print('[PCA] ')
-
-
-ToOrig = []
-for Var in VarsName:
-    ToOrig.append(SpeciesNames.index(Var))
-ToOrig = np.array(ToOrig, dtype=int)
-
-FileName    = OutputDir+'/'+str(NVarsRed)+'PC/ROM/ToOrig_Mask.csv'
-np.savetxt(FileName, ToOrig, delimiter=',')
 
 
 
@@ -233,23 +248,38 @@ with open(FileName, 'w') as the_file:
 #['['level', 'pareto', 'range', 'std', 'vast']', 'pareto', 'range', 'std', 'vast']
 
 ### 
-pca        = PCAA(yMat, scaling='pareto', n_components=NVarsRed)
-C          = pca.X_center
-D          = pca.X_scale
-A          = pca.A[:,0:NVarsRed].T
-L          = pca.L
-AT         = A.T
-print('[PCA] Shape of A        = ', A.shape)
-print('[PCA] ')
+if (DirName == 'train'):
 
-FileName    = OutputDir+'/'+str(NVarsRed)+'PC/ROM/A.csv'
-np.savetxt(FileName, A, delimiter=',')
+    pca        = PCAA(yMat, scaling='pareto', n_components=NVarsRed)
+    C          = pca.X_center
+    D          = pca.X_scale
+    A          = pca.A[:,0:NVarsRed].T
+    L          = pca.L
+    AT         = A.T
+    print('[PCA] Shape of A        = ', A.shape)
+    print('[PCA] ')
 
-FileName    = OutputDir+'/'+str(NVarsRed)+'PC/ROM/C.csv'
-np.savetxt(FileName, C, delimiter=',')
+    FileName    = OutputDir+'/'+str(NVarsRed)+'PC/ROM/A.csv'
+    np.savetxt(FileName, A, delimiter=',')
 
-FileName    = OutputDir+'/'+str(NVarsRed)+'PC/ROM/D.csv'
-np.savetxt(FileName, D, delimiter=',')
+    FileName    = OutputDir+'/'+str(NVarsRed)+'PC/ROM/C.csv'
+    np.savetxt(FileName, C, delimiter=',')
+
+    FileName    = OutputDir+'/'+str(NVarsRed)+'PC/ROM/D.csv'
+    np.savetxt(FileName, D, delimiter=',')
+
+else:
+    FileName = OutputDir+'/'+str(NVarsRed)+'PC/ROM/A.csv'
+    A        = pd.read_csv(FileName, delimiter=',', header=None).to_numpy()
+    AT       = A.T
+
+    FileName = OutputDir+'/'+str(NVarsRed)+'PC/ROM/C.csv'
+    C        = pd.read_csv(FileName, delimiter=',', header=None).to_numpy()
+    C        = np.squeeze(C)
+
+    FileName = OutputDir+'/'+str(NVarsRed)+'PC/ROM/D.csv'
+    D        = pd.read_csv(FileName, delimiter=',', header=None).to_numpy()
+    D        = np.squeeze(D)
 
 
 Header   = 'PC_1'
@@ -261,15 +291,15 @@ for iVarsRed in range(1,NVarsRed):
 
 #yMat_pca    = pca.transform(yMat, nocenter=False)
 yMat_pca   = ((yMat - C)/D).dot(AT)
-FileName    = OutputDir+'/' + str(NVarsRed) + 'PC/train/ext/PC.csv'
+FileName    = OutputDir+'/' + str(NVarsRed) + 'PC/'+DirName+'/ext/PC.csv'
 np.savetxt(FileName, yMat_pca, delimiter=',', header=Header, comments='')
 
 #ySource_pca = pca.transform(ySource, nocenter=False)
 ySource_pca = (ySource/D).dot(AT) 
-FileName    = OutputDir+'/' + str(NVarsRed) + 'PC/train/ext/PCSource.csv'
+FileName    = OutputDir+'/' + str(NVarsRed) + 'PC/'+DirName+'/ext/PCSource.csv'
 np.savetxt(FileName, ySource_pca, delimiter=',', header=HeaderS, comments='')
 
-FileName    = OutputDir+'/' + str(NVarsRed) + 'PC/train/ext/PCAll.csv'
+FileName    = OutputDir+'/' + str(NVarsRed) + 'PC/'+DirName+'/ext/PCAll.csv'
 Temp        = np.concatenate((yMat_pca, ySource_pca), axis=1)
 np.savetxt(FileName, Temp, delimiter=',', header=Header+','+HeaderS, comments='')
 
@@ -291,8 +321,8 @@ Header0 = Header
 Header  = 't,'+Header
 HeaderS = 't,'+HeaderS
 
-fDeepOnetInput  = open(OutputDir +'/' + str(NVarsRed) + 'PC/train/ext/Input.csv', 'w')
-fDeepOnetOutput = open(OutputDir +'/' + str(NVarsRed) + 'PC/train/ext/Output.csv', 'w')
+fDeepOnetInput  = open(OutputDir +'/' + str(NVarsRed) + 'PC/'+DirName+'/ext/Input.csv', 'w')
+fDeepOnetOutput = open(OutputDir +'/' + str(NVarsRed) + 'PC/'+DirName+'/ext/Output.csv', 'w')
 
 for iT in range(1,NICs+1):
     print(KeptSpeciesNames)
@@ -306,7 +336,7 @@ for iT in range(1,NICs+1):
 
 
     yMat_pca    = ((yTemp - C)/D).dot(AT)
-    FileName    = OutputDir+'/' + str(NVarsRed) + 'PC/train/ext/PC.csv.'+str(iT)
+    FileName    = OutputDir+'/' + str(NVarsRed) + 'PC/'+DirName+'/ext/PC.csv.'+str(iT)
     Temp        = np.concatenate((tVec, yMat_pca), axis=1)
     np.savetxt(FileName, Temp, delimiter=',', header=Header, comments='')
 
@@ -327,7 +357,7 @@ for iT in range(1,NICs+1):
     ySourceTemp = Datay[KeptSpeciesNames].to_numpy()
 
     ySource_pca = (ySourceTemp/D).dot(AT) 
-    FileName    = OutputDir+'/' + str(NVarsRed) + 'PC/train/ext/PCSource.csv.'+str(iT)
+    FileName    = OutputDir+'/' + str(NVarsRed) + 'PC/'+DirName+'/ext/PCSource.csv.'+str(iT)
     Temp        = np.concatenate((tVec, ySource_pca), axis=1)
     np.savetxt(FileName, Temp, delimiter=',', header=HeaderS, comments='')
 

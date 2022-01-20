@@ -25,14 +25,14 @@ FigDir             = OutputDir + '/fig/'
 MixtureFile        = 'gri30.yaml'
 
 P0                 = ct.one_atm
-DirName            = 'train'
-NICs               = 2000
-EqRatio0Exts       = np.array([.5, 4.0], dtype=np.float64)
-T0Exts             = np.array([1000, 2000], dtype=np.float64)
-# DirName            = 'test'
-# NICs               = 5
+# DirName            = 'train'
+# NICs               = 2000
+# EqRatio0Exts       = np.array([.5, 4.0], dtype=np.float64)
+# T0Exts             = np.array([1000, 2000], dtype=np.float64)
+DirName            = 'test'
+NICs               = 5
 
-NPerT0             = 500
+NPerT0             = 2000
 
 Integration        = ' '#'Canteras'
 rtol               = 1.e-12
