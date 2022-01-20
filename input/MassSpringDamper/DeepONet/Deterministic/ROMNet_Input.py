@@ -53,8 +53,8 @@ class inputdata(object):
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Branch's Input Data
         self.BranchToTrunk       = [0,0]                                                                  # Index of the Trunk Corresponding to i-th Branch
         self.BranchVars          = ['x','v']                                                              # List Containing the Branch's Input Data Column Names
-        self.BranchLayers        = [np.array([32,32,32,4]), np.array([32,32,32,4])]                           # List Containing the No of Neurons per Each Branch's Layer
-        self.BranchActFun        = [['sigmoid','sigmoid','sigmoid','linear']]*2                      # List Containing the Activation Funct.s per Each Branch's Layer
+        self.BranchLayers        = [np.array([32,32,32,2]), np.array([32,32,32,2])]                           # List Containing the No of Neurons per Each Branch's Layer
+        self.BranchActFun        = [['tanh','tanh','tanh','linear']]*2                      # List Containing the Activation Funct.s per Each Branch's Layer
         # self.BranchLayers        = [np.array([32,32,32,100]), np.array([32,32,32,100])]                           # List Containing the No of Neurons per Each Branch's Layer
         # self.BranchActFun        = [['relu','relu','relu','linear']]*2                      # List Containing the Activation Funct.s per Each Branch's Layer
         self.BranchDropOutRate   = 1.e-10                                                                 # Branch's Layers Dropout Rate
@@ -63,7 +63,7 @@ class inputdata(object):
         self.BranchSoftmaxFlg    = False                                                                  # Flag for Using Softmax after Branch's Last Layer
         self.TrunkVars           = ['t']                                                                  # List Containing the Trunk's Input Data Column Names
         self.TrunkLayers         = [np.array([32,32,32,2])]                                                 # List Containing the No of Neurons per Each Trunk's Layer
-        self.TrunkActFun         = [['sigmoid','sigmoid','sigmoid','linear']]#,
+        self.TrunkActFun         = [['tanh','tanh','tanh','linear']]#,
                                     #['tanh','tanh','tanh','linear']]                                               # List Containing the Activation Funct.s per Each Trunk's Layer
         self.TrunkDropOutRate    = 1.e-10                                                                  # Trunk's Layers Dropout Rate  
         self.TrunkDropOutPredFlg = False                                                                  # Flag for Using Trunk's Dropout during Prediction
@@ -95,7 +95,7 @@ class inputdata(object):
         self.Losses              = {'pts': {'name': 'MSE', 'axis': 0}} # Loss Functions
         self.LossWeights         = {'pts': 1.}     
         self.Metrics             = None                                                                   # List of Metric Functions
-        self.LR                  = 1.e-4                                                               # Initial Learning Rate
+        self.LR                  = 1.e-3                                                               # Initial Learning Rate
         self.LRDecay             = ["exponential", 10000, 0.98]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
