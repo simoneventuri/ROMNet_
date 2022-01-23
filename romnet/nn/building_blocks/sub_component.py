@@ -48,42 +48,54 @@ class Sub_Component(object):
 
         try:
             self.trainable_flg    = InputData.trainable_flg[self.system_name][self.component_type][self.name]
+            notfnd_flg            = False
         except:
             self.trainable_flg    = 'all'
-        try:
-            self.trainable_flg    = InputData.trainable_flg[self.system_name][self.component_name][self.name]
-        except:
-            self.trainable_flg    = 'all'
+            notfnd_flg            = True
+        if notfnd_flg:
+            try:
+                self.trainable_flg    = InputData.trainable_flg[self.system_name][self.component_name][self.name]
+            except:
+                self.trainable_flg    = 'all'
 
 
         try:
             self.dropout_rate     = InputData.dropout_rate[self.system_name][self.component_type][self.name]
+            notfnd_flg            = False
         except:
             self.dropout_rate     = None 
-        try:
-            self.dropout_rate     = InputData.dropout_rate[self.system_name][self.component_name][self.name]
-        except:
-            self.dropout_rate     = None 
+            notfnd_flg            = True
+        if notfnd_flg:
+            try:
+                self.dropout_rate     = InputData.dropout_rate[self.system_name][self.component_name][self.name]
+            except:
+                self.dropout_rate     = None 
 
 
         try:
             self.dropout_pred_flg = InputData.dropout_pred_flg[self.system_name][self.component_type][self.name]
+            notfnd_flg            = False
         except:
             self.dropout_pred_flg = False
-        try:
-            self.dropout_pred_flg = InputData.dropout_pred_flg[self.system_name][self.component_name][self.name]
-        except:
-            self.dropout_pred_flg = False
+            notfnd_flg            = True
+        if notfnd_flg:
+            try:
+                self.dropout_pred_flg = InputData.dropout_pred_flg[self.system_name][self.component_name][self.name]
+            except:
+                self.dropout_pred_flg = False
 
 
         try:
             self.softmax_flg      = InputData.softmax_flg[self.system_name][self.component_type][self.name]
+            notfnd_flg            = False
         except:
             self.softmax_flg      = None
-        try:
-            self.softmax_flg      = InputData.softmax_flg[self.system_name][self.component_name][self.name]
-        except:
-            self.softmax_flg      = None
+            notfnd_flg            = True
+        if notfnd_flg:
+            try:
+                self.softmax_flg      = InputData.softmax_flg[self.system_name][self.component_name][self.name]
+            except:
+                self.softmax_flg      = None
 
 
         self.weight_decay_coeffs  = InputData.weight_decay_coeffs
@@ -170,15 +182,20 @@ class Sub_Component(object):
             layer_name = self.long_name + '-SoftMax'
             self.layer_names.append(layer_name)
             self.layers_vec.append(tf.keras.layers.Softmax())
-                
-        print("[ROMNet - sub_component.py          ]:         Constructed Sub-Component: " + self.name + " with Layers: ", self.layers_vec) 
+    
+
+        self.n_layers = len(self.layers_vec)
+        print("[ROMNet - sub_component.py          ]:         Constructed Sub-Component: " + self.name + " with Layers:      ", self.layers_vec) 
+        #print("[ROMNet - sub_component.py          ]:         Constructed Sub-Component: " + self.name + " with Layer Names: ", self.layer_names) 
 
     # ---------------------------------------------------------------------------------------------------------------------------
 
 
     # ---------------------------------------------------------------------------------------------------------------------------
-    def call_single_layer(self, inputs, i_layer, training=False):
+    def call_single_layer(self, inputs, i_layer, shift, training=False):
 
+        if (shift is not None) and ('HL_1' in self.layer_names[i_layer]):
+            y = tf.keras.layers.subtract([y, shift])
         y = self.layers_vec[i_layer](inputs, training=training)
 
         return y
@@ -187,11 +204,13 @@ class Sub_Component(object):
 
 
     # ---------------------------------------------------------------------------------------------------------------------------
-    def call(self, inputs, training=False):
+    def call(self, inputs, shift, training=False):
 
-        y = inputs
-        for layer in self.layers_vec:
-            y = layer(y, training=training)
+        y = inputs        
+        for i_layer in range(self.n_layers):
+            if (shift is not None) and ('HL_1' in self.layer_names[i_layer]):
+                y = tf.keras.layers.subtract([y, shift])
+            y = self.layers_vec[i_layer](y, training=training)
 
         return y
 

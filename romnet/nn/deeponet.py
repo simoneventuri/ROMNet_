@@ -39,8 +39,9 @@ class DeepONet(NN):
         print("\n[ROMNet - deeponet.py               ]:   Constructing Deep Operator Network: ") 
 
         self.layers_dict                      = {'DeepONet': {}}
+        self.layer_names_dict                 = {'DeepONet': {}}
         self.system_of_components             = {}
-        self.system_of_components['DeepONet'] = System_of_Components(InputData, 'DeepONet', self.norm_input, layers_dict=self.layers_dict)
+        self.system_of_components['DeepONet'] = System_of_Components(InputData, 'DeepONet', self.norm_input, layers_dict=self.layers_dict, layer_names_dict=self.layer_names_dict)
 
     # ---------------------------------------------------------------------------------------------------------------------------
 

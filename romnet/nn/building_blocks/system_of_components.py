@@ -16,7 +16,7 @@ from .component                           import Component
 class System_of_Components(object):
 
     # ---------------------------------------------------------------------------------------------------------------------------
-    def __init__(self, InputData, system_name, norm_input, layers_dict=[]):
+    def __init__(self, InputData, system_name, norm_input, layers_dict=[], layer_names_dict=[]):
         
         self.name                          = system_name
 
@@ -99,8 +99,9 @@ class System_of_Components(object):
             elif ('Trunk' in component_name):
                 self.trunk_names.append(component_name)
 
-            layers_dict[self.name][component_name] = {}
-            self.components[component_name]        = Component(InputData, self.name, component_name, self.norm_input, layers_dict=layers_dict)
+            layers_dict[self.name][component_name]      = {}
+            layer_names_dict[self.name][component_name] = {}
+            self.components[component_name]             = Component(InputData, self.name, component_name, self.norm_input, layers_dict=layers_dict, layer_names_dict=layer_names_dict)
 
 
         # Adding Post Correlating / Scaling / Shifting Layer (If Needed)
@@ -137,10 +138,12 @@ class System_of_Components(object):
 
         if (self.n_rigids > 0):
             for i_rigid in range(self.n_rigids):
-                rigid   = self.components[rigid_names[i_rigid]].call(inputs_branch, shift=None, training=training)
+                rigid_name = self.rigid_names[i_rigid]
+                rigid      = self.components[rigid_name].call(inputs_branch, shift=None, training=training)
             shift = tf.split(rigid, num_or_size_splits=[1]*self.n_trunks, axis=1)
         else:
             shift = [None]*self.n_trunks
+            print("[ROMNet - system_of_components.py   ]:     shift = ", shift) 
 
 
         y_trunk_vec = []

@@ -43,8 +43,9 @@ class FNN(NN):
         print("\n[ROMNet - deeponet.py               ]:   Constructing Feed-Forward Network: ") 
 
         self.layers_dict                 = {'FNN': {}}
+        self.layer_names_dict            = {'FNN': {}}
         self.system_of_components        = {}
-        self.system_of_components['FNN'] = System_of_Components(InputData, 'FNN', self.norm_input, layers_dict=self.layers_dict)
+        self.system_of_components['FNN'] = System_of_Components(InputData, 'FNN', self.norm_input, layers_dict=self.layers_dict, layer_names_dict=self.layer_names_dict)
 
 
     # ---------------------------------------------------------------------------------------------------------------------------

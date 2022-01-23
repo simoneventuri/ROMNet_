@@ -10,7 +10,7 @@ from .sub_component import Sub_Component
 class Component(object):
 
     # ---------------------------------------------------------------------------------------------------------------------------
-    def __init__(self, InputData, system_name, component_name, norm_input, trans_vec=[], trans_names=[], norm_vec=[], norm_names=[], layers_dict=[], layer_names=[]):
+    def __init__(self, InputData, system_name, component_name, norm_input, trans_vec=[], trans_names=[], norm_vec=[], norm_names=[], layers_dict=[], layer_names_dict=[]):
         
         self.system_name           = system_name
         self.name                  = component_name
@@ -20,9 +20,10 @@ class Component(object):
         self.norm_vec              = norm_vec
         self.norm_names            = norm_names
         self.layers_dict           = layers_dict
-        self.layer_names           = layer_names
+        self.layer_names_dict      = layer_names_dict
 
         layers_vec                 = []
+        layer_names                = []
 
         if ('_' in self.system_name):
             self.system_type, self.system_idx = self.system_name.split('_')
@@ -47,12 +48,15 @@ class Component(object):
 
         try:   
             self.norm_input_flg   = InputData.norm_input_flg[self.system_name][self.type]
+            notfnd_flg            = False
         except:   
             self.norm_input_flg   = None
-        try:   
-            self.norm_input_flg   = InputData.norm_input_flg[self.system_name][self.name]
-        except:   
-            self.norm_input_flg   = None
+            notfnd_flg            = True
+        if notfnd_flg:
+            try:   
+                self.norm_input_flg = InputData.norm_input_flg[self.system_name][self.name]
+            except:   
+                self.norm_input_flg = None
 
     
         try:          
@@ -92,8 +96,8 @@ class Component(object):
                         indxs.append(ivar)
 
                 if (len(indxs) > 0):
-                    layer      = TransLayer(fun, len(self.input_vars), indxs, name=layer_name)
                     layer_name = self.long_name + '-PreTransformation_' + fun
+                    layer      = TransLayer(fun, len(self.input_vars), indxs, name=layer_name)
                     layers_vec.append(layer)
                     layer_names.append(layer_name)
                     self.trans_vec.append(layer)
@@ -135,10 +139,15 @@ class Component(object):
             if (sub_component_name == 'U'):
                 self.call = self.call_improved                
             
-            layers_dict[system_name][component_name][sub_component_name]  = []
-            layers_dict[system_name][component_name][sub_component_name] += layers_vec
-            layers_vec_                                                   = layers_dict[system_name][component_name][sub_component_name]
-            self.sub_components[sub_component_name]                       = Sub_Component(InputData, self.system_name, self.name, sub_component_name, layers_vec=layers_vec_, layer_names=layer_names)
+            layers_dict[system_name][component_name][sub_component_name]       = []
+            layers_dict[system_name][component_name][sub_component_name]      += layers_vec
+            layers_vec_                                                        = layers_dict[system_name][component_name][sub_component_name]
+
+            layer_names_dict[system_name][component_name][sub_component_name]  = []
+            layer_names_dict[system_name][component_name][sub_component_name] += layer_names
+            layer_names_                                                       = layer_names_dict[system_name][component_name][sub_component_name]
+
+            self.sub_components[sub_component_name]                            = Sub_Component(InputData, self.system_name, self.name, sub_component_name, layers_vec=layers_vec_, layer_names=layer_names_)
 
     # ---------------------------------------------------------------------------------------------------------------------------
      
@@ -146,7 +155,7 @@ class Component(object):
     # ---------------------------------------------------------------------------------------------------------------------------
     def call_classic(self, inputs, shift=None, training=False):
 
-        return self.sub_components['Main'].call(inputs, training)
+        return self.sub_components['Main'].call(inputs, shift, training)
 
     # ---------------------------------------------------------------------------------------------------------------------------   
 
@@ -154,18 +163,18 @@ class Component(object):
     # ---------------------------------------------------------------------------------------------------------------------------
     def call_improved(self, inputs, shift=None, training=False):
 
-        y = inputs
+        y                  = inputs
 
         sub_component_Main = self.sub_components['Main']
         sub_component_U    = self.sub_components['U']
         sub_component_V    = self.sub_components['V']
 
-        y_U                = sub_component_U.call(y, training=training)
-        y_V                = sub_component_V.call(y, training=training)
+        y_U                = sub_component_U.call(y, shift, training=training)
+        y_V                = sub_component_V.call(y, shift, training=training)
         i_layer  = 0
         n_layers = len(sub_component_Main.layers_vec)
         while (i_layer <= n_layers-1):
-            y  = sub_component_Main.call_single_layer(y, i_layer, training=training)
+            y  = sub_component_Main.call_single_layer(y, i_layer, shift, training=training)
             if ('HL' in sub_component_Main.layer_names[i_layer]) and (i_layer < n_layers-1):
                 ym = tf.keras.layers.Lambda(lambda x: 1.-x)(y)
                 yu = tf.keras.layers.multiply([ym, y_U])
