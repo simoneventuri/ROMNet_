@@ -431,7 +431,8 @@ class Model_Deterministic(Model):
             
         """
 
-        y_pred = self.net.predict(input_data)
+        #y_pred = self.net.predict(input_data)
+        y_pred = self.net.call_predict(input_data)
 
         if (self.norm_output_flg):
 

@@ -47,14 +47,21 @@ class Sub_Component(object):
 
 
         try:
-            self.trainable_flg    = InputData.trainable_flg[self.system_name][self.component_type][self.name]
+            self.trainable_flg    = InputData.trainable_flg[self.system_name]
             notfnd_flg            = False
         except:
             self.trainable_flg    = 'all'
             notfnd_flg            = True
         if notfnd_flg:
             try:
-                self.trainable_flg    = InputData.trainable_flg[self.system_name][self.component_name][self.name]
+                self.trainable_flg    = InputData.trainable_flg[self.system_name][self.component_type]
+                notfnd_flg            = False
+            except:
+                self.trainable_flg    = 'all'
+                notfnd_flg            = True
+        if notfnd_flg:
+            try:
+                self.trainable_flg    = InputData.trainable_flg[self.system_name][self.component_type][self.name]
             except:
                 self.trainable_flg    = 'all'
 

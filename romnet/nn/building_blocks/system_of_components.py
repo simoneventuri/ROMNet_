@@ -143,7 +143,7 @@ class System_of_Components(object):
             shift = tf.split(rigid, num_or_size_splits=[1]*self.n_trunks, axis=1)
         else:
             shift = [None]*self.n_trunks
-            print("[ROMNet - system_of_components.py   ]:     shift = ", shift) 
+            #print("[ROMNet - system_of_components.py   ]:     shift = ", shift) 
 
 
         y_trunk_vec = []
