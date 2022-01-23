@@ -8,6 +8,8 @@ class inputdata(object):
 
     def __init__(self, WORKSPACE_PATH, ROMNetFldr):
 
+        self.NPODs               = 2
+
         #=======================================================================================================================================
         ### Case Name
         self.NNRunIdx            = 0                                                                      # Training Case Identification Number 
@@ -48,38 +50,45 @@ class inputdata(object):
 
         #=======================================================================================================================================
         ## NN Model Structure
-        self.SurrogateType       = 'DeepONet'                                                             # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
-        self.ProbApproach        = 'Deterministic'                                                        # Probabilistic Technique for Training the BNN (if Any)
-        self.NormalizeInput      = True                                                                   # Flag for Normalizing Branch's Input Data
-        self.BranchToTrunk       = [0,0]                                                                  # Index of the Trunk Corresponding to i-th Branch
-        self.BranchVars          = ['x','v']                                                              # List Containing the Branch's Input Data Column Names
-        self.BranchLayers        = [np.array([32,32,32,2]), np.array([32,32,32,2])]                           # List Containing the No of Neurons per Each Branch's Layer
-        self.BranchActFun        = [['tanh','tanh','tanh','linear']]*2                      # List Containing the Activation Funct.s per Each Branch's Layer
-        # self.BranchLayers        = [np.array([32,32,32,100]), np.array([32,32,32,100])]                           # List Containing the No of Neurons per Each Branch's Layer
-        # self.BranchActFun        = [['relu','relu','relu','linear']]*2                      # List Containing the Activation Funct.s per Each Branch's Layer
-        self.BranchDropOutRate   = 1.e-10                                                                 # Branch's Layers Dropout Rate
-        self.BranchDropOutPredFlg= False                                                                  # Flag for Using Branch's Dropout during Prediction
-        # self.BranchSoftmaxFlg    = False                                                                  # Flag for Using Softmax after Branch's Last Layer
-        self.BranchSoftmaxFlg    = False                                                                  # Flag for Using Softmax after Branch's Last Layer
-        self.TrunkVars           = ['t']                                                                  # List Containing the Trunk's Input Data Column Names
-        self.TrunkLayers         = [np.array([32,32,32,2])]                                                 # List Containing the No of Neurons per Each Trunk's Layer
-        self.TrunkActFun         = [['tanh','tanh','tanh','linear']]#,
-                                    #['tanh','tanh','tanh','linear']]                                               # List Containing the Activation Funct.s per Each Trunk's Layer
-        self.TrunkDropOutRate    = 1.e-10                                                                  # Trunk's Layers Dropout Rate  
-        self.TrunkDropOutPredFlg = False                                                                  # Flag for Using Trunk's Dropout during Prediction
-        self.TransFun            = None
-        self.FinalLayerFlg       = None                                                                   # Flag for Using a Full Linear Layer after Dot-Product Layer
-        self.OutputVars          = ['x','v']                                                              # List Containing the Output Data Column Names
-
-        # self.BranchULayers       = [np.array([32]),np.array([32])]                                           # List Containing the No of Neurons per Each NN's Layer
-        # self.BranchUActFun       = [['tanh'],['tanh']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-        # self.BranchVLayers       = [np.array([32]),np.array([32])]                                           # List Containing the No of Neurons per Each NN's Layer
-        # self.BranchVActFun       = [['tanh'],['tanh']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-
-        # self.TrunkULayers        = [np.array([32])]                                           # List Containing the No of Neurons per Each NN's Layer
-        # self.TrunkUActFun        = [['tanh']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-        # self.TrunkVLayers        = [np.array([32])]                                           # List Containing the No of Neurons per Each NN's Layer
-        # self.TrunkVActFun        = [['tanh']]                                 # List Containing the Activation Funct.s per Each NN's Layer
+        self.SurrogateType       = 'DeepONet'                                                              # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
+        self.ProbApproach        = 'Deterministic'                                                         # Probabilistic Technique for Training the BNN (if Any)
+        self.trans_fun           = None #{'log': ['t']}                                                    # Dictionary Containing Functions to Be Applied to Input Data 
+        self.norm_output_flg     = False                                                                   # Flag for Normalizing Output Data
+        self.output_vars         = ['x','v']                                                               # List Containing the Output Data Variable Names for each System
+        self.input_vars_all      = ['x','v','t']                                                           # List Containing all the Input Data Variable Names
+        self.input_vars          = {'DeepONet': {'Branch': ['x','v'],
+                                                  'Trunk': ['t']}}                                         # Dictionary Containing the Input  Data Variable Names for each Component
+        self.norm_input_flg      = {'DeepONet': {'Branch_1': True, 
+                                                 'Branch_2': True, 
+                                                    'Trunk': True}}                                        # Dictionary Containing Flags for Normalizing Input Data for each Component
+        # self.structure           = {'DeepONet': {'Branch_1': ['Main'],
+        #                                          'Branch_2': ['Main'],
+        #                                             'Trunk': ['Main']}}                                    # Dictionary Containing the Structure of the Network
+        # self.n_neurons           = {'DeepONet': {'Branch': {'Main': np.array([32,32,32,self.NPODs+2])},
+        #                                           'Trunk': {'Main': np.array([32,32,32,self.NPODs])}}}     # Dictionary Containing the No of Neurons for each Layer
+        # self.act_funcs           = {'DeepONet': {'Branch': {'Main': ['tanh','tanh','tanh','linear']},
+        #                                           'Trunk': {'Main': ['tanh','tanh','tanh','linear']}}}     # Dictionary Containing the Activation Funct.s for each Layer
+        # self.dropout_rate        = {'DeepONet': {'Branch': {'Main': 1.e-10},
+        #                                           'Trunk': {'Main': 1.e-10}}}                              # Dictionary Containing the Dropout Rate for each Sub-Component
+        # self.dropout_pred_flg    = {'DeepONet': {'Branch': {'Main': False},
+        #                                           'Trunk': {'Main': False}}}                               # Dictionary Containing the Dropout-at-Prediction Flag for each Sub-Component 
+        # self.softmax_flg         = {'DeepONet': {'Branch': {'Main': False},
+        #                                           'Trunk': {'Main': False}}}                               # Dictionary Containing the Softmax Flag for each Sub-Component 
+        self.structure           = {'DeepONet': {'Branch_1': ['Main', 'U', 'V'],
+                                                 'Branch_2': ['Main', 'U', 'V'],
+                                                    'Trunk': ['Main']}}                                    # Dictionary Containing the Structure of the Network
+        self.n_neurons           = {'DeepONet': {'Branch': {'Main': np.array([32,32,32,self.NPODs+2]),
+                                                               'U': np.array([32]),
+                                                               'V': np.array([32])},
+                                                  'Trunk': {'Main': np.array([32,32,32,self.NPODs])}}}     # Dictionary Containing the No of Neurons for each Layer
+        self.act_funcs           = {'DeepONet': {'Branch': {'Main': ['sigmoid','sigmoid','sigmoid','linear'],
+                                                               'U': ['tanh'],
+                                                               'V': ['tanh']},
+                                                  'Trunk': {'Main': ['sigmoid','sigmoid','sigmoid','linear']}}}  # Dictionary Containing the Activation Funct.s for each Layer
+        self.dropout_rate        = {'DeepONet': {'Branch': {'Main':  1.e-3, 'U': None,  'V': None},
+                                                  'Trunk': {'Main':  1.e-3}}}                              # Dictionary Containing the Dropout Rate for each Sub-Component
+        self.dropout_pred_flg    = {'DeepONet': {'Branch': {'Main': False,  'U': False, 'V': False}}}              # Dictionary Containing the Dropout-at-Prediction Flag for each Sub-Component 
+        self.softmax_flg         = {'DeepONet': {'Branch': {'Main': False}}}                                       # Dictionary Containing the Softmax Flag for each Sub-Component 
 
         #=======================================================================================================================================
         ### Training Quanties
@@ -99,7 +108,7 @@ class inputdata(object):
         self.LRDecay             = ["exponential", 10000, 0.98]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
-        self.WeightDecay         = np.array([1.e-10, 1.e-10], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
+        self.weight_decay_coeffs = np.array([1.e-10, 1.e-10], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
         self.Callbacks           = {
             'base': {
                 'stateful_metrics': None

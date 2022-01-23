@@ -10,32 +10,32 @@ class Data(object):
         self.Type = InputData.DataType
 
 
-    #===========================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
     def transform_normalization_data(self):
 
-        if (self.TransFun):
-            for ifun, fun in enumerate(self.TransFun):
-                vars_list = self.TransFun[fun]
+        if (self.trans_fun):
+            for ifun, fun in enumerate(self.trans_fun):
+                vars_list = self.trans_fun[fun]
 
-                for ivar, var in enumerate(self.InputVars):
+                for ivar, var in enumerate(self.input_vars):
                     if var in vars_list:
                         if (fun == 'log10'):
-                            self.xnorm[var] = np.log10(self.xnorm[var])
+                            self.norm_input[var] = np.log10(self.norm_input[var])
                         elif (fun == 'log'):
-                            self.xnorm[var] = np.log(self.xnorm[var])
+                            self.norm_input[var] = np.log(self.norm_input[var])
 
-                for ivar, var in enumerate(self.OutputVars):
+                for ivar, var in enumerate(self.output_vars):
                     if var in vars_list:
                         if (fun == 'log10'):
-                            self.ynorm[var] = np.log10(self.ynorm[var])
+                            self.norm_output[var] = np.log10(self.norm_output[var])
                         elif (fun == 'log'):
-                            self.ynorm[var] = np.log(self.ynorm[var])
+                            self.norm_output[var] = np.log(self.norm_output[var])
                     
-    #===========================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
 
 
-    #===========================================================================
-    def normalize_output_data(self, all_data):
+    # ---------------------------------------------------------------------------------------------------------------------------
+    def normalize_input_data(self, all_data):
 
         for i, now_data in enumerate(all_data):
             for data_id, xyi_data in now_data.items():
@@ -47,10 +47,10 @@ class Data(object):
         
         return all_data
 
-    #===========================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
 
 
-    #===========================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
     def normalize_output_data(self, all_data):
 
         for i, now_data in enumerate(all_data):
@@ -63,36 +63,34 @@ class Data(object):
         
         return all_data
 
-    #===========================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
 
 
-    #===========================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
     def compute_input_statistics(self):
 
         self.xstat         = {}
-        self.xstat['min']  = self.xnorm.min(axis = 0)
-        self.xstat['max']  = self.xnorm.max(axis = 0)
-        self.xstat['mean'] = self.xnorm.mean(axis = 0)
-        self.xstat['std']  = self.xnorm.std(axis = 0)   
+        self.xstat['min']  = self.norm_input.min(axis = 0)
+        self.xstat['max']  = self.norm_input.max(axis = 0)
+        self.xstat['mean'] = self.norm_input.mean(axis = 0)
+        self.xstat['std']  = self.norm_input.std(axis = 0)   
 
-    #===========================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
 
 
-
-    #===========================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
     def compute_output_statistics(self):
 
         self.ystat         = {}
-        self.ystat['min']  = self.ynorm.min(axis = 0)
-        self.ystat['max']  = self.ynorm.max(axis = 0)
-        self.ystat['mean'] = self.ynorm.mean(axis = 0)
-        self.ystat['std']  = self.ynorm.std(axis = 0)   
+        self.ystat['min']  = self.norm_output.min(axis = 0)
+        self.ystat['max']  = self.norm_output.max(axis = 0)
+        self.ystat['mean'] = self.norm_output.mean(axis = 0)
+        self.ystat['std']  = self.norm_output.std(axis = 0)   
 
-    #===========================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
 
 
-
-    #===========================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
     def read_output_statistics(self, PathToRead=None):
 
         if (PathToRead):
@@ -106,19 +104,19 @@ class Data(object):
         self.ystat['min']  = DataNew['y_min']
         self.ystat['max']  = DataNew['y_max']
 
-    #===========================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
 
 
-
-    #===========================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
     def res_fn(self, net):
         '''Residual loss function'''
 
-        self.NVarsx = net.NVarsx
-        self.NVarsy = net.NVarsy
+        self.n_inputs  = net.n_inputs
+        self.n_outputs = net.n_outputs
 
         def residual(inputs, training=True):
             return None
         
         return residual
-    #===========================================================================
+
+    # ---------------------------------------------------------------------------------------------------------------------------

@@ -54,43 +54,33 @@ class inputdata(object):
         self.NTest               = 2                                                                        # No of Test Cases
         self.TestFlg             = False
 
-        # #=======================================================================================================================================
-        # ## NN Model Structure
-        # self.SurrogateType       = 'FNN'                                                                  # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
-        # self.ProbApproach        = 'Deterministic'                                                        # Probabilistic Technique for Training the BNN (if Any)
-        # self.InputVars           = ['PC_'+str(iPC+1) for iPC in range(self.NRODs)]                                                                 # List Containing the Input Data Column Names 
-        # self.OutputVars          = ['POD_'+str(iPOD+1) for iPOD in range(self.NPODs)]                                                              # List Containing the Output Data Column Names
-        # self.TransFun            = None#{'log': ['t']} 
-        # self.NormalizeInput      = True                                                                   # Flag for Normalizing Input Data
-        # self.Layers              = [np.array([32,64,256,500,self.NPODs])]                                           # List Containing the No of Neurons per Each NN's Layer
-        # self.ActFun              = [['tanh','tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-        # self.DropOutRate         = 1.e-4                                                                 # NN's Layers Dropout Rate
-        # self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
-        # self.NormalizeOutput     = True                                                                   # Flag for Normalizing Input Data
-
-
         #=======================================================================================================================================
         ## NN Model Structure
-        self.SurrogateType       = 'FNN'                                                                  # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
-        self.ProbApproach        = 'Deterministic'                                                        # Probabilistic Technique for Training the BNN (if Any)
-        self.InputVars           = ['x','v']                                                                 # List Containing the Input Data Column Names 
-        self.OutputVars          = ['POD_'+str(iPOD+1) for iPOD in range(self.NPODs)]+['C']                                                              # List Containing the Output Data Column Names
-        #self.OutputVars          = ['IC_'+str(iC+1) for iC in range(self.NICs)]                                                              # List Containing the Output Data Column Names
-        self.TransFun            = None#{'log': ['t']} 
-        self.NormalizeInput      = True                                                                   # Flag for Normalizing Input Data
-        self.Layers              = [np.array([32,32,32,self.NPODs+1])]                                           # List Containing the No of Neurons per Each NN's Layer
-        #self.Layers              = [np.array([32,32,32,self.NICs])]                                           # List Containing the No of Neurons per Each NN's Layer
-        self.ActFun              = [['sigmoid','sigmoid','sigmoid','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-        #self.ActFun              = [['sigmoid','sigmoid','sigmoid','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-        self.DropOutRate         = 1.e-3                                                               # NN's Layers Dropout Rate
-        self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
-        self.NormalizeOutput     = False
-        self.SoftMaxFlg          = False      
+        self.SurrogateType       = 'FNN'                                                                   # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
+        self.ProbApproach        = 'Deterministic'                                                         # Probabilistic Technique for Training the BNN (if Any)
+        self.trans_fun           = None #{'log': ['t']}                                                    # Dictionary Containing Functions to Be Applied to Input Data 
+        self.norm_output_flg     = False                                                                   # Flag for Normalizing Output Data
+        self.output_vars         = ['POD_'+str(iPOD+1) for iPOD in range(self.NPODs)]+['C']+['D']          # List Containing the Output Data Variable Names for each System
+        self.input_vars_all      = ['x','v']                                                               # List Containing all the Input Data Variable Names
+        self.input_vars          = {'FNN': {'FNN': self.input_vars_all}}                                   # Dictionary Containing the Input  Data Variable Names for each Component
+        self.norm_input_flg      = {'FNN': {'FNN': True}}                                                  # Dictionary Containing Flags for Normalizing Input Data for each Component
+        # self.structure           = {'FNN': {'FNN': ['Main']}}                                              # Dictionary Containing the Structure of the Network
+        # self.n_neurons           = {'FNN': {'FNN': {'Main': np.array([32,32,32,self.NPODs+2])}}}           # Dictionary Containing the No of Neurons for each Layer
+        # self.act_funcs           = {'FNN': {'FNN': {'Main': ['tanh','tanh','tanh','linear']}}}             # Dictionary Containing the Activation Funct.s for each Layer
+        # self.dropout_rate        = {'FNN': {'FNN': {'Main': 1.e-10}}}                                      # Dictionary Containing the Dropout Rate for each Sub-Component
+        # self.dropout_pred_flg    = {'FNN': {'FNN': {'Main': False}}}                                       # Dictionary Containing the Dropout-at-Prediction Flag for each Sub-Component 
+        # self.softmax_flg         = {'FNN': {'FNN': {'Main': False}}}                                       # Dictionary Containing the Softmax Flag for each Sub-Component 
+        self.structure           = {'FNN': {'FNN': ['Main', 'U', 'V']}}                                    # Dictionary Containing the Structure of the Network
+        self.n_neurons           = {'FNN': {'FNN': {'Main': np.array([32,32,32,self.NPODs+2]),
+                                                       'U': np.array([32]),
+                                                       'V': np.array([32])}}}                              # Dictionary Containing the No of Neurons for each Layer
+        self.act_funcs           = {'FNN': {'FNN': {'Main': ['sigmoid','sigmoid','sigmoid','linear'],
+                                                       'U': ['tanh'],
+                                                       'V': ['tanh']}}}                                    # Dictionary Containing the Activation Funct.s for each Layer
+        self.dropout_rate        = {'FNN': {'FNN': {'Main': 1.e-3, 'U': None,  'V': None}}}                 # Dictionary Containing the Dropout Rate for each Sub-Component
+        self.dropout_pred_flg    = {'FNN': {'FNN': {'Main': False,  'U': False, 'V': False}}}              # Dictionary Containing the Dropout-at-Prediction Flag for each Sub-Component 
+        self.softmax_flg         = {'FNN': {'FNN': {'Main': False}}}                                       # Dictionary Containing the Softmax Flag for each Sub-Component 
 
-        # self.ULayers             = [np.array([32])]                                           # List Containing the No of Neurons per Each NN's Layer
-        # self.UActFun             = [['tanh']]                                 # List Containing the Activation Funct.s per Each NN's Layer
-        # self.VLayers             = [np.array([32])]                                           # List Containing the No of Neurons per Each NN's Layer
-        # self.VActFun             = [['tanh']]                                 # List Containing the Activation Funct.s per Each NN's Layer
 
         #=======================================================================================================================================
         ### Training Quanties
@@ -107,7 +97,7 @@ class inputdata(object):
         self.LRDecay             = ["exponential", 500, 0.95]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
-        self.WeightDecay         = np.array([1.e-10, 1.e-10], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
+        self.weight_decay_coeffs = np.array([1.e-10, 1.e-10], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
         self.Callbacks           = {
             'base': {
                 'stateful_metrics': None

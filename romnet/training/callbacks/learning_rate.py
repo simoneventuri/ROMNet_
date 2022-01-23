@@ -40,7 +40,7 @@ class LearningRateTracker(CB.Callback):
         self,
         file=None,
         log_dir=None,
-        verbose=1
+        verbose=0
     ):
         super(LearningRateTracker, self).__init__()
 
@@ -70,7 +70,7 @@ class LearningRateTracker(CB.Callback):
             self.file.write('%.6e\n' % lr)
             self.file.flush()
         if self.verbose > 0:
-            print("Learning rate value = %.4e" % lr)
+            print("[ROMNet - learning_rate.py          ]:   Learning rate value = %.4e" % lr)
 
     def on_train_end(self, logs=None):
         if self.file is not None:

@@ -27,7 +27,6 @@ class ConstantWeightsAdapter(tf.keras.callbacks.Callback):
     ):
         super(ConstantWeightsAdapter, self).__init__()
 
-        print('pde_loss_weights = ', pde_loss_weights)
         self.name             = None
         self.data_generator   = data_generator
         self.pde_loss_weights = pde_loss_weights
@@ -42,14 +41,15 @@ class ConstantWeightsAdapter(tf.keras.callbacks.Callback):
 
     def init_weights(self):
         if self.pde_loss_weights is None:
-            print("[ROMNet]   No `pde_loss_weights` have been provided. The initial value of 1 will be applied.")
+                    
+            print("[ROMNet - weight_loss.py  ]:   No `pde_loss_weights` have been provided. The initial value of 1 will be applied.")
             _pde_loss_weights = dict( zip(self.model.data_ids, [1.]*len(self.model.data_ids)) )
         elif isinstance(self.pde_loss_weights, (list,tuple)):
             _pde_loss_weights = dict( zip(self.model.data_ids, self.pde_loss_weights) )
         elif isinstance(self.pde_loss_weights, dict):
             _pde_loss_weights = self.pde_loss_weights
         else:
-            utils.raise_value_err("`pde_loss_weights` passed into `{}` "
+            utils.raise_value_err("[ROMNet - weight_loss.py  ]: `pde_loss_weights` passed into `{}` "
                 "has to be a list or a dictionary:\n"
                 "  - 'ics': weight for initial condition pts loss;\n"
                 "  - 'pts': weight for anchor pts loss;\n"
@@ -75,9 +75,8 @@ class ConstantWeightsAdapter(tf.keras.callbacks.Callback):
         weights = self.model.pde_loss_weights.values()
         if any(tf.math.is_nan(w) for w in weights) \
             or any(tf.math.is_inf(w) for w in weights):
-            print("")
             utils.warning(
-                "One or multiple `pde_loss_weights` evaluated in `{}` class "
+                "[ROMNet - weight_loss.py  ]: One or multiple `pde_loss_weights` evaluated in `{}` class "
                 "are `inf` or `nan`.".format(self.name)
             )
             utils.print_submain("Here the `pde_loss_weights` values:")
@@ -132,7 +131,6 @@ class SoftAttention(tf.keras.callbacks.Callback):
         path.mkdir(parents=True, exist_ok=True)
         self.save_softattention_weights(self.save_dir+'/Model/LossWeights/', 'Initial')
 
-        print('self.save_dir = ', self.save_dir)
 
 
     def on_epoch_end(self, epoch, logs={}):
@@ -165,7 +163,7 @@ class SoftAttention(tf.keras.callbacks.Callback):
 
     def init_weights(self):
         if self.pde_loss_weights is None:
-            print("[ROMNet]   No `pde_loss_weights` have been provided. The initial value of 1 will be applied.")
+            print("[ROMNet - weight_loss.py  ]:   No `pde_loss_weights` have been provided. The initial value of 1 will be applied.")
             _pde_loss_weights = dict( zip(self.model.data_ids, [1.]*len(self.model.data_ids)) )
         elif isinstance(self.pde_loss_weights, (list,tuple)):
             _pde_loss_weights = dict( zip(self.model.data_ids, self.pde_loss_weights) )

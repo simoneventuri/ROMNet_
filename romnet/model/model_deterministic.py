@@ -50,19 +50,19 @@ class Model_Deterministic(Model):
             
             
         """
-        print('\n[ROMNet]:   Initializing the ML Model')
+        print('\n[ROMNet - model_deterministic.py    ]:   Initializing the ML Model')
 
-        self.SurrogateType     = InputData.SurrogateType
-        self.ProbApproach      = InputData.ProbApproach
-
-        self.TrainIntFlg       = InputData.TrainIntFlg
-        self.PathToLoadFld     = InputData.PathToLoadFld
-
-        self.got_stats         = False
+        self.SurrogateType       = InputData.SurrogateType
+        self.ProbApproach        = InputData.ProbApproach
+  
+        self.TrainIntFlg         = InputData.TrainIntFlg
+        self.PathToLoadFld       = InputData.PathToLoadFld
+  
+        self.got_stats           = False
         try:
-            self.ynorm_flg     = InputData.NormalizeOutput
+            self.norm_output_flg = InputData.norm_output_flg
         except:
-            self.ynorm_flg     = False
+            self.norm_output_flg = False
 
         if (self.TrainIntFlg > 0):
 
@@ -98,14 +98,14 @@ class Model_Deterministic(Model):
 
             path = Path( self.PathToRunFld+'/Training/Params' )
             path.mkdir(parents=True, exist_ok=True)
-
-            print("\n[ROMNet]:   Trained Model can be Found here: "    + 
+                     
+            print("\n[ROMNet - model_deterministic.py    ]:   Trained Model can be Found here: "    + 
                                                               self.PathToRunFld)
-            print("\n[ROMNet]:   TensorBoard Data can be Found here: " + 
+            print("\n[ROMNet - model_deterministic.py    ]:   TensorBoard Data can be Found here: " + 
                                                           self.TBCheckpointFldr)
 
             # Copying Input File
-            print("\n[ROMNet]:   Copying Input File From: " +                  \
+            print("\n[ROMNet - model_deterministic.py    ]:   Copying Input File From: " + \
                               InputData.InputFilePath+'/ROMNet_Input.py to ' + \
                                          self.PathToRunFld + '/ROMNet_Input.py')
             shutil.copyfile(InputData.InputFilePath+'/ROMNet_Input.py', 
@@ -136,7 +136,7 @@ class Model_Deterministic(Model):
             
             
         """
-        print('\n[ROMNet]:   Building the ML Model')
+        print('\n[ROMNet - model_deterministic.py    ]:   Building the ML Model')
 
         self.data        = data
 
@@ -148,14 +148,14 @@ class Model_Deterministic(Model):
             self.NN_Transfer_Model = None
 
         if (self.TrainIntFlg > 0):
-            self.xnorm = self.data.xnorm
+            self.norm_input = self.data.norm_input
         else:
-            self.xnorm = None
+            self.norm_input = None
         #-----------------------------------------------------------------------
 
 
         #-----------------------------------------------------------------------
-        self.net = Net(InputData, self.xnorm, self.NN_Transfer_Model)
+        self.net = Net(InputData, self.norm_input)
 
         self.net.AntiPCA_flg = False
         # try:
@@ -168,7 +168,7 @@ class Model_Deterministic(Model):
         #     self.net.C_AntiPCA   = data.system.C
         #     self.net.D_AntiPCA   = data.system.D
 
-        self.net.build((1,self.net.NVarsx))
+        self.net.build((1,self.net.n_inputs))
         #-----------------------------------------------------------------------
 
 
@@ -221,11 +221,11 @@ class Model_Deterministic(Model):
             
             
         """
-        print('\n[ROMNet]:   Compiling the ML Model ... ')
+        print('\n[ROMNet - model_deterministic.py    ]:   Compiling the ML Model ... ')
 
 
         #-----------------------------------------------------------------------
-        print('\n[ROMNet]:   Creating the Models Graph')
+        print('\n[ROMNet - model_deterministic.py    ]:   Creating the Models Graph')
 
         self.graph = self.net.get_graph()
 
@@ -237,7 +237,7 @@ class Model_Deterministic(Model):
         tf.keras.utils.plot_model(self.graph, self.PathToRunFld + 
                                                              "/Model/Model.png")
 
-        ModelFile = self.PathToRunFld + '/Model/' + self.net.Name + '/'
+        ModelFile = self.PathToRunFld + '/Model/' + self.net.structure_name + '/'
         self.graph.save(ModelFile)
 
         #-----------------------------------------------------------------------
@@ -262,16 +262,16 @@ class Model_Deterministic(Model):
 
 
         #-----------------------------------------------------------------------
-        if (self.ynorm_flg):
+        if (self.norm_output_flg):
             self.save_data_statistics(self.data.xstat, self.data.ystat)
-            self.data.system.ynorm_flg = True
+            self.data.system.norm_output_flg = True
             self.data.system.y_mean    = self.y_mean
             self.data.system.y_std     = self.y_std
             self.data.system.y_min     = self.y_min
             self.data.system.y_max     = self.y_max
             self.data.system.y_range   = self.y_range
         else:
-            self.data.system.ynorm_flg = False
+            self.data.system.norm_output_flg = False
         #-----------------------------------------------------------------------
 
 
@@ -342,12 +342,12 @@ class Model_Deterministic(Model):
             
             
         """
-        print('\n[ROMNet]:   Training the ML Model ... ')
+        print('\n[ROMNet - model_deterministic.py    ]:   Training the ML Model ... ')
 
         self.loss_history = LossHistory()
     
-        self.NOutputVars  = self.data.NOutputVars
-        CallBacksList     = callbacks.get_callback(self, InputData)
+        self.n_outputs = self.data.n_outputs
+        CallBacksList  = callbacks.get_callback(self, InputData)
 
         if (InputData.DataType == 'PDE'):
             x        = self.data.train
@@ -396,7 +396,7 @@ class Model_Deterministic(Model):
             if last:
                 FilePath = FilePath + "/" + last
 
-        print('\n[ROMNet]:   Loading ML Model Parameters from File: ', FilePath)
+        print('\n[ROMNet - model_deterministic.py    ]:   Loading ML Model Parameters from File: ', FilePath)
 
         self.net.load_weights(FilePath, by_name=True)#, skip_mismatch=False)
 
@@ -413,7 +413,7 @@ class Model_Deterministic(Model):
             
             
         """
-        print('\n[ROMNet]:   Saving ML Model Parameters to File: ', FilePath)
+        print('\n[ROMNet - model_deterministic.py    ]:   Saving ML Model Parameters to File: ', FilePath)
 
         # Save weights
         self.net.save_weights(FilePath, overwrite=True, save_format='h5')
@@ -423,7 +423,7 @@ class Model_Deterministic(Model):
 
 
     #===========================================================================
-    def predict(self, xData):
+    def predict(self, input_data):
         """
 
         Args:
@@ -431,9 +431,9 @@ class Model_Deterministic(Model):
             
         """
 
-        y_pred = self.net.predict(xData)
+        y_pred = self.net.predict(input_data)
 
-        if (self.ynorm_flg):
+        if (self.norm_output_flg):
 
             if (not self.got_stats):
                 self.read_data_statistics()

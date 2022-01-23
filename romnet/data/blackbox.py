@@ -14,6 +14,26 @@ class BlackBox(Data):
     def __init__(self, InputData, system):
         super(BlackBox, self).__init__(InputData, system)
 
+        self.input_vars          = InputData.input_vars_all
+        self.n_inputs            = len(self.input_vars)
+
+        try:    
+            self.output_vars     = system.output_vars
+        except:
+            self.output_vars     = InputData.output_vars
+        self.n_outputs           = len(self.output_vars)
+
+        try:
+            self.trans_fun       = InputData.trans_fun
+        except:
+            self.trans_fun       = None
+
+        try:
+            self.norm_output_flg = InputData.norm_output_flg
+        except:
+            self.norm_output_flg = False
+            
+
         self.Type                = InputData.DataType
 
         self.PathToDataFld       = InputData.PathToDataFld
@@ -25,31 +45,10 @@ class BlackBox(Data):
         self.test_perc           = InputData.TestPerc
 
         self.SurrogateType       = InputData.SurrogateType
-        if (self.SurrogateType == 'DeepONet'):
-            self.BranchVars      = InputData.BranchVars
-            self.TrunkVars       = InputData.TrunkVars
-        else:
-            self.InputVars       = InputData.InputVars
 
-        try:    
-            self.OutputVars      = system.OutputVars
-        except:    
-            self.OutputVars      = InputData.OutputVars
-        self.NOutputVars         = len(self.OutputVars)
-    
         self.NData               = 0
         self.xtrain, self.ytrain = None, None
         self.xtest,  self.ytest  = None, None
-
-        try:
-            self.TransFun        = InputData.TransFun
-        except:
-            self.TransFun        = None
-
-        try:
-            self.ynorm_flg     = InputData.NormalizeOutput
-        except:
-            self.ynorm_flg     = False
 
         self.system              = system
         self.other_idxs          = None
@@ -66,7 +65,7 @@ class BlackBox(Data):
     #===========================================================================
     # Reading Data 
     def get(self, InputData):
-        print('[ROMNet]:   Reading Data')
+        print('[ROMNet - blackbox.py]:   Reading Data')
 
         self.n_train_tot         = {}  
         self.train               = {}
@@ -77,15 +76,15 @@ class BlackBox(Data):
         FirstFlg                 = True
         for data_id, InputFile in self.InputFiles.items():
 
-            if isinstance(self.InputVars, (list,tuple)):
-                InputVars = self.InputVars
+            if isinstance(self.input_vars, (list,tuple)):
+                input_vars = self.input_vars
             else:
-                InputVars = list(pd.read_csv(self.PathToDataFld+'/train/'+data_id+'/'+self.InputVars[data_id], header=None).to_numpy()[0,:])
+                input_vars = list(pd.read_csv(self.PathToDataFld+'/train/'+data_id+'/'+self.input_vars[data_id], header=None).to_numpy()[0,:])
 
-            if isinstance(self.OutputVars, (list,tuple)):
-                OutputVars = self.OutputVars
+            if isinstance(self.output_vars, (list,tuple)):
+                output_vars = self.output_vars
             else:
-                OutputVars = list(pd.read_csv(self.PathToDataFld+'/train/'+data_id+'/'+self.OutputVars[data_id], header=None).to_numpy()[0,:])
+                output_vars = list(pd.read_csv(self.PathToDataFld+'/train/'+data_id+'/'+self.output_vars[data_id], header=None).to_numpy()[0,:])
 
             Data = pd.read_csv(self.PathToDataFld+'/train/'+data_id+'/'+InputFile, header=0)
 
@@ -109,20 +108,20 @@ class BlackBox(Data):
                 #                                           self.TrunkScale(x+1.e-15))
 
             else:
-                xall = Data[InputVars]           
+                xall = Data[input_vars]           
 
             for iCol in range(xall.shape[1]):
                 array_sum = np.sum(xall.to_numpy()[:,iCol])
                 if (np.isnan(array_sum)):
-                    print('xall has NaN!!!')
+                    print('[ROMNet -  blackbox.py              ]:   xall has NaN!!!')
 
 
             Data = pd.read_csv(self.PathToDataFld+'/train/'+data_id+'/'+self.OutputFiles[data_id], header=0)
-            yall = Data[OutputVars]
+            yall = Data[output_vars]
             for iCol in range(yall.shape[1]):
                 array_sum = np.sum(yall.to_numpy()[:,iCol])
                 if (np.isnan(array_sum)):
-                    print('yall has NaN!!!')
+                    print('[ROMNet -  blackbox.py              ]:   yall has NaN!!!')
 
 
             xtrain     = xall.copy()
@@ -144,13 +143,13 @@ class BlackBox(Data):
 
 
             if (FirstFlg):
-                self.xnorm     = xall
+                self.norm_input      = xall
                 if (data_id != 'res'):
-                    self.ynorm = yall
+                    self.norm_output = yall
             else:
-                self.xnorm     = self.xnorm.append(xall, ignore_index=True)
+                self.norm_input      = self.norm_input.append(xall, ignore_index=True)
                 if (data_id != 'res'):
-                    self.ynorm = self.ynorm.append(yall, ignore_index=True)
+                    self.norm_output = self.norm_output.append(yall, ignore_index=True)
             FirstFlg = False
         
             self.train[data_id] = [xtrain, ytrain]
@@ -163,15 +162,15 @@ class BlackBox(Data):
         self.compute_input_statistics()      
         self.compute_output_statistics()      
 
-        if (self.ynorm_flg):
+        if (self.norm_output_flg):
             if (self.PathToLoadFld):
                 self.read_output_statistics(self.PathToLoadFld)      
             self.train, self.valid = self.normalize_output_data([self.train, self.valid])
 
         self.train, self.valid = self.system.preprocess_data([self.train, self.valid], self.xstat)
 
-        print("[ROMNet]:   Train      Data: ", self.train)
-        print("[ROMNet]:   Validation Data: ", self.valid)
+        print("[ROMNet -  blackbox.py              ]:   Train      Data: ", self.train)
+        print("[ROMNet -  blackbox.py              ]:   Validation Data: ", self.valid)
 
     #===========================================================================
 
@@ -183,7 +182,7 @@ class BlackBox(Data):
         def print_fn(dset, data_type, verbose):
             num_pts = {data_id: dset.n_samples[data_id] for data_id in dset.data}
             if verbose:
-                print("Number of pts for data " + k + ": ", v)
+                print("[ROMNet -  blackbox.py              ]: Number of pts for data " + k + ": ", v)
                 for k, v in num_pts.items():
                     utils.print_submain("  - '%s': %8d" % (k, v))
             return num_pts

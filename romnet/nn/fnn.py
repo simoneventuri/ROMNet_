@@ -1,142 +1,75 @@
-import numpy        as np
-import tensorflow   as tf
-import pandas       as pd
+import numpy                   as np
+import tensorflow              as tf
+import pandas                  as pd
+from tensorflow.keras      import regularizers
 
-from .nn        import NN
+from .nn                   import NN
+from .building_blocks      import System_of_Components
 
+
+
+#===================================================================================================================================
 class FNN(NN):
-    """Fully-connected neural network.
+    """Feed-Forward Neural Network.
     """
-
-    #===================================================================================================================================
-    def __init__(self, InputData, xnorm, NN_Transfer_Model):
+    
+    # ---------------------------------------------------------------------------------------------------------------------------
+    def __init__(self, InputData, norm_input):
         super(FNN, self).__init__()
 
-        self.Name              = 'FNN'
+        self.structure_name  = 'FNN'
 
-        if isinstance(InputData.InputVars, (list,tuple)):
-            self.InputVars  = InputData.InputVars
-        else:
-            data_id         = list(InputData.InputVars.keys())[0]
-            self.InputVars  = list(pd.read_csv(InputData.PathToDataFld+'/train/'+data_id+'/'+InputData.InputVars[data_id], header=None).to_numpy()[0,:])
+        self.attention_mask  = None
+        self.residual        = None
 
-        if isinstance(InputData.OutputVars, (list,tuple)):
-            self.OutputVars = InputData.OutputVars
-        else:
-            data_id         = list(InputData.OutputVars.keys())[0]
-            self.OutputVars = list(pd.read_csv(InputData.PathToDataFld+'/train/'+data_id+'/'+InputData.OutputVars[data_id], header=None).to_numpy()[0,:])
 
-        self.NVarsx         = len(self.InputVars)
-        self.NVarsy         = len(self.OutputVars)
+        self.input_vars      = InputData.input_vars_all
+        self.n_inputs        = len(self.input_vars)
+
+
+        if isinstance(InputData.output_vars, list):
+            self.output_vars = InputData.output_vars
+        else: 
+            data_id          = list(InputData.output_vars.keys())[0]
+            self.output_vars = list(pd.read_csv(InputData.PathToDataFld+'/train/'+data_id+'/'+InputData.output_vars[data_id], header=None).to_numpy()[0,:]) 
+        self.n_outputs       = len(self.output_vars)
+
         
-        if (xnorm is None):
-            xnorm = pd.DataFrame(np.zeros((1,self.NVarsx)), columns=self.InputVars)
+        if (norm_input is None):
+            norm_input       = pd.DataFrame(np.zeros((1,self.n_inputs)), columns=self.input_vars)
+        self.norm_input      = norm_input
 
-        self.xnorm            = xnorm
-        self.NN_Transfer_Model = NN_Transfer_Model
+                  
+        print("\n[ROMNet - deeponet.py               ]:   Constructing Feed-Forward Network: ") 
 
-        self.NormalizeInput    = InputData.NormalizeInput
-        self.Layers            = InputData.Layers
-        self.ActFun            = InputData.ActFun
-        self.WeightDecay       = InputData.WeightDecay
-        self.NFNNs             = len(InputData.Layers)
-
-        try:
-            self.ULayers       = InputData.ULayers                          
-            self.UActFun       = InputData.UActFun                          
-            self.VLayers       = InputData.VLayers                          
-            self.VActFun       = InputData.VActFun 
-        except:
-            self.ULayers       = None                
-            self.UActFun       = None                
-            self.VLayers       = None                
-            self.VActFun       = None       
+        self.layers_dict                 = {'FNN': {}}
+        self.system_of_components        = {}
+        self.system_of_components['FNN'] = System_of_Components(InputData, 'FNN', self.norm_input, layers_dict=self.layers_dict)
 
 
-        try:
-            self.SoftMaxFlg    = InputData.SoftMaxFlg
-        except:
-            self.SoftMaxFlg    = False
-
-        self.DropOutRate       = InputData.DropOutRate
-        self.DropOutPredFlg    = InputData.DropOutPredFlg
-
-        if (np.sum(np.array(self.WeightDecay)) > 0.):
-            self.RegularizeFlg = True
-        else:
-            self.RegularizeFlg = False
-
-        self.attention_mask    = None
-
-        self.ynorm_flg         = False
-
-        try:
-            self.TransFun      = InputData.TransFun
-        except:
-            self.TransFun      = None
-
-        self.PathToPODFile     = None
+    # ---------------------------------------------------------------------------------------------------------------------------
 
 
-        self.FNNLayersVecs = {}
-        self.FNNLayers_U   = {}
-        self.FNNLayers_V   = {}
-        for iFNN in range(self.NFNNs):
-
-            ## FNN Block
-            self.FNNLayersVecs[iFNN], self.FNNLayers_U[iFNN], self.FNNLayers_V[iFNN] = self.fnn_block(self.xnorm, '', 'NN', iFNN, self.InputVars)
-
-    #===================================================================================================================================
-
-
-
-    #===================================================================================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
     def call(self, inputs, training=False):
 
-        OutputVec = []
-        for iFNN in range(self.NFNNs):
-            NLayers = len(self.FNNLayersVecs[iFNN])
+        # if (self.AntiPCA_flg):
+        #     OutputFinal = ROM.AntiPCALayer(A0=self.A_AntiPCA, C0=self.C_AntiPCA, D0=self.D_AntiPCA)(OutputConcat)
+        # else:
+        #     OutputFinal = OutputConcat
 
-            y = inputs
-            if (self.NormalizeInput):
-                iStart = 1
-                y      = self.FNNLayersVecs[iFNN][0](y, training=training)
-            else:
-                iStart = 0 
+        y        = self.system_of_components['FNN'].call(inputs, training=training)
 
-            if (self.FNNLayers_U[iFNN]):
-                y_U = self.FNNLayers_U[iFNN](y, training=training)
-                y_V = self.FNNLayers_V[iFNN](y, training=training)
+        return y
 
-            for iLayer, f in enumerate(self.FNNLayersVecs[iFNN][iStart::]):
-                y = f(y, training=training)
-                if ( (self.FNNLayers_U[iFNN]) and (iLayer < NLayers-(1+iStart)) and (not 'dropout' in f.name) ):
-                    yo = tf.keras.layers.Lambda(lambda x: 1.-x)(y)
-                    ya = tf.keras.layers.multiply([yo, y_U])
-                    yb = tf.keras.layers.multiply([   y, y_V])
-                    y  = tf.keras.layers.add([ya, yb])
-
-            OutputVec.append(y)
-
-        if (self.NFNNs > 1):
-            OutputConcat = tf.keras.layers.Concatenate(axis=1)(OutputVec)
-        else:
-            OutputConcat = OutputVec[0]
-
-        if (self.AntiPCA_flg):
-            OutputFinal = ROM.AntiPCALayer(A0=self.A_AntiPCA, C0=self.C_AntiPCA, D0=self.D_AntiPCA)(OutputConcat)
-        else:
-            OutputFinal = OutputConcat
-
-        return OutputFinal
-
-    #===================================================================================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
 
 
-
-    #===================================================================================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
     def get_graph(self):
-        input_  = tf.keras.Input(shape=[self.NVarsx,])
+        input_  = tf.keras.Input(shape=[self.n_inputs,])
         return tf.keras.Model(inputs=[input_], outputs=[self.call(input_)] )
 
-    #===================================================================================================================================
+    # ---------------------------------------------------------------------------------------------------------------------------
+
+#===================================================================================================================================

@@ -108,8 +108,6 @@ def get_callback(model, InputData):
     if "weighted_loss" not in InputData.Callbacks:
         callback_list.append( _get_single_callback(model, "weighted_loss", {'name': 'ConstantWeightsAdapter', 'data_generator': None, 'pde_loss_weights': InputData.LossWeights}) )
     
-    print('callback_list = ', callback_list)
-
     return callback_list
 
 #=======================================================================================================================================

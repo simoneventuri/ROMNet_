@@ -22,38 +22,36 @@ class PDE(Data):
     def __init__(self, InputData, system):
         super(PDE, self).__init__(InputData, system)
 
+        self.input_vars          = InputData.input_vars_all
+        self.n_inputs            = len(self.input_vars)
+
+        try:    
+            self.output_vars     = system.output_vars
+        except:
+            self.output_vars     = InputData.output_vars
+        self.n_outputs           = len(self.output_vars)
+
+        try:
+            self.trans_fun       = InputData.trans_fun
+        except:
+            self.trans_fun       = None
+
+        try:
+            self.norm_output_flg = InputData.norm_output_flg
+        except:
+            self.norm_output_flg = False
+
+
         self.Type                = InputData.DataType
 
         self.PathToDataFld       = InputData.PathToDataFld
         self.PathToLoadFld       = InputData.PathToLoadFld
 
         self.SurrogateType       = InputData.SurrogateType
-        if ('DeepONet' in self.SurrogateType):
-            self.BranchVars      = InputData.BranchVars
-            self.TrunkVars       = InputData.TrunkVars
-            self.InputVars       = self.BranchVars + self.TrunkVars
-        else:
-            self.InputVars       = InputData.InputVars
-
-        try:    
-            self.OutputVars      = system.OutputVars
-        except:    
-            self.OutputVars      = InputData.OutputVars
-        self.NOutputVars         = len(self.OutputVars)
 
         self.NData               = 0
         self.xtrain, self.ytrain = None, None
         self.xtest,  self.ytest  = None, None
-
-        try:
-            self.TransFun        = InputData.TransFun
-        except:
-            self.TransFun        = None
-
-        try:
-            self.ynorm_flg     = InputData.NormalizeOutput
-        except:
-            self.ynorm_flg     = False
 
         self.system              = system
         self.other_idxs          = system.other_idxs
@@ -74,13 +72,14 @@ class PDE(Data):
     #===========================================================================
     # Generating Data 
     def get(self, InputData):
-        print('\n[ROMNet]:   Generating Data')
+                  
+        print('\n[ROMNet - pde.py                    ]:   Generating Data')
 
 
 
         #-----------------------------------------------------------------------
         def initial_cond(data_obj):
-            print('\n[ROMNet]:   Generating initial conditions ...')
+            print('\n[ROMNet - pde.py                    ]:   Generating initial conditions ...')
 
             n_tot_list = [data_obj.n_train['ics'], data_obj.n_valid['ics'], data_obj.n_test]
             d          = len(data_obj.other_ranges)
@@ -120,7 +119,7 @@ class PDE(Data):
 
         #-----------------------------------------------------------------------
         def read_training_data(data_obj):
-            print('\n[ROMNet]:   Reading training pts ...')
+            print('\n[ROMNet - pde.py                    ]:   Reading training pts ...')
 
             data          = {}
             data['train'] = {}
@@ -129,8 +128,8 @@ class PDE(Data):
             for data_type in data:
                 for data_id in data_obj.data_ids:
 
-                    x_df   = pd.read_csv(data_obj.PathToDataFld+'/'+data_type+"/"+data_id+'/Input.csv')[data_obj.InputVars]
-                    y_df   = pd.read_csv(data_obj.PathToDataFld+'/'+data_type+"/"+data_id+'/Output.csv')[data_obj.OutputVars]
+                    x_df   = pd.read_csv(data_obj.PathToDataFld+'/'+data_type+"/"+data_id+'/Input.csv')[data_obj.input_vars]
+                    y_df   = pd.read_csv(data_obj.PathToDataFld+'/'+data_type+"/"+data_id+'/Output.csv')[data_obj.output_vars]
                     i_df   = pd.DataFrame( np.arange(x_df.shape[0]), columns=['indx'])
 
                     # if (data_id != 'res'):
@@ -151,7 +150,7 @@ class PDE(Data):
 
         #-----------------------------------------------------------------------
         def generate_training_data(data_obj, ic_list):
-            print('\n[ROMNet]:   Generating training pts ...')
+            print('\n[ROMNet - pde.py                    ]:   Generating training pts ...')
 
             data = {}
             for i, data_type in enumerate(['train', 'valid']):
@@ -202,24 +201,24 @@ class PDE(Data):
         #-----------------------------------------------------------------------
         def get_norm(data):
 
-            FirstFlg = True
-            xnorm    = None
-            ynorm    = None
+            FirstFlg    = True
+            norm_input  = None
+            norm_output = None
             for i in range(2):
                 for data_id in data[i]:
                     if data[i][data_id] is None:
                         continue
 
-                    x_df     = data[i][data_id][0]
-                    xnorm    = x_df if FirstFlg else xnorm.append(x_df, ignore_index=True)
+                    input_df   = data[i][data_id][0]
+                    norm_input = input_df if FirstFlg else norm_input.append(input_df, ignore_index=True)
 
                     if (data_id != 'res'):
-                        y_df     = data[i][data_id][1]
-                        ynorm    = y_df if FirstFlg else ynorm.append(y_df, ignore_index=True)
+                        output_df   = data[i][data_id][1]
+                        norm_output = output_df if FirstFlg else norm_output.append(output_df, ignore_index=True)
 
                     FirstFlg = False
 
-            return xnorm, ynorm
+            return norm_input, norm_output
         #-----------------------------------------------------------------------
 
 
@@ -341,7 +340,7 @@ class PDE(Data):
 
         #-----------------------------------------------------------------------
         def read_testing_data(data_obj):
-            print('\n[ROMNet]:   Reading test pts ...')
+            print('\n[ROMNet - pde.py                    ]:   Reading test pts ...')
 
 
             # Print ics
@@ -358,7 +357,7 @@ class PDE(Data):
 
         #-----------------------------------------------------------------------
         def generate_testing_data(data_obj, ic_test, ic_train=None, header=None):
-            print('\n[ROMNet]:   Generating test pts ...')
+            print('\n[ROMNet - pde.py                    ]:   Generating test pts ...')
 
             # Test underfitting
             if (ic_train is not None):
@@ -457,12 +456,12 @@ class PDE(Data):
                 test_data          = None
 
 
-        self.xnorm, self.ynorm = get_norm([train_data, valid_data])
+        self.norm_input, self.norm_output = get_norm([train_data, valid_data])
         self.transform_normalization_data()
         self.compute_input_statistics()      
         self.compute_output_statistics()      
 
-        if (self.ynorm_flg):
+        if (self.norm_output_flg):
             if (self.PathToLoadFld):
                 self.read_output_statistics(self.PathToLoadFld)      
             train_data, valid_data = self.normalize_output_data([train_data, valid_data])
@@ -487,8 +486,8 @@ class PDE(Data):
             valid_dset = None
 
 
-        print("[ROMNet]:   Train      Data: ", train_data)
-        print("[ROMNet]:   Validation Data: ", valid_data)
+        print("[ROMNet - pde.py                    ]:   Train      Data: ", train_data)
+        print("[ROMNet - pde.py                    ]:   Validation Data: ", valid_data)
 
         self.train     = DataSequence(train_dset, self.data_ids, batch_size=self.BatchSize)
         if valid_dset:
@@ -503,8 +502,8 @@ class PDE(Data):
             self.data_ids_valid = self.valid.data_ids
 
 
-        print("[ROMNet]:   Train      Data: ", self.train)
-        print("[ROMNet]:   Validation Data: ", self.valid)
+        print("[ROMNet - pde.py                    ]:   Train      Data: ", self.train)
+        print("[ROMNet - pde.py                    ]:   Validation Data: ", self.valid)
 
     #===========================================================================
 
@@ -516,7 +515,7 @@ class PDE(Data):
         def print_fn(dset, data_type, verbose):
             num_pts = {data_id: dset.n_samples[data_id] for data_id in dset.data}
             if verbose:
-                print("Number of pts for data " + k + ": ", v)
+                print("[ROMNet - pde.py                    ]:   Number of pts for data " + k + ": ", v)
                 for k, v in num_pts.items():
                     utils.print_submain("  - '%s': %8d" % (k, v))
             return num_pts
@@ -544,8 +543,8 @@ class PDE(Data):
     def res_fn(self, net):
         '''Residual loss function'''
 
-        self.NVarsx    = net.NVarsx
-        self.NVarsy    = net.NVarsy
+        self.n_inputs  = net.n_inputs
+        self.n_outputs = net.n_outputs
 
         def residual(inputs, training=True):
 
@@ -554,8 +553,8 @@ class PDE(Data):
 
             # Evaluate gradients
             grads = self.grad_fn(self, self.order, net, other_vars, ind_vars, training)
-            # if (self.NVarsy > 1):
-            #     grads = [tf.split(g, self.NVarsy, axis=1) for g in grads]
+            # if (self.n_outputs > 1):
+            #     grads = [tf.split(g, self.n_outputs, axis=1) for g in grads]
 
             # Evaluate residual
             return self.get_residual(other_vars, ind_vars, grads)

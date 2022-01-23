@@ -15,11 +15,11 @@ if __name__ == "__main__":
     
 
     #===========================================================================
-    print("\n[ROMNet]: Loading Input Module ...")
+    print("\n[ROMNet.py                          ]: Loading Input Module ...")
 
     try:
         InputFile = sys.argv[1]
-        print("[ROMNet]:   Calling ROMNet with Input File = ", InputFile)
+        print("[ROMNet.py                          ]:   Calling ROMNet with Input File = ", InputFile)
         sys.path.insert(0, InputFile)
     except OSError:
         print('Input File not Specified')
@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     from ROMNet_Input import inputdata
 
-    print("\n[ROMNet]: Initializing Input ...")
+    print("\n[ROMNet.py                          ]: Initializing Input ...")
     InputData               = inputdata(WORKSPACE_PATH, ROMNetFldr)
     InputData.InputFilePath = InputFile
     #===========================================================================
@@ -35,17 +35,17 @@ if __name__ == "__main__":
 
 
     #===========================================================================
-    print("\n[ROMNet]: Importing Physical System ... ")
+    print("\n[ROMNet.py                          ]: Importing Physical System ... ")
 
     if (InputData.PhysSystem is not None):
         System = getattr(rmnt.pinn.system, InputData.PhysSystem)
         system = System(InputData)
     #===========================================================================
 
-
-
+              
+              
     #===========================================================================
-    print("\n[ROMNet]: Getting Data ... ")
+    print("\n[ROMNet.py                          ]: Getting Data ... ")
 
     Data = getattr(rmnt.data, InputData.DataType)
     data = Data(InputData, system)
@@ -80,14 +80,14 @@ if __name__ == "__main__":
 
         if (InputData.PlotIntFlg >= 1):
     
-            print('\n[ROMNet]: Plotting the Losses Evolution ... ')
+            print('\n[ROMNet.py                          ]: Plotting the Losses Evolution ... ')
 
             #loss_history.plot(InputData)
 
 
     else:
 
-        print('\n[ROMNet]: Reading the ML Model Parameters ... ')
+        print('\n[ROMNet.py                          ]: Reading the ML Model Parameters ... ')
 
         model.load_params(InputData.PathToParamsFld)
 

@@ -23,7 +23,6 @@ def get_learning_rate(lr, decay):
 def get_optimizer(InputData):
 
     LearningRate = get_learning_rate(InputData.LR, InputData.LRDecay)
-    print('LearningRate = ', LearningRate)
 
     MTD = InputData.Optimizer
     if (MTD == 'adadelta'):  # A SGD method based on adaptive learning rate
