@@ -14,7 +14,7 @@ class FNN(NN):
     """
     
     # ---------------------------------------------------------------------------------------------------------------------------
-    def __init__(self, InputData, norm_input):
+    def __init__(self, InputData, norm_input, stat_output):
         super(FNN, self).__init__()
 
         self.structure_name  = 'FNN'
@@ -39,6 +39,34 @@ class FNN(NN):
             norm_input       = pd.DataFrame(np.zeros((1,self.n_inputs)), columns=self.input_vars)
         self.norm_input      = norm_input
 
+        self.norm_output_flg = InputData.norm_output_flg
+
+
+        if (stat_output is not None):
+            self.output_mean  = tf.cast(stat_output['mean'][np.newaxis,...])
+            self.output_std   = tf.cast(stat_output['std'][np.newaxis,...])
+            self.output_min   = tf.cast(stat_output['min'][np.newaxis,...])
+            self.output_max   = tf.cast(stat_output['max'][np.newaxis,...])
+            self.output_range = tf.cast(self.output_max - self.output_min)
+        self.stat_output = stat_output
+
+
+        # Pre-Transforming Layer
+        if (self.input_vars):
+            self.trans_vec = []
+            for ifun, fun in enumerate(self.input_vars):
+                vars_list = self.trans_fun[fun]
+
+                indxs = []
+                for ivar, var in enumerate(self.input_vars):
+                    if var in vars_list:
+                        indxs.append(ivar)
+
+                if (len(indxs) > 0):
+                    layer_name = 'PreTransformation_' + fun
+                    layer      = InputTransLayer(fun, len(self.input_vars), indxs, name=layer_name)
+                    self.trans_vec.append(layer)
+
                   
         print("\n[ROMNet - deeponet.py               ]:   Constructing Feed-Forward Network: ") 
 
@@ -48,18 +76,26 @@ class FNN(NN):
         self.system_of_components['FNN'] = System_of_Components(InputData, 'FNN', self.norm_input, layers_dict=self.layers_dict, layer_names_dict=self.layer_names_dict)
 
 
+        self.norm_output_flg           = InputData.norm_output_flg
+        self.stat_output               = stat_output
+        if (self.norm_output_flg) and (self.stat_output):                    
+            self.output_min            = tf.constant(stat_output['min'][np.newaxis,...],  dtype=tf.keras.backend.floatx())
+            self.output_max            = tf.constant(stat_output['max'][np.newaxis,...],  dtype=tf.keras.backend.floatx())
+            self.output_range          = tf.constant(self.output_max - self.output_min,   dtype=tf.keras.backend.floatx())
+            self.output_trans_layer    = OutputTransLayer(   self.output_range, self.output_min)
+            self.output_invtrans_layer = OutputInvTransLayer(self.output_range, self.output_min)
+
     # ---------------------------------------------------------------------------------------------------------------------------
 
 
     # ---------------------------------------------------------------------------------------------------------------------------
     def call(self, inputs, training=False):
 
-        # if (self.AntiPCA_flg):
-        #     OutputFinal = ROM.AntiPCALayer(A0=self.A_AntiPCA, C0=self.C_AntiPCA, D0=self.D_AntiPCA)(OutputConcat)
-        # else:
-        #     OutputFinal = OutputConcat
+        y = inputs
+        if (self.trans_fun):
+            y = self.trans_vec[0](y)
 
-        y        = self.system_of_components['FNN'].call(inputs, training=training)
+        y     = self.system_of_components['FNN'].call(y, training=training)
 
         return y
 
@@ -70,7 +106,11 @@ class FNN(NN):
     # ---------------------------------------------------------------------------------------------------------------------------
     def call_predict(self, inputs):
 
-        y        = self.system_of_components['FNN'].call(inputs, training=False)
+        y = inputs
+        if (self.trans_fun):
+            y = self.trans_vec[0](y)
+
+        y     = self.system_of_components['FNN'].call(y, training=False)
 
         return y
 
@@ -85,3 +125,56 @@ class FNN(NN):
     # ---------------------------------------------------------------------------------------------------------------------------
 
 #===================================================================================================================================
+
+
+#=======================================================================================================================================
+class InputTransLayer(tf.keras.layers.Layer):
+
+    def __init__(self, f, NVars, indxs, name='InputTrans'):
+        super(InputTransLayer, self).__init__(name=name, trainable=False)
+        self.f           = f
+        self.NVars       = NVars
+        self.indxs       = indxs
+
+    def call(self, inputs):
+
+        inputs_unpack = tf.split(inputs, self.NVars, axis=1)
+        
+        if (self.f == 'log10'):
+            for indx in self.indxs:
+                inputs_unpack[indx] = tf.experimental.numpy.log10(inputs_unpack[indx])
+        elif (self.f == 'log'):
+            for indx in self.indxs:
+                inputs_unpack[indx] = tf.math.log(inputs_unpack[indx])
+        
+        return tf.concat(inputs_unpack, axis=1)
+        
+#=======================================================================================================================================
+
+
+#=======================================================================================================================================
+class OutputTransLayer(tf.keras.layers.Layer):
+
+    def __init__(self, output_range, output_min, name='OutputTrans'):
+        super(OutputTransLayer, self).__init__(name=name, trainable=False)
+        self.output_range = output_range
+        self.output_min   = output_min
+
+    def call(self, inputs):
+        return (inputs -  self.output_min) / self.output_range
+        
+#=======================================================================================================================================
+
+
+#=======================================================================================================================================
+class OutputInvTransLayer(tf.keras.layers.Layer):
+
+    def __init__(self, output_range, output_min, name='OutputInvTrans'):
+        super(OutputInvTransLayer, self).__init__(name=name, trainable=False)
+        self.output_range = output_range
+        self.output_min   = output_min
+
+    def call(self, inputs):
+        return inputs * self.output_range + self.output_min
+        
+#=======================================================================================================================================

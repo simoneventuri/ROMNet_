@@ -54,7 +54,7 @@ class inputdata(object):
         self.ProbApproach        = 'Deterministic'                                                         # Probabilistic Technique for Training the BNN (if Any)
         self.trans_fun           = None #{'log': ['t']}                                                    # Dictionary Containing Functions to Be Applied to Input Data 
         self.t_scale             = 'lin'
-        self.norm_output_flg     = False                                                                   # Flag for Normalizing Output Data
+        self.norm_output_flg     = True                                                                   # Flag for Normalizing Output Data
         self.output_vars         = ['x','v']                                                               # List Containing the Output Data Variable Names for each System
         self.input_vars_all      = ['x','v','t']                                                           # List Containing all the Input Data Variable Names
         self.input_vars          = {  'DeepONet': {'Branch': ['x','v'],

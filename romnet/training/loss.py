@@ -101,17 +101,25 @@ def cce(axis):
     return categorical_crossentropy
 
 
+
 @tf.keras.utils.register_keras_serializable(package='ROMNet', name='MSLE')
 def msle(axis):
-    def mean_squared_logarithmic_error(y_true, y_pred):
-        # Warning: see MeanSquaredError above.
-        y_pred = tf.convert_to_tensor(y_pred)
-        y_true = tf.cast(y_true, y_pred.dtype)
-        y_pred = tf.math.log(K.maximum(y_pred, K.epsilon()))
-        y_true = tf.math.log(K.maximum(y_true, K.epsilon()))
-        err    = tf.math.squared_difference(y_pred, y_true)
-        return tf.reduce_sum(tf.reduce_mean(err, axis=axis))
+    def mean_squared_logarithmic_error(y_true, y_pred, attention_mask=None):
+        #n_points = tf.cast(tf.shape(y_true)[0], tf.float64)
+        y_pred   = tf.convert_to_tensor(y_pred)
+        y_true   = tf.cast(y_true, y_pred.dtype)
+        y_pred   = tf.math.log(K.maximum(y_pred, K.epsilon()) + 1.)
+        y_true   = tf.math.log(K.maximum(y_true, K.epsilon()) + 1.)
+        err      = tf.math.squared_difference(y_pred, y_true) 
+        if attention_mask is not None:
+            attention_mask = tf.convert_to_tensor(attention_mask)
+            err           *= attention_mask**2
+        # return K.mean(err, axis=-1)                          # TF
+        # return tf.reduce_sum(tf.reduce_mean(err, axis=axis)) # PRODE
+        return K.mean(err, axis=-1) #/ (n_points)
+
     return mean_squared_logarithmic_error
+
 
 
 @tf.keras.utils.register_keras_serializable(package='ROMNet', name='ZERO')
@@ -196,7 +204,7 @@ def get_loss(name, axis=-1):
         return mse(axis)
 
     elif (LF == 'msle'):
-        return mae(axis)
+        return msle(axis)
 
     elif (LF == 'cce'):
         return cce(axis)

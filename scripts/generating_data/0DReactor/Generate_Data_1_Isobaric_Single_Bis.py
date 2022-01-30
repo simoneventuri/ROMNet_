@@ -19,20 +19,21 @@ from scipy.interpolate import interp1d
 ##########################################################################################
 ### Input Data
 
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_1Cond/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_200Shifts/'
 FigDir             = OutputDir + '/fig/'
 
 MixtureFile        = 'gri30.yaml'
 
 P0                 = ct.one_atm
 DirName            = 'train'
-NICs               = 10
-EqRatio0Exts       = np.array([.4999, 0.5001], dtype=np.float64)
-T0Exts             = np.array([999.9999, 1000.0001], dtype=np.float64)
+NICs               = 1
+EqRatio0Exts       = np.array([1., 1.], dtype=np.float64)
+T0Exts             = np.array([1000, 1000], dtype=np.float64)
 # DirName            = 'test'
 # NICs               = 5
+NShifts            = 200
 
-NPerT0             = 5000
+NPerT0             = 10000
 
 Integration        = ' '#'Canteras'
 rtol               = 1.e-12
@@ -151,7 +152,7 @@ if (DirName == 'train'):
     ### Writing Initial Temperatures
     FileName = OutputDir+'/Orig/'+DirName+'/ext/ICs.csv'
     Header   = 'P,EqRatio,T'
-    np.savetxt(FileName, ICs, delimiter=',', header=Header, comments='')
+    np.savetxt(FileName, np.repeat(ICs,NShifts,axis=0), delimiter=',', header=Header, comments='')
 
 
 elif (DirName == 'test'):
@@ -173,9 +174,10 @@ elif (DirName == 'test'):
 
 ### Iterating Over Residence Times
 DataMat         = None
-iStart          = np.zeros(NICs)
-iEnd            = np.zeros(NICs)
-AutoIgnitionVec = np.zeros((NICs,1))
+iStart          = np.zeros(NICs+NShifts)
+iEnd            = np.zeros(NICs+NShifts)
+AutoIgnitionVec = np.zeros((NICs+NShifts,1))
+jIC             = 0
 for iIC in range(NICs):
     P0       = ICs[iIC,0]
     EqRatio0 = ICs[iIC,1]
@@ -192,6 +194,8 @@ for iIC in range(NICs):
     # gas.set_equivalence_ratio(EqRatio0, 'CH4:1.0', 'O2:1.0')
     gas.set_equivalence_ratio(EqRatio0, 'H2:1.0', 'O2:1.0, N2:4.0')
 
+
+
     r       = ct.IdealGasConstPressureReactor(gas)
     sim     = ct.ReactorNet([r])
     sim.verbose = False
@@ -202,6 +206,8 @@ for iIC in range(NICs):
     P_      = P0
     y0      = np.array(np.hstack((gas_.T, gas_.Y)), dtype=np.float64)
     # y0      = np.array(np.hstack((gas_.T, gas_.Y[0:-1])), dtype=np.float64)
+
+
 
     ############################################################################
     # ### Initialize Integration 
@@ -221,19 +227,19 @@ for iIC in range(NICs):
     ############################################################################
 
     ############################################################################
-    TVec  = np.array([700, 800, 900, 1000, 1200, 1500, 1700, 1850, 2000])
-    tVec1 = np.array([5.e1, 5.e0, 1.e-1, 1.e-4, 1.e-5, 5.e-6, 1.e-6, 5.e-7, 5.e-7])
-    tVec2 = np.array([5.e0, 1.e0, 1.e-2, 1.e-5, 1.e-6, 5.e-7, 1.e-7, 5.e-8, 5.e-8])
-    tVec3 = np.array([1.e4, 1.e2, 1.e0, 1.e-1, 5.e-2, 1.e-2, 1.e-1, 5.e-2, 1.e-2])
+    # TVec  = np.array([700, 800, 900, 1000, 1200, 1500, 1700, 1850, 2000])
+    # tVec1 = np.array([5.e1, 5.e0, 1.e-1, 1.e-4, 1.e-5, 5.e-6, 1.e-6, 5.e-7, 5.e-7])
+    # tVec2 = np.array([5.e0, 1.e0, 1.e-2, 1.e-5, 1.e-6, 5.e-7, 1.e-7, 5.e-8, 5.e-8])
+    # tVec3 = np.array([1.e4, 1.e2, 1.e0, 1.e-1, 5.e-2, 1.e-2, 1.e-1, 5.e-2, 1.e-2])
 
-    f1 = interp1d(1000/TVec, np.log10(tVec1), kind='cubic')
-    f2 = interp1d(1000/TVec, np.log10(tVec2), kind='cubic')
-    f3 = interp1d(1000/TVec, np.log10(tVec3), kind='cubic')
+    # f1 = interp1d(1000/TVec, np.log10(tVec1), kind='cubic')
+    # f2 = interp1d(1000/TVec, np.log10(tVec2), kind='cubic')
+    # f3 = interp1d(1000/TVec, np.log10(tVec3), kind='cubic')
 
-    tMin     = f1(1000/T0) #1.e-5
-    dt0      = f2(1000/T0) #1.e-5
-    tMax     = f3(1000/T0) #1.e-3
-    tMaxAll  = f1(1.) #1.e-5
+    # tMin     = f1(1000/T0) #1.e-5
+    # dt0      = f2(1000/T0) #1.e-5
+    # tMax     = f3(1000/T0) #1.e-3
+    # tMaxAll  = f1(1.) #1.e-5
 
     # tStratch = 1.3
     # tVec     = [0.0]
@@ -248,7 +254,7 @@ for iIC in range(NICs):
     # tVec     = np.concatenate([[0.], np.logspace(tMin, tMax, 3000)])
     #tVec     = np.concatenate([[0.], np.logspace(-12, tMin, 20), np.logspace(tMin, tMax, 480)[1:]])
     #tVec     = np.concatenate([[0.], np.logspace(-12, -6, 100), np.logspace(-5.99999999, -1., 4899)])
-    tVec     = np.concatenate([np.logspace(-8., 0., NPerT0)])
+    tVec     = np.concatenate([np.logspace(-10., 3., NPerT0)])
     #tVec     = np.concatenate([[0.], np.linspace(1.e-12, 1.e-2, 4999)])
     #############################################################################
 
@@ -316,7 +322,7 @@ for iIC in range(NICs):
         Mask = np.linspace(0,Nt-1,NPerT0, dtype=int)
         Ntt  = NPerT0
 
-    if (iIC == 0):
+    if (jIC == 0):
         T0All        = np.ones(Ntt)*T0
         yTemp        = np.concatenate((tVecFinal[Mask,np.newaxis], Mat[Mask,:]), axis=1)
         yMat         = yTemp
@@ -324,8 +330,8 @@ for iIC in range(NICs):
         ySourceTemp  = np.concatenate((tVecFinal[Mask,np.newaxis], Source[Mask,:]), axis=1)
         SourceMat    = ySourceTemp
         
-        iStart[iIC]  = 0
-        iEnd[iIC]    = Ntt
+        iStart[jIC]  = 0
+        iEnd[jIC]    = Ntt
     else:
         T0All        = np.concatenate((T0All, np.ones(Ntt)*T0), axis=0)
 
@@ -335,9 +341,8 @@ for iIC in range(NICs):
         ySourceTemp  = np.concatenate((tVecFinal[Mask,np.newaxis], Source[Mask,:]), axis=1)
         SourceMat    = np.concatenate((SourceMat, ySourceTemp), axis=0) 
         
-        iStart[iIC]  = iEnd[iIC-1]
-        iEnd[iIC]    = iEnd[iIC-1]+Ntt
-        
+        iStart[jIC]  = iEnd[jIC-1]
+        iEnd[jIC]    = iEnd[jIC-1]+Ntt
 
     ### Writing Results
     NSpec    = gas.n_species
@@ -354,14 +359,25 @@ for iIC in range(NICs):
     for iSpec in range(NSpec):
         Header += ','+gas.species_name(iSpec)
 
-    FileName = OutputDir+'/Orig/'+DirName+'/ext/y.csv.'+str(iIC+1)
-    np.savetxt(FileName, yTemp,       delimiter=',', header=Header, comments='')
 
-    FileName = OutputDir+'/Orig/'+DirName+'/ext/ySource.csv.'+str(iIC+1)
-    np.savetxt(FileName, ySourceTemp, delimiter=',', header=Header, comments='')
+    for iShift in range(NShifts):    
 
-    # FileName = OutputDir+'/orig_data/Jacobian.csv.'+str(iIC+1)
-    # np.savetxt(FileName, JJTauMat,    delimiter=',')
+        idx_zero   = int(NPerT0/2 / (NShifts-1) * iShift)
+        idxs       = idx_zero + np.arange(int(NPerT0/2))    
+        yNow       = yTemp + 0.
+        yNow[:,0]  = yNow[:,0] - yNow[idx_zero,0] 
+        print(' iShift = ', iShift+1, '; t0 = ', yNow[idx_zero,0] )
+
+        FileName = OutputDir+'/Orig/'+DirName+'/ext/y.csv.'+str(jIC+1)
+        np.savetxt(FileName, yNow[idxs,:],       delimiter=',', header=Header, comments='')
+
+        # FileName = OutputDir+'/Orig/'+DirName+'/ext/ySource.csv.'+str(jIC+1)
+        # np.savetxt(FileName, ySourceTemp[idxs], delimiter=',', header=Header, comments='')
+
+        # FileName = OutputDir+'/orig_data/Jacobian.csv.'+str(iIC+1)
+        # np.savetxt(FileName, JJTauMat,    delimiter=',')
+
+        jIC += 1
 
 
 

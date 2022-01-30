@@ -15,16 +15,19 @@ from PCAfold import PCA as PCAA
 ##########################################################################################
 ### Input Data
 ###
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_2000Cases_Diff/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_1Cond/'
 FigDir             = OutputDir + '/fig/'
 
-# DirName            = 'train'
-# NICs               = 1000
-DirName            = 'test'
-NICs               = 5
+DirName            = 'train'
+NICs               = 10
+# DirName            = 'test'
+# NICs               = 5
 iSimVec            = range(NICs)
 
-NVarsRed           = 7
+NVarsRed           = 10
+
+scale              = 'log10'
+MinVal             = 1.e-20
 ##########################################################################################
 
 
@@ -94,7 +97,13 @@ np.savetxt(FileName, tOrig, delimiter=',')
 yMatTemp     = yMatCSV[:,1:]
 ySourceTemp  = SourceMatCSV[:,1:]
 
-yMat         = yMatTemp[:,0][...,np.newaxis]
+yMatOrig     = yMatTemp[:,0][...,np.newaxis]
+if   (scale == 'lin'):
+    yMat     = yMatTemp[:,0][...,np.newaxis]
+elif (scale == 'log'):
+    yMat     = np.log(yMatTemp[:,0][...,np.newaxis] + MinVal)
+elif (scale == 'log10'):
+    yMat     = np.log10(yMatTemp[:,0][...,np.newaxis] + MinVal)
 ySource      = ySourceTemp[:,0][...,np.newaxis]
 
 print('[PCA] Original (', len(SpeciesNames), ') Species: ', SpeciesNames)
@@ -103,9 +112,14 @@ if (DirName == 'train'):
     
     for iSpec in range(1, yMatTemp.shape[1]):
         if (np.amax(np.abs(yMatTemp[1:,iSpec] - yMatTemp[:-1,iSpec])) > 1.e-10):
-            yMat    = np.concatenate((yMat,    yMatTemp[:,iSpec][...,np.newaxis]), axis=1)
-            ySource = np.concatenate((ySource, ySourceTemp[:,iSpec][...,np.newaxis]), axis=1)
-            #print(gas.species_name(i-1))
+            yMatOrig = np.concatenate((yMatOrig, yMatTemp[:,iSpec][...,np.newaxis]), axis=1)
+            if   (scale == 'lin'):
+                yMat     = np.concatenate((yMat,        yMatTemp[:,iSpec][...,np.newaxis]), axis=1)
+            elif (scale == 'log'):
+                yMat     = np.concatenate((yMat, np.log(yMatTemp[:,iSpec] + MinVal)[...,np.newaxis]), axis=1)
+            elif (scale == 'log10'):
+                yMat     = np.concatenate((yMat, np.log10(yMatTemp[:,iSpec] + MinVal)[...,np.newaxis]), axis=1)
+            ySource  = np.concatenate((ySource, ySourceTemp[:,iSpec][...,np.newaxis]), axis=1)
             VarsName.append(SpeciesNames[iSpec])  
 
     ToOrig = []
@@ -250,7 +264,7 @@ with open(FileName, 'w') as the_file:
 ### 
 if (DirName == 'train'):
 
-    pca        = PCAA(yMat, scaling='pareto', n_components=NVarsRed)
+    pca        = PCAA(yMat, scaling='none', n_components=NVarsRed, nocenter=True)
     C          = pca.X_center
     D          = pca.X_scale
     A          = pca.A[:,0:NVarsRed].T
@@ -307,7 +321,12 @@ np.savetxt(FileName, Temp, delimiter=',', header=Header+','+HeaderS, comments=''
 #yMat_      = pca.reconstruct(yMat_pca, nocenter=False)
 yMat_      = (yMat_pca.dot(A))*D + C
 print('[PCA] Shape of yMat_pca = ', yMat_pca.shape)
-print('[PCA] Error = ', np.max(abs(yMat - yMat_)))
+if   (scale == 'lin'):
+    print('[PCA] Error = ', np.max(abs(yMatOrig - yMat_)))
+elif (scale == 'log'):
+    print('[PCA] Error = ', np.max(abs(yMatOrig - np.exp(yMat_))))
+elif (scale == 'log10'):
+    print('[PCA] Error = ', np.max(abs(yMatOrig - 10**(yMat_))))
 
 #ySource_      = ySource_pca.dot(A)*D 
 ySource_      = (ySource_pca.dot(A))*D 
@@ -334,8 +353,12 @@ for iT in range(1,NICs+1):
     yTemp       = Datay[KeptSpeciesNames].to_numpy()
     #print('yTemp = ', yTemp)
 
-
-    yMat_pca    = ((yTemp - C)/D).dot(AT)
+    if   (scale == 'lin'):
+        yMat_pca    = ((yTemp - C)/D).dot(AT)
+    elif (scale == 'log'):
+        yMat_pca    = ((np.log(yTemp + MinVal ) - C)/D).dot(AT)
+    elif (scale == 'log10'):
+        yMat_pca    = ((np.log10(yTemp + MinVal) - C)/D).dot(AT)
     FileName    = OutputDir+'/' + str(NVarsRed) + 'PC/'+DirName+'/ext/PC.csv.'+str(iT)
     Temp        = np.concatenate((tVec, yMat_pca), axis=1)
     np.savetxt(FileName, Temp, delimiter=',', header=Header, comments='')

@@ -67,11 +67,12 @@ class System_of_Components(object):
                 self.branch_to_trunk       = InputData.branch_to_trunk[self.name]
                 if (self.branch_to_trunk  == 'stacked'):
                     self.branch_to_trunk   = [0]*self.n_branches
-                elif (branch_to_trunk['DeepONet'] == 'unstacked'):
+                elif (self.branch_to_trunk == 'unstacked'):
                     self.branch_to_trunk   = np.arange(self.n_branches)
             except:    
-               self.branch_to_trunk        = [0]*self.n_branches
-            
+              self.branch_to_trunk        = [0]*self.n_branches
+            print("[ROMNet - system_of_components.py   ]:     Mapping Branch-to-Trunk (i.e., self.branch_to_trunk Object): ", self.branch_to_trunk) 
+
             try:
                 self.system_post_layer_flg = InputData.system_post_layer_flg[self.name]
             except:
@@ -83,6 +84,8 @@ class System_of_Components(object):
                 self.transfered_model      = None
                 
         print("[ROMNet - system_of_components.py   ]:     Constructing System of Components: " + self.name) 
+
+        
 
 
         # Iterating over Components
@@ -99,9 +102,10 @@ class System_of_Components(object):
             elif ('Trunk' in component_name):
                 self.trunk_names.append(component_name)
 
-            layers_dict[self.name][component_name]      = {}
-            layer_names_dict[self.name][component_name] = {}
-            self.components[component_name]             = Component(InputData, self.name, component_name, self.norm_input, layers_dict=layers_dict, layer_names_dict=layer_names_dict)
+            if (not component_name in layers_dict[self.name]):
+                layers_dict[self.name][component_name]      = {}
+                layer_names_dict[self.name][component_name] = {}
+            self.components[component_name]                 = Component(InputData, self.name, component_name, self.norm_input, layers_dict=layers_dict, layer_names_dict=layer_names_dict)
 
 
         # Adding Post Correlating / Scaling / Shifting Layer (If Needed)
@@ -121,9 +125,9 @@ class System_of_Components(object):
 
 
     # ---------------------------------------------------------------------------------------------------------------------------
-    def call_fnn(self, inputs, training=False):
+    def call_fnn(self, inputs, layers_dict, training=False):
 
-        y = self.components['FNN'].call(inputs, shift=None, training=training)
+        y = self.components['FNN'].call(inputs, layers_dict, None, None, training=training)
 
         return y
 
@@ -131,25 +135,32 @@ class System_of_Components(object):
 
 
     # ---------------------------------------------------------------------------------------------------------------------------
-    def call_deeponet(self, inputs, training):
+    def call_deeponet(self, inputs, layers_dict, training):
 
-        inputs_branch, inputs_trunk = tf.split(inputs, num_or_size_splits=[len(self.branch_vars), len(self.trunk_vars)], axis=1)
+        inputs_branch, inputs_trunk = inputs
 
 
         if (self.n_rigids > 0):
             for i_rigid in range(self.n_rigids):
                 rigid_name = self.rigid_names[i_rigid]
-                rigid      = self.components[rigid_name].call(inputs_branch, shift=None, training=training)
-            shift = tf.split(rigid, num_or_size_splits=[1]*self.n_trunks, axis=1)
+                rigid      = self.components[rigid_name].call(inputs_branch, layers_dict, None, None, training=training)
+            splits  = tf.split(rigid, num_or_size_splits=[1]*self.n_trunks, axis=1)
+            #splits  = tf.split(rigid, num_or_size_splits=[1]*self.n_trunks*2, axis=1)
+            #shift   = splits[0:self.n_trunks]
+            #stretch = [None]*self.n_trunks
+            #stretch = splits[self.n_trunks:self.n_trunks*2]
+            stretch = splits[0:self.n_trunks]
+            shift   = [None]*self.n_trunks
         else:
-            shift = [None]*self.n_trunks
-            #print("[ROMNet - system_of_components.py   ]:     shift = ", shift) 
+            shift   = [None]*self.n_trunks
+            stretch = [None]*self.n_trunks
+
 
 
         y_trunk_vec = []
         for i_trunk in range(self.n_trunks): 
             trunk_name  = self.trunk_names[i_trunk]
-            y_trunk_vec.append(self.components[trunk_name].call(inputs_trunk, shift=shift[i_trunk], training=training))
+            y_trunk_vec.append(self.components[trunk_name].call(inputs_trunk, layers_dict, shift[i_trunk], stretch[i_trunk], training=training))
 
 
         y_branch_vec = []
@@ -157,7 +168,7 @@ class System_of_Components(object):
         for i_branch in range(self.n_branches): 
             i_trunk     = self.branch_to_trunk[i_branch]
             branch_name = self.branch_names[i_branch] 
-            y           = self.components[branch_name].call(inputs_branch, shift=None, training=training)
+            y           = self.components[branch_name].call(inputs_branch, layers_dict, None, None, training=training)
 
 
             output_dot = Dot_Add(axes=1)([y, y_trunk_vec[i_trunk]])            

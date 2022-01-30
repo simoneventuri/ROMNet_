@@ -148,14 +148,20 @@ class Model_Deterministic(Model):
             self.NN_Transfer_Model = None
 
         if (self.TrainIntFlg > 0):
-            self.norm_input = self.data.norm_input
+            self.norm_input  = self.data.norm_input
+            self.stat_output = self.data.stat_output
         else:
-            self.norm_input = None
+            try:
+                self.read_data_statistics()
+            except:
+                self.stat_output = None
+            self.norm_input  = None
+            
         #-----------------------------------------------------------------------
 
 
         #-----------------------------------------------------------------------
-        self.net = Net(InputData, self.norm_input)
+        self.net = Net(InputData, self.norm_input, self.stat_output)
 
         self.net.AntiPCA_flg = False
         # try:
@@ -263,13 +269,13 @@ class Model_Deterministic(Model):
 
         #-----------------------------------------------------------------------
         if (self.norm_output_flg):
-            self.save_data_statistics(self.data.xstat, self.data.ystat)
+            self.save_data_statistics(self.data.stat_input, self.data.stat_output)
             self.data.system.norm_output_flg = True
-            self.data.system.y_mean    = self.y_mean
-            self.data.system.y_std     = self.y_std
-            self.data.system.y_min     = self.y_min
-            self.data.system.y_max     = self.y_max
-            self.data.system.y_range   = self.y_range
+            self.data.system.output_mean    = self.output_mean
+            self.data.system.output_std     = self.output_std
+            self.data.system.output_min     = self.output_min
+            self.data.system.output_max     = self.output_max
+            self.data.system.output_range   = self.output_range
         else:
             self.data.system.norm_output_flg = False
         #-----------------------------------------------------------------------
@@ -431,15 +437,15 @@ class Model_Deterministic(Model):
             
         """
 
-        #y_pred = self.net.predict(input_data)
-        y_pred = self.net.call_predict(input_data)
+        y_pred = self.net.predict(input_data)
+        #y_pred = self.net.call_predict(input_data)
 
         if (self.norm_output_flg):
 
             if (not self.got_stats):
                 self.read_data_statistics()
 
-            y_pred = y_pred * self.y_range + self.y_min
+            y_pred = y_pred * self.output_range + self.output_min
 
         return y_pred
 
@@ -448,24 +454,73 @@ class Model_Deterministic(Model):
 
 
     #===========================================================================
-    def save_data_statistics(self, xstat, ystat):
+    def predict_test(self, input_data):
+        """
+
+        Args:
+            
+            
+        """
+
+        y_pred = self.net.call_predict_deeponet_1(input_data)
+
+        # if (self.norm_output_flg):
+
+        #     if (not self.got_stats):
+        #         self.read_data_statistics()
+
+        #     y_pred = y_pred * self.output_range + self.output_min
+
+        return y_pred
+
+    #===========================================================================
+
+
+
+
+    #===========================================================================
+    def predict_test_2(self, input_data):
+        """
+
+        Args:
+            
+            
+        """
+
+        y_pred = self.net.call_predict_deeponet_2(input_data)
+
+        # if (self.norm_output_flg):
+
+        #     if (not self.got_stats):
+        #         self.read_data_statistics()
+
+        #     y_pred = y_pred * self.output_range + self.output_min
+
+        return y_pred
+
+    #===========================================================================
+
+
+
+    #===========================================================================
+    def save_data_statistics(self, stat_input, stat_output):
 
         path = Path( self.PathToRunFld+'/Data/' )
         path.mkdir(parents=True, exist_ok=True)
 
-        DataNew            = pd.concat([xstat['mean'], xstat['std'], xstat['min'], xstat['max']], axis=1)
-        DataNew.columns    = ['x_mean','x_std','x_min','x_max']
-        DataNew.to_csv( self.PathToRunFld + "/Data/x_stats.csv", index=False)  
+        DataNew            = pd.concat([stat_input['mean'], stat_input['std'], stat_input['min'], stat_input['max']], axis=1)
+        DataNew.columns    = ['input_mean','input_std','input_min','input_max']
+        DataNew.to_csv( self.PathToRunFld + "/Data/stats_inputs.csv", index=False)  
 
-        DataNew            = pd.concat([ystat['mean'], ystat['std'], ystat['min'], ystat['max']], axis=1)
-        DataNew.columns    = ['y_mean','y_std','y_min','y_max']
-        DataNew.to_csv( self.PathToRunFld + "/Data/y_stats.csv", index=False)
+        DataNew            = pd.concat([stat_output['mean'], stat_output['std'], stat_output['min'], stat_output['max']], axis=1)
+        DataNew.columns    = ['output_mean','output_std','output_min','output_max']
+        DataNew.to_csv( self.PathToRunFld + "/Data/stats_output.csv", index=False)
 
-        self.y_mean  = ystat['mean']
-        self.y_std   = ystat['std']
-        self.y_min   = ystat['min']
-        self.y_max   = ystat['max']
-        self.y_range = self.y_max - self.y_min
+        self.output_mean  = stat_output['mean']
+        self.output_std   = stat_output['std']
+        self.output_min   = stat_output['min']
+        self.output_max   = stat_output['max']
+        self.output_range = self.output_max - self.output_min
 
         self.got_stats = True
 
@@ -480,13 +535,19 @@ class Model_Deterministic(Model):
         if (PathToRead):
             DataNew = pd.read_csv(PathToRead)
         else:
-            DataNew = pd.read_csv(self.PathToRunFld + "/Data/y_stats.csv")
+            DataNew = pd.read_csv(self.PathToRunFld + "/Data/stats_output.csv")
 
-        self.y_mean  = DataNew['y_mean'].to_numpy()
-        self.y_std   = DataNew['y_std'].to_numpy()
-        self.y_min   = DataNew['y_min'].to_numpy()
-        self.y_max   = DataNew['y_max'].to_numpy()
-        self.y_range = self.y_max - self.y_min
+        self.output_mean  = DataNew['output_mean'].to_numpy()
+        self.output_std   = DataNew['output_std'].to_numpy()
+        self.output_min   = DataNew['output_min'].to_numpy()
+        self.output_max   = DataNew['output_max'].to_numpy()
+        self.output_range = self.output_max - self.output_min
+
+        self.stat_output         = {}
+        self.stat_output['mean'] = self.output_mean
+        self.stat_output['std']  = self.output_std 
+        self.stat_output['min']  = self.output_min 
+        self.stat_output['max']  = self.output_max 
 
         self.got_stats = True
 

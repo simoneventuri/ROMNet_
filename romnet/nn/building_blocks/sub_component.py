@@ -199,10 +199,8 @@ class Sub_Component(object):
 
 
     # ---------------------------------------------------------------------------------------------------------------------------
-    def call_single_layer(self, inputs, i_layer, shift, training=False):
+    def call_single_layer(self, inputs, i_layer, training=False):
 
-        if (shift is not None) and ('HL_1' in self.layer_names[i_layer]):
-            y = tf.keras.layers.subtract([y, shift])
         y = self.layers_vec[i_layer](inputs, training=training)
 
         return y
@@ -211,12 +209,10 @@ class Sub_Component(object):
 
 
     # ---------------------------------------------------------------------------------------------------------------------------
-    def call(self, inputs, shift, training=False):
+    def call(self, inputs, training=False):
 
         y = inputs        
         for i_layer in range(self.n_layers):
-            if (shift is not None) and ('HL_1' in self.layer_names[i_layer]):
-                y = tf.keras.layers.subtract([y, shift])
             y = self.layers_vec[i_layer](y, training=training)
 
         return y

@@ -10,15 +10,10 @@ from .sub_component import Sub_Component
 class Component(object):
 
     # ---------------------------------------------------------------------------------------------------------------------------
-    def __init__(self, InputData, system_name, component_name, norm_input, trans_vec=[], trans_names=[], norm_vec=[], norm_names=[], layers_dict=[], layer_names_dict=[]):
+    def __init__(self, InputData, system_name, component_name, norm_input, layers_dict=[], layer_names_dict=[]):
         
         self.system_name           = system_name
         self.name                  = component_name
-
-        self.trans_vec             = trans_vec
-        self.trans_names           = trans_names
-        self.norm_vec              = norm_vec
-        self.norm_names            = norm_names
         self.layers_dict           = layers_dict
         self.layer_names_dict      = layer_names_dict
 
@@ -58,6 +53,19 @@ class Component(object):
             except:   
                 self.norm_input_flg = None
 
+
+        try:   
+            self.gaussnoise_rate  = InputData.gaussnoise_rate[self.system_name][self.type]
+            notfnd_flg            = False
+        except:   
+            self.gaussnoise_rate  = None
+            notfnd_flg            = True
+        if notfnd_flg:
+            try:   
+                self.gaussnoise_rate = InputData.gaussnoise_rate[self.system_name][self.name]
+            except:   
+                self.gaussnoise_rate = None
+
     
         try:          
             self.input_vars       = InputData.input_vars[self.system_name][self.type]
@@ -74,35 +82,12 @@ class Component(object):
         except:
             self.transfered_model = None
 
-        try:    
-            self.trans_fun        = InputData.trans_fun
-        except:       
-            self.trans_fun        = None
-
 
         self.call                 = self.call_classic
                 
         print("[ROMNet - component.py              ]:       Constructing Component: " + self.name) 
 
 
-        # Pre-Transforming Layer
-        if (self.trans_fun):
-            for ifun, fun in enumerate(self.trans_fun):
-                vars_list = self.trans_fun[fun]
-
-                indxs = []
-                for ivar, var in enumerate(self.input_vars):
-                    if var in vars_list:
-                        indxs.append(ivar)
-
-                if (len(indxs) > 0):
-                    layer_name = self.long_name + '-PreTransformation_' + fun
-                    layer      = TransLayer(fun, len(self.input_vars), indxs, name=layer_name)
-                    layers_vec.append(layer)
-                    layer_names.append(layer_name)
-                    self.trans_vec.append(layer)
-                    self.trans_names.append(layer_name)
-            
 
         # Normalizing Layer
         if (self.norm_input_flg):
@@ -128,8 +113,13 @@ class Component(object):
                 layer.adapt(np.array(self.norm_input))
             layers_vec.append(layer)
             layer_names.append(layer_name)
-            self.norm_vec.append(layer)
-            self.norm_names.append(layer_name)
+
+
+        if (self.gaussnoise_rate):
+            layer      = tf.keras.layers.GaussianNoise(self.gaussnoise_rate)
+            layer_name = self.long_name + '_GaussNoise'
+            layers_vec.append(layer)
+            layer_names.append(layer_name)
 
 
         # Feed-forward Component (i.e., "Sub-Component")
@@ -153,15 +143,45 @@ class Component(object):
      
 
     # ---------------------------------------------------------------------------------------------------------------------------
-    def call_classic(self, inputs, shift=None, training=False):
+    def call_classic(self, inputs, layers_dict, shift, stretch, training=False):
 
-        return self.sub_components['Main'].call(inputs, shift, training)
+        trans_flg = False
+        if ('TransFun' in layers_dict[self.system_name][self.name]):
+            trans_flg = True
+        #     inputs    = layers_dict[self.system_name][self.name]['TransFun'](inputs)
+
+        if (stretch is not None):
+            if (trans_flg):
+                inputs = layers_dict[self.system_name][self.name]['Stretch']([inputs, tf.math.softplus(stretch)])
+            else:
+                inputs = layers_dict[self.system_name][self.name]['Stretch']([inputs, shift])
+
+        if (shift   is not None):
+            if (trans_flg):
+                inputs = layers_dict[self.system_name][self.name]['Shift']([inputs, tf.math.softplus(shift)])
+                inputs = tf.keras.layers.ReLU()(inputs) + 1.e-14
+            else:
+                inputs = layers_dict[self.system_name][self.name]['Shift']([inputs, shift])
+            
+        if (trans_flg):
+            inputs = layers_dict[self.system_name][self.name]['TransFun'](inputs)
+
+        return self.sub_components['Main'].call(inputs, training)
 
     # ---------------------------------------------------------------------------------------------------------------------------   
 
 
     # ---------------------------------------------------------------------------------------------------------------------------
-    def call_improved(self, inputs, shift=None, training=False):
+    def call_improved(self, inputs, layers_dict, shift, stretch, training=False):
+
+        if (stretch is not None):
+            inputs = layers_dict[self.system_name][self.name]['Stretch']([inputs, stretch])
+
+        if (shift   is not None):
+            inputs = layers_dict[self.system_name][self.name]['Shift']([inputs, shift])
+            
+        if ('TransFun' in layers_dict[self.system_name][self.name]):
+            inputs = layers_dict[self.system_name][self.name]['TransFun'](inputs)
 
         y                  = inputs
 
@@ -169,12 +189,12 @@ class Component(object):
         sub_component_U    = self.sub_components['U']
         sub_component_V    = self.sub_components['V']
 
-        y_U                = sub_component_U.call(y, shift, training=training)
-        y_V                = sub_component_V.call(y, shift, training=training)
+        y_U                = sub_component_U.call(y, training=training)
+        y_V                = sub_component_V.call(y, training=training)
         i_layer  = 0
         n_layers = len(sub_component_Main.layers_vec)
         while (i_layer <= n_layers-1):
-            y  = sub_component_Main.call_single_layer(y, i_layer, shift, training=training)
+            y  = sub_component_Main.call_single_layer(y, i_layer, training=training)
             if ('HL' in sub_component_Main.layer_names[i_layer]) and (i_layer < n_layers-1):
                 ym = tf.keras.layers.Lambda(lambda x: 1.-x)(y)
                 yu = tf.keras.layers.multiply([ym, y_U])
@@ -186,30 +206,4 @@ class Component(object):
 
     # ---------------------------------------------------------------------------------------------------------------------------
 
-#=======================================================================================================================================
-
-
-
-#=======================================================================================================================================
-class TransLayer(tf.keras.layers.Layer):
-
-    def __init__(self, f, NVars, indxs, name='TransLayer'):
-        super(TransLayer, self).__init__(name=name, trainable=False)
-        self.f           = f
-        self.NVars       = NVars
-        self.indxs       = indxs
-
-    def call(self, inputs):
-
-        inputs_unpack = tf.split(inputs, self.NVars, axis=1)
-        
-        if (self.f == 'log10'):
-            for indx in self.indxs:
-                inputs_unpack[indx] = tf.experimental.numpy.log10(inputs_unpack[indx])
-        elif (self.f == 'log'):
-            for indx in self.indxs:
-                inputs_unpack[indx] = tf.math.log(inputs_unpack[indx])
-        
-        return tf.concat(inputs_unpack, axis=1)
-        
 #=======================================================================================================================================

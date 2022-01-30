@@ -58,7 +58,8 @@ class ZeroDR(System):
         # Initialize Reactor
         self.initialize_reactor()
 
-        self.read_params_ROM(PathToDataFld)
+        #self.read_params_ROM(PathToDataFld)
+        self.n_pc = 0
 
         if (self.ROM_pred_flg):
             self.f_call     = self.f_pc
