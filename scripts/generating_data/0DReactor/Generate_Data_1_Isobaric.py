@@ -19,24 +19,27 @@ from scipy.interpolate import interp1d
 ##########################################################################################
 ### Input Data
 
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_1Cond/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_2000Cases_NEq/'
 FigDir             = OutputDir + '/fig/'
 
 MixtureFile        = 'gri30.yaml'
 
 P0                 = ct.one_atm
 DirName            = 'train'
-NICs               = 10
-EqRatio0Exts       = np.array([.4999, 0.5001], dtype=np.float64)
-T0Exts             = np.array([999.9999, 1000.0001], dtype=np.float64)
+NICs               = 50
+T0Exts             = np.array([1000., 2000.], dtype=np.float64)
+X0Exts             = np.array([0.05, 0.95], dtype=np.float64)
+SpeciesVec         = ['H2','H','O','O2','OH','N','NH','NO','N2']
+EqRatio0Exts       = None #np.array([.5, 4.], dtype=np.float64)
+
 # DirName            = 'test'
 # NICs               = 5
 
-NPerT0             = 5000
+NPerT0             = 500
 
 Integration        = ' '#'Canteras'
-rtol               = 1.e-12
-atol               = 1.e-20
+rtol               = 1.e-14
+atol               = 1.e-18
 SOLVER             = 'BDF'#'RK23'#'BDF'#'Radau'
 
 ##########################################################################################
@@ -137,21 +140,49 @@ def IdealGasReactor(t, T, Y):
 
 
 if (DirName == 'train'):
-    MinVals = np.array([EqRatio0Exts[0], T0Exts[0]], dtype=np.float64)
-    MaxVals = np.array([EqRatio0Exts[1], T0Exts[1]], dtype=np.float64)
-    NDims   = 2
 
-    ICs     = pyDOE.lhs(2, samples=NICs, criterion='center')
+    if (EqRatio0Exts):
+        MinVals = np.array([EqRatio0Exts[0], T0Exts[0]], dtype=np.float64)
+        MaxVals = np.array([EqRatio0Exts[1], T0Exts[1]], dtype=np.float64)
+        NDims   = 2
 
-    for i in range(NDims):
-        ICs[:,i] = ICs[:,i] * (MaxVals[i] - MinVals[i]) + MinVals[i]
-    ICs = np.concatenate([P0*np.ones((NICs,1)),ICs], axis=1)
+        ICs     = pyDOE.lhs(2, samples=NICs, criterion='center')
+
+        for i in range(NDims):
+            ICs[:,i] = ICs[:,i] * (MaxVals[i] - MinVals[i]) + MinVals[i]
+        ICs = np.concatenate([P0*np.ones((NICs,1)),ICs], axis=1)
+
+        ### Writing Initial Temperatures
+        FileName = OutputDir+'/Orig/'+DirName+'/ext/ICs.csv'
+        Header   = 'P,EqRatio,T'
+        np.savetxt(FileName, ICs, delimiter=',', header=Header, comments='')
 
 
-    ### Writing Initial Temperatures
-    FileName = OutputDir+'/Orig/'+DirName+'/ext/ICs.csv'
-    Header   = 'P,EqRatio,T'
-    np.savetxt(FileName, ICs, delimiter=',', header=Header, comments='')
+    elif (X0Exts is not None) and (SpeciesVec is not None):
+        NSpecies = len(SpeciesVec)
+
+        MinVals  = np.array([T0Exts[0], X0Exts[0]], dtype=np.float64)
+        MaxVals  = np.array([T0Exts[1], X0Exts[1]], dtype=np.float64)
+        NDims    = NSpecies + 1
+
+        ICs      = pyDOE.lhs(NDims, samples=NICs, criterion='center')
+
+        ICs[:,0] = ICs[:,0] * (T0Exts[1] - T0Exts[0]) + T0Exts[0]
+        for i in range(1, NDims):
+            ICs[:,i] = ICs[:,i] * (X0Exts[1] - X0Exts[0]) + X0Exts[0]
+        ICs = np.concatenate([P0*np.ones((NICs,1)),ICs], axis=1)
+
+        ### Writing Initial Temperatures
+        FileName   = OutputDir+'/Orig/'+DirName+'/ext/ICs.csv'
+        SpeciesStr = SpeciesVec[0]
+        for Spec in SpeciesVec[1:]:
+            SpeciesStr += ','+Spec
+        Header   = 'P,T,'+SpeciesStr
+        np.savetxt(FileName, ICs, delimiter=',', header=Header, comments='')
+
+    else:
+        print('Please, specify (EqRatio0Exts) OR (X0Exts and SpeciesVec)!')
+
 
 
 elif (DirName == 'test'):
@@ -177,10 +208,17 @@ iStart          = np.zeros(NICs)
 iEnd            = np.zeros(NICs)
 AutoIgnitionVec = np.zeros((NICs,1))
 for iIC in range(NICs):
-    P0       = ICs[iIC,0]
-    EqRatio0 = ICs[iIC,1]
-    T0       = ICs[iIC,2]
-    print('Pressure = ', P0, 'Pa; EqRatio0 = ', EqRatio0, '; Temperature = ', T0, 'K')
+    
+    if (EqRatio0Exts):
+        P0       = ICs[iIC,0]
+        EqRatio0 = ICs[iIC,1]
+        T0       = ICs[iIC,2]
+        print('Pressure = ', P0, 'Pa; EqRatio0 = ', EqRatio0, '; Temperature = ', T0, 'K')
+
+    elif (X0Exts is not None) and (SpeciesVec is not None):
+        P0       = ICs[iIC,0]
+        T0       = ICs[iIC,1]
+        print('Pressure = ', P0, 'Pa; Temperature = ', T0, 'K')
     
 
     ### Create Mixture
@@ -188,9 +226,18 @@ for iIC in range(NICs):
 
     ### Create Reactor
     gas.TP  = T0, P0
-    # gas.set_equivalence_ratio(EqRatio0, 'CH4:1.0', 'O2:0.21, N2:0.79')
-    # gas.set_equivalence_ratio(EqRatio0, 'CH4:1.0', 'O2:1.0')
-    gas.set_equivalence_ratio(EqRatio0, 'H2:1.0', 'O2:1.0, N2:4.0')
+
+    if (EqRatio0Exts):
+        # gas.set_equivalence_ratio(EqRatio0, 'CH4:1.0', 'O2:0.21, N2:0.79')
+        # gas.set_equivalence_ratio(EqRatio0, 'CH4:1.0', 'O2:1.0')
+        gas.set_equivalence_ratio(EqRatio0, 'H2:1.0', 'O2:1.0, N2:4.0')
+
+    elif (X0Exts is not None) and (SpeciesVec is not None):
+        SpecDict = {}
+        for iS, Spec in enumerate(SpeciesVec):
+            SpecDict[Spec] = ICs[iIC,iS+2]
+        gas.X    = SpecDict
+        print('   Mole Fractions = ', SpecDict)
 
     r       = ct.IdealGasConstPressureReactor(gas)
     sim     = ct.ReactorNet([r])
@@ -198,6 +245,7 @@ for iIC in range(NICs):
 
     gas_    = gas
     mass_   = r.mass
+    print('   Mass = ', mass_)
     density_= r.density
     P_      = P0
     y0      = np.array(np.hstack((gas_.T, gas_.Y)), dtype=np.float64)
@@ -248,7 +296,7 @@ for iIC in range(NICs):
     # tVec     = np.concatenate([[0.], np.logspace(tMin, tMax, 3000)])
     #tVec     = np.concatenate([[0.], np.logspace(-12, tMin, 20), np.logspace(tMin, tMax, 480)[1:]])
     #tVec     = np.concatenate([[0.], np.logspace(-12, -6, 100), np.logspace(-5.99999999, -1., 4899)])
-    tVec     = np.concatenate([np.logspace(-8., 0., NPerT0)])
+    tVec     = np.concatenate([np.logspace(-12., 0., NPerT0)])
     #tVec     = np.concatenate([[0.], np.linspace(1.e-12, 1.e-2, 4999)])
     #############################################################################
 
@@ -270,7 +318,7 @@ for iIC in range(NICs):
         tVecFinal        = np.array(tVec, dtype=np.float64)
         HRVec            = [HR]
     else:
-        output           = solve_ivp( IdealGasConstPressureReactor_SciPY, (tVec[0],tVec[-1]), y0, method=SOLVER, t_eval=tVec, rtol=rtol )
+        output           = solve_ivp( IdealGasConstPressureReactor_SciPY, (tVec[0],tVec[-1]), y0, method=SOLVER, t_eval=tVec, atol=atol )
         it0              = 0
         tVecFinal        = output.t
         HRVec            = []

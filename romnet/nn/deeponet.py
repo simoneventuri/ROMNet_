@@ -64,11 +64,11 @@ class DeepONet(NN):
         print("\n[ROMNet - deeponet.py               ]:   Constructing Deep Operator Network: ") 
 
 
-        self.layers_dict      = {'DeepONet': {}}
+        self.layers_dict      = {'DeepONet': {}, 'All': {}}
         for i_trunk in range(self.n_trunks):
             self.layers_dict['DeepONet']['Trunk_'+str(i_trunk+1)]      = {}
 
-        self.layer_names_dict = {'DeepONet': {}}
+        self.layer_names_dict = {'DeepONet': {}, 'All': {}}
         for i_trunk in range(self.n_trunks):
             self.layer_names_dict['DeepONet']['Trunk_'+str(i_trunk+1)] = {}
 

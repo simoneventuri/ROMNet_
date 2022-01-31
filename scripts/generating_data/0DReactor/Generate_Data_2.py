@@ -15,11 +15,11 @@ from PCAfold import PCA as PCAA
 ##########################################################################################
 ### Input Data
 ###
-OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_1Cond/'
+OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_2000Cases_NEq/'
 FigDir             = OutputDir + '/fig/'
 
 DirName            = 'train'
-NICs               = 10
+NICs               = 50
 # DirName            = 'test'
 # NICs               = 5
 iSimVec            = range(NICs)
@@ -60,9 +60,9 @@ except:
 FileName    = OutputDir+'/Orig/'+DirName+'/ext/ICs.csv'
 Data        = pd.read_csv(FileName)
 
-P0Vec       = Data['P'].to_numpy()
-EqRatio0Vec = Data['EqRatio'].to_numpy()
-T0Vec       = Data['T'].to_numpy()
+# P0Vec       = Data['P'].to_numpy()
+# EqRatio0Vec = Data['EqRatio'].to_numpy()
+# T0Vec       = Data['T'].to_numpy()
 
 jSim=0
 for iSim in iSimVec:
@@ -75,15 +75,15 @@ for iSim in iSimVec:
     if (jSim == 0):
         yMatCSV        = Datay.to_numpy()
         SourceMatCSV   = DataS.to_numpy()
-        T0VecTot       = np.ones((Datay.shape[0],1))*T0Vec[iSim]
-        EqRatio0VecTot = np.ones((Datay.shape[0],1))*EqRatio0Vec[iSim]
-        P0VecTot       = np.ones((Datay.shape[0],1))*P0Vec[iSim]
+        # T0VecTot       = np.ones((Datay.shape[0],1))*T0Vec[iSim]
+        # EqRatio0VecTot = np.ones((Datay.shape[0],1))*EqRatio0Vec[iSim]
+        # P0VecTot       = np.ones((Datay.shape[0],1))*P0Vec[iSim]
     else:
         yMatCSV        = np.concatenate((yMatCSV,        Datay.to_numpy()), axis=0)
         SourceMatCSV   = np.concatenate((SourceMatCSV,   DataS.to_numpy()), axis=0)
-        T0VecTot       = np.concatenate((T0VecTot,       np.ones((Datay.shape[0],1))*T0Vec[iSim]), axis=0)
-        EqRatio0VecTot = np.concatenate((EqRatio0VecTot, np.ones((Datay.shape[0],1))*EqRatio0Vec[iSim]), axis=0)
-        P0VecTot       = np.concatenate((P0VecTot,       np.ones((Datay.shape[0],1))*P0Vec[iSim]), axis=0)
+        # T0VecTot       = np.concatenate((T0VecTot,       np.ones((Datay.shape[0],1))*T0Vec[iSim]), axis=0)
+        # EqRatio0VecTot = np.concatenate((EqRatio0VecTot, np.ones((Datay.shape[0],1))*EqRatio0Vec[iSim]), axis=0)
+        # P0VecTot       = np.concatenate((P0VecTot,       np.ones((Datay.shape[0],1))*P0Vec[iSim]), axis=0)
 
     jSim+=1
 
@@ -94,7 +94,7 @@ tOrig        = yMatCSV[:,0]
 FileName = OutputDir+'/Orig/'+DirName+'/ext/t.csv'
 np.savetxt(FileName, tOrig, delimiter=',')
 
-yMatTemp     = yMatCSV[:,1:]
+yMatTemp     = np.maximum(yMatCSV[:,1:], 0.)
 ySourceTemp  = SourceMatCSV[:,1:]
 
 yMatOrig     = yMatTemp[:,0][...,np.newaxis]
@@ -155,14 +155,14 @@ for Var in KeptSpeciesNames:
     Header += ','+Var
 np.savetxt(FileName, np.concatenate((tOrig[...,np.newaxis], yMat), axis=1), delimiter=',', header=Header)
 
-FileName = OutputDir+'/Orig/'+DirName+'/ext/T0VecTot.csv'
-np.savetxt(FileName, T0VecTot, delimiter=',')
+# FileName = OutputDir+'/Orig/'+DirName+'/ext/T0VecTot.csv'
+# np.savetxt(FileName, T0VecTot, delimiter=',')
 
-FileName = OutputDir+'/Orig/'+DirName+'/ext/EqRatio0VecTot.csv'
-np.savetxt(FileName, EqRatio0VecTot, delimiter=',')
+# FileName = OutputDir+'/Orig/'+DirName+'/ext/EqRatio0VecTot.csv'
+# np.savetxt(FileName, EqRatio0VecTot, delimiter=',')
 
-FileName = OutputDir+'/Orig/'+DirName+'/ext/P0VecTot.csv'
-np.savetxt(FileName, P0VecTot, delimiter=',')
+# FileName = OutputDir+'/Orig/'+DirName+'/ext/P0VecTot.csv'
+# np.savetxt(FileName, P0VecTot, delimiter=',')
 
 FileName = OutputDir+'/Orig/'+DirName+'/ext/CleanVars.csv'
 StrSep = ','
@@ -264,7 +264,7 @@ with open(FileName, 'w') as the_file:
 ### 
 if (DirName == 'train'):
 
-    pca        = PCAA(yMat, scaling='none', n_components=NVarsRed, nocenter=True)
+    pca        = PCAA(yMat, scaling='pareto', n_components=NVarsRed, nocenter=False)
     C          = pca.X_center
     D          = pca.X_scale
     A          = pca.A[:,0:NVarsRed].T
@@ -350,7 +350,7 @@ for iT in range(1,NICs+1):
     FileName    = OutputDir+'/Orig/'+DirName+'/ext/y.csv.'+str(iT) 
     Datay       = pd.read_csv(FileName, header=0)
     tVec        = Datay['t'].to_numpy()[...,np.newaxis]
-    yTemp       = Datay[KeptSpeciesNames].to_numpy()
+    yTemp       = np.maximum(Datay[KeptSpeciesNames].to_numpy(), 0.)
     #print('yTemp = ', yTemp)
 
     if   (scale == 'lin'):
