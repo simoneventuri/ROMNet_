@@ -168,8 +168,6 @@ class System_of_Components(object):
             else:
                 output_vec.append( output_dot )
             
-            output_vec.append( output_dot )
-
 
         if (self.n_branches > 1):
             output_concat = tf.keras.layers.Concatenate(axis=1)(output_vec)

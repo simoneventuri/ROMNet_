@@ -63,6 +63,8 @@ class inputdata(object):
         self.trans_fun           = {'log': ['t']}                                                          # Dictionary Containing Functions to Be Applied to Input Data 
         self.norm_output_flg     = False                                                                    # Flag for Normalizing Output Data
         
+        self.internal_pca        = True
+
         # -----------------------------------------------------------------------------------
         FileName   = self.PathToDataFld+'/train/ext/CleanVars.csv'
         Vars       = pd.read_csv(FileName, delimiter=',', header=None).to_numpy()[0,:]
