@@ -42,6 +42,11 @@ class System_of_Components(object):
         self.n_outputs                     = len(self.output_vars)
 
 
+        try:
+            self.internal_pca              = InputData.internal_pca
+        except:
+            self.internal_pca              = False
+
         if (self.type == 'FNN'):    
             self.call                      = self.call_fnn
             
@@ -65,12 +70,12 @@ class System_of_Components(object):
 
             try:
                 self.branch_to_trunk       = InputData.branch_to_trunk[self.name]
-                if (self.branch_to_trunk  == 'stacked'):
+                if (self.branch_to_trunk   == 'stacked'):
                     self.branch_to_trunk   = [0]*self.n_branches
                 elif (self.branch_to_trunk == 'unstacked'):
                     self.branch_to_trunk   = np.arange(self.n_branches)
             except:    
-              self.branch_to_trunk        = [0]*self.n_branches
+              self.branch_to_trunk         = [0]*self.n_branches
             print("[ROMNet - system_of_components.py   ]:     Mapping Branch-to-Trunk (i.e., self.branch_to_trunk Object): ", self.branch_to_trunk) 
 
             try:
@@ -84,8 +89,6 @@ class System_of_Components(object):
                 self.transfered_model      = None
                 
         print("[ROMNet - system_of_components.py   ]:     Constructing System of Components: " + self.name) 
-
-        
 
 
         # Iterating over Components
@@ -106,20 +109,6 @@ class System_of_Components(object):
                 layers_dict[self.name][component_name]      = {}
                 layer_names_dict[self.name][component_name] = {}
             self.components[component_name]                 = Component(InputData, self.name, component_name, self.norm_input, layers_dict=layers_dict, layer_names_dict=layer_names_dict)
-
-
-        # Adding Post Correlating / Scaling / Shifting Layer (If Needed)
-        if (self.system_post_layer_flg):
-            
-            self.post_layer_vec = []
-
-            if (self.system_post_layer_flg == 'correlation'):
-                i_branch = 0
-                self.post_layer_vec.append(system_post_layer(self.system_post_layer_flg, self.name, self.n_branches, self.transfered_model))
-
-            else: 
-                for i_branch in range(n_branches):
-                    self.post_layer_vec.append(system_post_layer(self.system_post_layer_flg, self.name, i_branch, self.transfered_model))
 
     # ---------------------------------------------------------------------------------------------------------------------------
 
@@ -171,14 +160,16 @@ class System_of_Components(object):
             y           = self.components[branch_name].call(inputs_branch, layers_dict, None, None, training=training)
 
 
-            output_dot = Dot_Add(axes=1)([y, y_trunk_vec[i_trunk]])            
+            output_dot  = Dot_Add(axes=1)([y, y_trunk_vec[i_trunk]])            
 
 
-            if (self.system_post_layer_flg == 'shift') or (self.system_post_layer_flg == 'linear'):
-                output_vec.append( self.post_layer_vec[i_branch](output_dot, training=training) )
+            if (self.system_post_layer_flg) and (self.system_post_layer_flg != 'correlation') and (not self.internal_pca):
+                output_vec.append( layers_dict[self.name]['Branch_'+str(i_branch+1)]['Post'](output_dot, training=training) )
             else:
                 output_vec.append( output_dot )
-                
+            
+            output_vec.append( output_dot )
+
 
         if (self.n_branches > 1):
             output_concat = tf.keras.layers.Concatenate(axis=1)(output_vec)
@@ -186,8 +177,22 @@ class System_of_Components(object):
             output_concat = output_vec[0]
 
 
+        if (self.internal_pca):
+
+            output_all               = layers_dict[self.name]['PCAInvLayer'](output_concat)
+            output_T, output_species = tf.split(output_all, [1,self.n_outputs-1], axis=1)
+
+            output_T                 = layers_dict[self.name]['Branch_1']['Post'](output_T, training=training)
+            output_species           = layers_dict[self.name]['SoftMax'](output_species)
+
+            if (self.n_branches > 1):
+                output_concat = tf.keras.layers.Concatenate(axis=1)([output_T, output_species])
+            else:
+                output_concat = output_vec[0]
+
+
         if (self.system_post_layer_flg == 'correlation'):
-            output_final = self.post_layer_vec[0](output_concat, training=training)
+            output_final = layers_dict[self.name]['Post'](output_concat, training=training)
         else:
             output_final = output_concat
 
@@ -582,56 +587,3 @@ def _make_kl_divergence_penalty(
     return _fn
 
 #===================================================================================================================================
-
-
-
-#=======================================================================================================================================
-def system_post_layer(system_post_layer_flg, system_name, i_out, transfered_model):
-
-    if (system_post_layer_flg == 'correlation'):
-        layer_name = system_name + '-Post_Correlation'
-        
-        if (transfered_model is not None):
-            W0     = transfered_model.get_layer(layer_name).kernel.numpy()
-            b0     = transfered_model.get_layer(layer_name).bias.numpy()
-            W_ini  = tf.keras.initializers.RandomNormal(mean=W0, stddev=1.e-10)
-            b_ini  = tf.keras.initializers.RandomNormal(mean=b0, stddev=1.e-10)
-        else:
-            W_ini  = 'he_normal'
-            b_ini  = 'zeros'
-        out_layer  = tf.keras.layers.Dense(units              = i_out,
-                                           activation         = 'linear',
-                                           use_bias           = True,
-                                           kernel_initializer = W_ini,
-                                           bias_initializer   = b_ini,
-                                           name               = layer_name)
-
-    elif (system_post_layer_flg == 'linear'):
-        layer_name = system_name + '-Post_Linear_' + str(i_out+1)
-        
-        if (transfered_model is not None):
-            W0     = transfered_model.get_layer(layer_name).kernel.numpy()
-            b0     = transfered_model.get_layer(layer_name).bias.numpy()
-            W_ini  = tf.keras.initializers.RandomNormal(mean=W0, stddev=1.e-10)
-            b_ini  = tf.keras.initializers.RandomNormal(mean=b0, stddev=1.e-10)
-        else:
-            W_ini  = 'he_normal'
-            b_ini  = 'zeros'
-        out_layer  = tf.keras.layers.Dense(units              = 1,
-                                           activation         = 'linear',
-                                           use_bias           = True,
-                                           kernel_initializer = W_ini,
-                                           bias_initializer   = b_ini,
-                                           name               = layer_name)
-    
-    elif (system_post_layer_flg == 'shift'):
-        layer_name = system_name + '-Post_Shift_' + str(i_out+1)
-
-        b0 = 0
-        if (transfered_model is not None): 
-            b0 = transfered_model.get_layer(layer_name).bias.numpy()[0]
-        out_layer = bias_layer(b0=b0, layer_name=layer_name)
-
-    return out_layer
-
-#=======================================================================================================================================

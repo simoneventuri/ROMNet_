@@ -13,6 +13,7 @@ class inputdata(object):
         self.NRODsSel            = len(self.iRODSel)
 
         self.NPODs               = 1
+        self.ROM_pred_flg        = None
 
         #=======================================================================================================================================
         ### Case Name
@@ -33,7 +34,6 @@ class inputdata(object):
         self.WORKSPACE_PATH      = WORKSPACE_PATH                                                         # os.getenv('WORKSPACE_PATH')      
         self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
         self.PathToRunFld        = self.ROMNetFldr   + '/../0DReact_Isobaric_1Cond/'                                 # Path To Training Folder
-        self.ROMPred_Flg         = True
         #self.PathToDataFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_1Cond/'+str(self.NRODs)+'PC/'            # Path To Training Data Folder 
         self.PathToDataFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_1Cond/Orig/'            # Path To Training Data Folder 
         self.PathToLoadFld       = None #self.ROMNetFldr   + '/../Data/0DReact_Isobaric_500Cases_Up/7PC/OneByOne/FNN/Final.h5'            # Path To Training Data Folder 
@@ -76,7 +76,7 @@ class inputdata(object):
         self.input_vars          = {'DeepONet': {'Branch': self.Vars0,
                                                   'Rigid': self.Vars0,
                                                   'Trunk': ['t']}}                                         # Dictionary Containing the Input  Data Variable Names for each Component
-        self.n_branches          = len(self.Vars)
+        self.n_branches          = self.NRODsSel #len(self.Vars)
         self.n_trunks            = self.n_branches
         # -----------------------------------------------------------------------------------
 
@@ -94,8 +94,8 @@ class inputdata(object):
         self.norm_input_flg      = {'DeepONet': {'Branch': False, 
                                                   'Rigid': False,
                                                   'Trunk': False}}                                          # Dictionary Containing Flags for Normalizing Input Data for each Component
-        self.gaussnoise_rate     = {'DeepONet': {'Branch': 1.e-14,
-                                                  'Rigid': 1.e-14}}    
+        self.gaussnoise_rate     = {'DeepONet': {'Branch': None,
+                                                  'Rigid': None}}    
         self.structure                                    = {'DeepONet': {}}
         for i in range(self.n_branches):
            self.structure['DeepONet']['Branch_'+str(i+1)] = ['Main']
@@ -115,6 +115,7 @@ class inputdata(object):
                                                   'Trunk': {'Main': False}}}                               # Dictionary Containing the Dropout-at-Prediction Flag for each Sub-Component 
         self.softmax_flg         = {'DeepONet': {'Branch': {'Main': False},
                                                   'Trunk': {'Main': False}}}                               # Dictionary Containing the Softmax Flag for each Sub-Component 
+        self.system_post_layer_flg = {'DeepONet': 'softplus'}
         # self.structure                                  = {'DeepONet': {}}
         # for i in range(self.NRODs):
         #    self.structure['DeepONet']['Branch_'+str(i+1)] = ['Main','U','V']
@@ -160,7 +161,7 @@ class inputdata(object):
         self.Losses              = {'pts': {'name': 'msle', 'axis': 0}} # Loss Functions
         self.LossWeights         = {'pts': 1.}     
         self.Metrics             = None                   
-        self.LR                  = 1.e-4                                                          # Initial Learning Rate
+        self.LR                  = 5.e-4                                                          # Initial Learning Rate
         self.LRDecay             = ["exponential", 100000, 0.98]
         self.Optimizer           = 'adam'                                                                 # Optimizer
         self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer

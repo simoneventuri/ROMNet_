@@ -148,13 +148,12 @@ class Component(object):
         trans_flg = False
         if ('TransFun' in layers_dict[self.system_name][self.name]):
             trans_flg = True
-        #     inputs    = layers_dict[self.system_name][self.name]['TransFun'](inputs)
 
         if (stretch is not None):
             if (trans_flg):
                 inputs = layers_dict[self.system_name][self.name]['Stretch']([inputs, tf.math.softplus(stretch)])
             else:
-                inputs = layers_dict[self.system_name][self.name]['Stretch']([inputs, shift])
+                inputs = layers_dict[self.system_name][self.name]['Stretch']([inputs, stretch])
 
         if (shift   is not None):
             if (trans_flg):

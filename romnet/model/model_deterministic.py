@@ -128,6 +128,7 @@ class Model_Deterministic(Model):
         InputData,
         data,
         Net,
+        system,
         loadfile_no=None,
     ):
         """
@@ -161,7 +162,7 @@ class Model_Deterministic(Model):
 
 
         #-----------------------------------------------------------------------
-        self.net = Net(InputData, self.norm_input, self.stat_output)
+        self.net = Net(InputData, self.norm_input, self.stat_output, system)
 
         self.net.AntiPCA_flg = False
         # try:

@@ -15,7 +15,7 @@ class Double_DeepONet(NN):
     """
 
     # ---------------------------------------------------------------------------------------------------------------------------
-    def __init__(self, InputData, norm_input, stat_output):
+    def __init__(self, InputData, norm_input, stat_output, system):
         super(Double_DeepONet, self).__init__()
 
         self.structure_name  = 'Double_DeepONet'

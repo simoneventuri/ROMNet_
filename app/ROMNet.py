@@ -51,6 +51,7 @@ if __name__ == "__main__":
     data = Data(InputData, system)
     data.get(InputData)
 
+    print('system = ', system.A)
     #===========================================================================
 
 
@@ -64,7 +65,7 @@ if __name__ == "__main__":
 
     model = rmnt.model.Model_Deterministic(InputData)
 
-    model.build(InputData, data, Net)
+    model.build(InputData, data, Net, system)
 
     #===========================================================================
 

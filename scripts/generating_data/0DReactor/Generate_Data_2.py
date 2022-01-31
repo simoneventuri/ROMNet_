@@ -24,9 +24,9 @@ NICs               = 10
 # NICs               = 5
 iSimVec            = range(NICs)
 
-NVarsRed           = 10
+NVarsRed           = 7
 
-scale              = 'log10'
+scale              = 'lin'
 MinVal             = 1.e-20
 ##########################################################################################
 

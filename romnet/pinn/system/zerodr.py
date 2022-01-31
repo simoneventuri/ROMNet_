@@ -14,11 +14,12 @@ class ZeroDR(System):
     def __init__(
         self,
         InputData
-    ):
+    ):  
+
         PathToDataFld      = InputData.PathToDataFld
         ROMNetFldr         = InputData.ROMNetFldr
         try:
-            self.ROM_pred_flg = InputData.ROMPred_Flg
+            self.ROM_pred_flg = InputData.ROM_pred_flg
         except:
             self.ROM_pred_flg = None
         self.NRODs         = InputData.NRODs
@@ -58,9 +59,8 @@ class ZeroDR(System):
         # Initialize Reactor
         self.initialize_reactor()
 
-        #self.read_params_ROM(PathToDataFld)
-        self.n_pc = 0
-
+        self.read_params_ROM(PathToDataFld)
+        
         if (self.ROM_pred_flg):
             self.f_call     = self.f_pc
             self.n_dims     = self.n_pc
@@ -291,7 +291,7 @@ class ZeroDR(System):
         if (self.ROM_pred_flg):
             return None
         else:
-            return fROM_anti_PCA 
+            return None #fROM_anti_PCA 
     #===========================================================================
 
 

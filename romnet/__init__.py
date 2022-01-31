@@ -10,7 +10,7 @@ from . import utils
 
 # TensorFlow ------------------------------------------------------------------
 tf_setup = {
-    'EPSILON':              1.e-15,
+    'EPSILON':              1.e-20,
     'DTYPE':                'float64',
     'NUM_THREADS':          0,
     'TF_CPP_MIN_LOG_LEVEL': '3'
