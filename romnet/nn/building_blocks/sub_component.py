@@ -163,9 +163,9 @@ class Sub_Component(object):
 
 
             # Trainable Layer?
-            if (self.trainable_flg == 'none'):
+            if (self.trainable_flg.lower() == 'none'):
                 layer.trainable = False
-            elif (self.trainable_flg == 'only_last'):
+            elif (self.trainable_flg.lower() == 'only_last'):
                 if (i_layer < self.n_layers-1):
                     layer.trainable = False
 

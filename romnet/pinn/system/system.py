@@ -9,9 +9,9 @@ class System(object):
     #===========================================================================
     def __init__(
         self,
-        ROMNetFldr,
+        ROMNet_fld,
     ):
-        ROMNetFldr          = InputData.ROMNetFldr
+        ROMNet_fld          = InputData.ROMNet_fld
 
         self.order          = 0
 

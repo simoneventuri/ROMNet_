@@ -15,8 +15,8 @@ class PSR(System):
         self,
         InputData
     ):
-        PathToDataFld      = InputData.PathToDataFld
-        ROMNetFldr         = InputData.ROMNetFldr
+        path_to_data_fld      = InputData.path_to_data_fld
+        ROMNet_fld         = InputData.ROMNet_fld
         try:
             self.ROM_pred_flg = InputData.ROMPred_Flg
         except:
@@ -51,12 +51,12 @@ class PSR(System):
         self.get_variable_locations()
 
         # Initial/final time
-        self.read_extremes(ROMNetFldr)
+        self.read_extremes(ROMNet_fld)
 
         # Initialize Reactor
         self.initialize_reactor()
 
-        self.read_params_ROM(PathToDataFld)
+        self.read_params_ROM(path_to_data_fld)
 
         if (self.ROM_pred_flg):
             self.f_call     = self.f_pc
@@ -65,7 +65,7 @@ class PSR(System):
             self.f_call     = self.f
             self.n_dims     = self.n_mask
 
-        self.n_batch       = InputData.BatchSize 
+        self.n_batch       = InputData.batch_size 
 
     #===========================================================================
 
@@ -239,9 +239,9 @@ class PSR(System):
 
 
     #===========================================================================
-    def read_extremes(self, ROMNetFldr):
+    def read_extremes(self, ROMNet_fld):
 
-        # PathToExtremes      = ROMNetFldr + '/database/MassSpringDamper/Extremes/'
+        # PathToExtremes      = ROMNet_fld + '/database/MassSpringDamper/Extremes/'
 
         # Data                = pd.read_csv(PathToExtremes+'/t.csv')
         # self.t0             = Data.to_numpy()[0,:]
@@ -265,13 +265,13 @@ class PSR(System):
 
 
     #===========================================================================
-    def read_params_ROM(self, PathToDataFld):
+    def read_params_ROM(self, path_to_data_fld):
 
         if (self.ROM_pred_flg):
-            PathToParams    = PathToDataFld + '/ROM/'
+            PathToParams    = path_to_data_fld + '/ROM/'
         else:
-            PathToParams    = PathToDataFld + '/../'+str(self.NRODs)+'PC/ROM/'
-            self.OutputVars = list(pd.read_csv(PathToDataFld+'/train/ext/CleanVars.csv', header=None).to_numpy()[0,:])
+            PathToParams    = path_to_data_fld + '/../'+str(self.NRODs)+'PC/ROM/'
+            self.OutputVars = list(pd.read_csv(path_to_data_fld+'/train/ext/CleanVars.csv', header=None).to_numpy()[0,:])
 
         self.A         = pd.read_csv(PathToParams+'/A.csv', header=None).to_numpy()
         self.C         = pd.read_csv(PathToParams+'/C.csv', header=None).to_numpy().T
@@ -351,11 +351,11 @@ class PSR(System):
 #=======================================================================================================================================
 class AutoEncoderLayer(tf.keras.layers.Layer):
 
-    def __init__(self, PathToDataFld, NVars, trainable_flg=False, name='AutoEncoderLayer'):
+    def __init__(self, path_to_data_fld, NVars, trainable_flg=False, name='AutoEncoderLayer'):
         super(AutoEncoderLayer, self).__init__(name=name, trainable=False)
 
-        self.PathToDataFld = PathToDataFld
-        Data               = pd.read_csv(self.PathToDataFld+'/train/ext/Output_MinMax.csv')
+        self.path_to_data_fld = path_to_data_fld
+        Data               = pd.read_csv(self.path_to_data_fld+'/train/ext/Output_MinMax.csv')
         var_min            = Data.to_numpy()[:,0]
         var_max            = Data.to_numpy()[:,1]
 
@@ -383,11 +383,11 @@ class AutoEncoderLayer(tf.keras.layers.Layer):
 #=======================================================================================================================================
 class AntiAutoEncoderLayer(tf.keras.layers.Layer):
 
-    def __init__(self, PathToDataFld, NVars, trainable_flg=False, name='AntiAutoEncoderLayer'):
+    def __init__(self, path_to_data_fld, NVars, trainable_flg=False, name='AntiAutoEncoderLayer'):
         super(AntiAutoEncoderLayer, self).__init__(name=name, trainable=False)
 
-        self.PathToDataFld = PathToDataFld
-        Data               = pd.read_csv(self.PathToDataFld+'/train/ext/Output_MinMax.csv')
+        self.path_to_data_fld = path_to_data_fld
+        Data               = pd.read_csv(self.path_to_data_fld+'/train/ext/Output_MinMax.csv')
         var_min            = Data.to_numpy()[:,0]
         var_max            = Data.to_numpy()[:,1]
 

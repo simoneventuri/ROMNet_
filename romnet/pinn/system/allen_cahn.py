@@ -14,7 +14,7 @@ class Allen_Cahn(System):
         self,
         InputData
     ):
-        ROMNetFldr        = InputData.ROMNetFldr
+        ROMNet_fld        = InputData.ROMNet_fld
 
         self.order        = [1,2]
 
@@ -28,13 +28,13 @@ class Allen_Cahn(System):
 
 
         # Initial/final time
-        self.read_extremes(ROMNetFldr)
+        self.read_extremes(ROMNet_fld)
         
         # Get Parameters
-        self.read_params(ROMNetFldr)
+        self.read_params(ROMNet_fld)
         
         # Get No of Steps
-        self.read_steps(ROMNetFldr)
+        self.read_steps(ROMNet_fld)
 
     #===========================================================================
 
@@ -111,9 +111,9 @@ class Allen_Cahn(System):
 
 
     #===========================================================================
-    def read_extremes(self, ROMNetFldr):
+    def read_extremes(self, ROMNet_fld):
 
-        PathToExtremes = ROMNetFldr + '/database/Allen_Cahn/Extremes/'
+        PathToExtremes = ROMNet_fld + '/database/Allen_Cahn/Extremes/'
 
         Data                = pd.read_csv(PathToExtremes+'/t.csv')
         self.t0             = Data.to_numpy()[0,:]
@@ -139,9 +139,9 @@ class Allen_Cahn(System):
 
 
     #===========================================================================
-    def read_steps(self, ROMNetFldr):
+    def read_steps(self, ROMNet_fld):
 
-        PathToExtremes = ROMNetFldr + '/database/Allen_Cahn/Steps/'
+        PathToExtremes = ROMNet_fld + '/database/Allen_Cahn/Steps/'
 
         Data                = pd.read_csv(PathToExtremes+'/t.csv')
         self.n_t            = Data.to_numpy()[0,0]
@@ -154,9 +154,9 @@ class Allen_Cahn(System):
 
 
     #===========================================================================
-    def read_params(self, ROMNetFldr):
+    def read_params(self, ROMNet_fld):
 
-        PathToParams = ROMNetFldr + '/database/Allen_Cahn/Params/'
+        PathToParams = ROMNet_fld + '/database/Allen_Cahn/Params/'
 
         nu = pd.read_csv(PathToParams+'/nu.csv').to_numpy()[0,0]
         xi = pd.read_csv(PathToParams+'/xi.csv').to_numpy()[0,0]

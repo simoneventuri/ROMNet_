@@ -14,76 +14,92 @@ class FNN(NN):
     """
     
     # ---------------------------------------------------------------------------------------------------------------------------
-    def __init__(self, InputData, norm_input, stat_output):
+    def __init__(self, InputData, norm_input, stat_output, system):
         super(FNN, self).__init__()
 
-        self.structure_name  = 'FNN'
-
-        self.attention_mask  = None
-        self.residual        = None
-
-
-        self.input_vars      = InputData.input_vars_all
-        self.n_inputs        = len(self.input_vars)
-
-
-        if isinstance(InputData.output_vars, list):
-            self.output_vars = InputData.output_vars
-        else: 
-            data_id          = list(InputData.output_vars.keys())[0]
-            self.output_vars = list(pd.read_csv(InputData.PathToDataFld+'/train/'+data_id+'/'+InputData.output_vars[data_id], header=None).to_numpy()[0,:]) 
-        self.n_outputs       = len(self.output_vars)
-
+        self.structure_name   = 'FNN'
+ 
+        self.attention_mask   = None
+        self.residual         = None
+ 
+ 
+        self.input_vars       = InputData.input_vars_all
+        self.n_inputs         = len(self.input_vars)
+ 
+ 
+        self.output_vars      = InputData.output_vars
+        self.n_outputs        = len(self.output_vars)
+ 
         
         if (norm_input is None):
-            norm_input       = pd.DataFrame(np.zeros((1,self.n_inputs)), columns=self.input_vars)
-        self.norm_input      = norm_input
+            norm_input        = pd.DataFrame(np.zeros((1,self.n_inputs)), columns=self.input_vars)
+        self.norm_input       = norm_input
+ 
+        self.norm_output_flg  = InputData.norm_output_flg
+ 
+        self.trans_fun        = InputData.trans_fun
 
-        self.norm_output_flg = InputData.norm_output_flg
+
+        try:
+            self.internal_pca = InputData.internal_pca
+        except:
+            self.internal_pca = False
+
+        print("\n[ROMNet - fnn.py                    ]:   Constructing Feed-Forward Network: ") 
 
 
-        if (stat_output is not None):
-            self.output_mean  = tf.cast(stat_output['mean'][np.newaxis,...])
-            self.output_std   = tf.cast(stat_output['std'][np.newaxis,...])
-            self.output_min   = tf.cast(stat_output['min'][np.newaxis,...])
-            self.output_max   = tf.cast(stat_output['max'][np.newaxis,...])
-            self.output_range = tf.cast(self.output_max - self.output_min)
-        self.stat_output = stat_output
+        self.layers_dict      = {'FNN': {}, 'All': {}}
+        self.layer_names_dict = {'FNN': {}, 'All': {}}
+
+
+        # PCA Layers
+        if (self.internal_pca):
+            self.layers_dict['FNN']['PCALayer']    = PCALayer(system.A, system.C, system.D)
+            self.layers_dict['FNN']['PCAInvLayer'] = PCAInvLayer(system.A, system.C, system.D)
 
 
         # Pre-Transforming Layer
-        if (self.input_vars):
-            self.trans_vec = []
-            for ifun, fun in enumerate(self.input_vars):
-                vars_list = self.trans_fun[fun]
+        if (self.trans_fun):
+            for i_trunk in range(self.n_trunks):
+                for ifun, fun in enumerate(self.trans_fun):
+                    vars_list = self.trans_fun[fun]
 
-                indxs = []
-                for ivar, var in enumerate(self.input_vars):
-                    if var in vars_list:
-                        indxs.append(ivar)
+                    indxs = []
+                    for ivar, var in enumerate(self.trunk_vars):
+                        if var in vars_list:
+                            indxs.append(ivar)
 
-                if (len(indxs) > 0):
-                    layer_name = 'PreTransformation_' + fun
-                    layer      = InputTransLayer(fun, len(self.input_vars), indxs, name=layer_name)
-                    self.trans_vec.append(layer)
+                    if (len(indxs) > 0):
+                        layer_name = 'PreTransformation' + fun + '-' + str(i_trunk+1)
+                        layer      = InputTransLayer(fun, len(self.trunk_vars), indxs, name=layer_name)
 
-                  
-        print("\n[ROMNet - deeponet.py               ]:   Constructing Feed-Forward Network: ") 
+                        self.layers_dict['FNN']['FNN']['TransFun']      = layer
+                        self.layer_names_dict['FNN']['FNN']['TransFun'] = layer_name
 
-        self.layers_dict                 = {'FNN': {}}
-        self.layer_names_dict            = {'FNN': {}}
-        self.system_of_components        = {}
-        self.system_of_components['FNN'] = System_of_Components(InputData, 'FNN', self.norm_input, layers_dict=self.layers_dict, layer_names_dict=self.layer_names_dict)
+        
+        # Main System of Components    
+        self.system_of_components             = {}
+        self.system_of_components['FNN']      = System_of_Components(InputData, 'FNN',      self.norm_input, layers_dict=self.layers_dict, layer_names_dict=self.layer_names_dict)
 
 
-        self.norm_output_flg           = InputData.norm_output_flg
-        self.stat_output               = stat_output
+        # # Softmax Layer
+        # if (self.internal_pca):
+        #     self.layers_dict['FNN']['SoftMax'] = tf.keras.layers.Softmax()
+
+
+        # Output Normalizing Layer
+        self.norm_output_flg             = InputData.norm_output_flg
+        self.stat_output                 = stat_output
         if (self.norm_output_flg) and (self.stat_output):                    
-            self.output_min            = tf.constant(stat_output['min'][np.newaxis,...],  dtype=tf.keras.backend.floatx())
-            self.output_max            = tf.constant(stat_output['max'][np.newaxis,...],  dtype=tf.keras.backend.floatx())
-            self.output_range          = tf.constant(self.output_max - self.output_min,   dtype=tf.keras.backend.floatx())
-            self.output_trans_layer    = OutputTransLayer(   self.output_range, self.output_min)
-            self.output_invtrans_layer = OutputInvTransLayer(self.output_range, self.output_min)
+            self.output_min                                = tf.constant(stat_output['min'],  dtype=tf.keras.backend.floatx())
+            self.output_max                                = tf.constant(stat_output['max'],  dtype=tf.keras.backend.floatx())
+            self.output_range                              = tf.constant(self.output_max - self.output_min,   dtype=tf.keras.backend.floatx())
+            
+            self.layers_dict['All']['OutputTrans']         = OutputTransLayer(   self.output_range, self.output_min)
+            self.layer_names_dict['All']['OutputTrans']    = 'OutputTrans'
+
+            self.layers_dict['All']['OutputInvTrans']      = OutputInvTransLayer(self.output_range, self.output_min)
+            self.layer_names_dict['All']['OutputInvTrans'] = 'OutputInvTrans'
 
     # ---------------------------------------------------------------------------------------------------------------------------
 
@@ -91,11 +107,7 @@ class FNN(NN):
     # ---------------------------------------------------------------------------------------------------------------------------
     def call(self, inputs, training=False):
 
-        y = inputs
-        if (self.trans_fun):
-            y = self.trans_vec[0](y)
-
-        y     = self.system_of_components['FNN'].call(y, training=training)
+        y = self.system_of_components['FNN'].call(inputs, self.layers_dict, training=training)
 
         return y
 
@@ -106,11 +118,7 @@ class FNN(NN):
     # ---------------------------------------------------------------------------------------------------------------------------
     def call_predict(self, inputs):
 
-        y = inputs
-        if (self.trans_fun):
-            y = self.trans_vec[0](y)
-
-        y     = self.system_of_components['FNN'].call(y, training=False)
+        y = self.system_of_components['FNN'].call(inputs, self.layers_dict, training=False)
 
         return y
 

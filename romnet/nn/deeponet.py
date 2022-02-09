@@ -18,21 +18,21 @@ class DeepONet(NN):
     def __init__(self, InputData, norm_input, stat_output, system):
         super(DeepONet, self).__init__()
 
-        self.structure_name  = 'DeepONet'
- 
-        self.attention_mask  = None
-        self.residual        = None
-
-
-        self.input_vars      = InputData.input_vars_all
-        self.n_inputs        = len(self.input_vars)
+        self.structure_name            = 'DeepONet'
            
-  
-        self.output_vars     = InputData.output_vars
-        self.n_outputs       = len(self.output_vars)
-
-        self.branch_vars     = InputData.input_vars['DeepONet']['Branch']
-        self.trunk_vars      = InputData.input_vars['DeepONet']['Trunk']  
+        self.attention_mask            = None
+        self.residual                  = None
+          
+          
+        self.input_vars                = InputData.input_vars_all
+        self.n_inputs                  = len(self.input_vars)
+                     
+            
+        self.output_vars               = InputData.output_vars
+        self.n_outputs                 = len(self.output_vars)
+          
+        self.branch_vars               = InputData.input_vars['DeepONet']['Branch']
+        self.trunk_vars                = InputData.input_vars['DeepONet']['Trunk']  
 
         self.n_branches                = len([name for name in InputData.structure['DeepONet'].keys() if 'Branch' in name])
         self.n_trunks                  = len([name for name in InputData.structure['DeepONet'].keys() if 'Trunk'  in name])
@@ -44,8 +44,12 @@ class DeepONet(NN):
             self.n_rigids              = 0
 
         if (norm_input is None):
-            norm_input       = pd.DataFrame(np.zeros((1,self.n_inputs)), columns=self.input_vars)
-        self.norm_input      = norm_input
+            norm_input                 = pd.DataFrame(np.zeros((1,self.n_inputs)), columns=self.input_vars)
+        self.norm_input                = norm_input
+
+        self.trans_fun                 = InputData.trans_fun
+  
+        self.norm_output_flg           = InputData.norm_output_flg
 
         try:
             self.system_post_layer_flg = InputData.system_post_layer_flg['DeepONet']
@@ -53,14 +57,10 @@ class DeepONet(NN):
             self.system_post_layer_flg = None
 
         try:
-            self.internal_pca              = InputData.internal_pca
+            self.internal_pca          = InputData.internal_pca
         except:
-            self.internal_pca              = False
+            self.internal_pca          = False
 
-        self.norm_output_flg = InputData.norm_output_flg
-
-        self.trans_fun       = InputData.trans_fun
-  
         print("\n[ROMNet - deeponet.py               ]:   Constructing Deep Operator Network: ") 
 
 
@@ -107,6 +107,7 @@ class DeepONet(NN):
                 self.layer_names_dict['DeepONet']['Trunk_'+str(i_trunk+1)]['Shift'] = 'Multiply'
 
 
+        # Main System of Components
         self.system_of_components             = {}
         self.system_of_components['DeepONet'] = System_of_Components(InputData, 'DeepONet', self.norm_input, layers_dict=self.layers_dict, layer_names_dict=self.layer_names_dict)
 
@@ -123,11 +124,12 @@ class DeepONet(NN):
                     self.layers_dict['DeepONet']['Branch_'+str(i_branch+1)]['Post'] = system_post_layer(self.system_post_layer_flg, 'DeepONet', i_branch, None)
 
         
-        # Softmax Layer
-        if (self.internal_pca):
-            self.layers_dict['DeepONet']['SoftMax'] = tf.keras.layers.Softmax()
+        # # Softmax Layer
+        # if (self.internal_pca):
+        #     self.layers_dict['DeepONet']['SoftMax'] = tf.keras.layers.Softmax()
 
 
+        # Output Normalizing Layer
         self.norm_output_flg             = InputData.norm_output_flg
         self.stat_output                 = stat_output
         if (self.norm_output_flg) and (self.stat_output):                    

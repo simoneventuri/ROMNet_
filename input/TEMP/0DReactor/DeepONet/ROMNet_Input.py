@@ -6,57 +6,57 @@ import pandas                                 as pd
 class inputdata(object):
 
 
-    def __init__(self, WORKSPACE_PATH, ROMNetFldr):
+    def __init__(self, WORKSPACE_PATH, ROMNet_fld):
 
         self.NRODs               = 15
-        self.iRODSel             = range(self.NRODs)
-        self.NRODsSel            = len(self.iRODSel)
+        self.i_redSel             = range(self.NRODs)
+        self.NRODsSel            = len(self.i_redSel)
 
-        self.NPODs               = 10
+        self.n_modes               = 10
         self.ROM_pred_flg        = True
 
         #=======================================================================================================================================
         ### Case Name
-        self.NNRunIdx            = 0                                                                      # Training Case Identification Number 
+        self.run_idx            = 0                                                                      # Training Case Identification Number 
 
         #=======================================================================================================================================
         ### Execution Flags
         self.DefineModelIntFlg   = 1
-        self.TrainIntFlg         = 2                                                                      # Training                       0=>No, 1=>Yes
+        self.train_int_flg         = 2                                                                      # Training                       0=>No, 1=>Yes
         self.WriteParamsIntFlg   = 1                                                                      # Writing Parameters             0=>Never, 1=>After Training, 2=>Also During Training
         self.WriteDataIntFlg     = 2                                                                      # Writing Data After Training    0=>Never, 1=>After Training, 2=>Also During Training
         self.TestIntFlg          = 2                                                                      # Evaluating                     0=>No, 1=>Yes
-        self.PlotIntFlg          = 2                                                                      # Plotting Data                  0=>Never, 1=>After Training, 2=>Also During Training
+        self.plot_int_flg          = 2                                                                      # Plotting Data                  0=>Never, 1=>After Training, 2=>Also During Training
         self.PredictIntFlg       = 2                                                                      # Plotting Data                  0=>Never, 1=>After Training, 2=>Also During Training
 
         #=======================================================================================================================================
         ### Paths
         self.WORKSPACE_PATH      = WORKSPACE_PATH                                                         # os.getenv('WORKSPACE_PATH')      
-        self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
-        self.PathToRunFld        = self.ROMNetFldr   + '/../0DReact_Isobaric_2000Cases_NEq/'                                 # Path To Training Folder
-        self.PathToLoadFld       = None #self.ROMNetFldr   + '/../Data/0DReact_Isobaric_500Cases_Up/7PC/OneByOne/FNN/Final.h5'            # Path To Training Data Folder 
-        #self.PathToLoadFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_500Cases_Simple/10PC/All/FNN/Final.h5'            # Path To Training Data Folder 
+        self.ROMNet_fld          = ROMNet_fld                                                             # $WORKSPACE_PATH/ProPDE/
+        self.path_to_run_fld        = self.ROMNet_fld   + '/../0DReact_Isobaric_2000Cases_NEq/'                                 # Path To Training Folder
+        self.path_to_load_fld       = None #self.ROMNet_fld   + '/../Data/0DReact_Isobaric_500Cases_Up/7PC/OneByOne/FNN/Final.h5'            # Path To Training Data Folder 
+        #self.path_to_load_fld       = self.ROMNet_fld   + '/../Data/0DReact_Isobaric_500Cases_Simple/10PC/All/FNN/Final.h5'            # Path To Training Data Folder 
 
         #=======================================================================================================================================
         ### Data
-        self.PhysSystem          = 'ZeroDR'                                                             # Module to Be Used for Reading Data
+        self.phys_system          = 'ZeroDR'                                                             # Module to Be Used for Reading Data
 
         #=======================================================================================================================================
         ### Data
-        self.DataType            = 'PDE'                                                                    # Module to Be Used for Reading Data
-        self.GenerateFlg         = False
-        # self.NTrain              = {'scs': 64, 'res': 128, 'pts': 128}                                                # No of Training Cases
-        # self.NTrain              = {'res': 128}                                                             # No of Training Cases
-        # self.NTrain              = {'scs': 64, 'pts': 128}                                                             # No of Training Cases
-        self.NTrain              = {'pts': 64}                                                             # No of Training Cases
-        self.ValidPerc           = 20.0                                                                     # Percentage of Training Data to Be Used for Validation (e.g., = 20.0 => 20%)
-        self.DataDist            = 'uniform'                                                                # Distribution for Sampling Independent Variables
-        self.NTest               = 2                                                                        # No of Test Cases
-        self.TestFlg             = False
+        self.data_type            = 'PDE'                                                                    # Module to Be Used for Reading Data
+        self.generate_flg         = False
+        # self.n_train              = {'scs': 64, 'res': 128, 'pts': 128}                                                # No of Training Cases
+        # self.n_train              = {'res': 128}                                                             # No of Training Cases
+        # self.n_train              = {'scs': 64, 'pts': 128}                                                             # No of Training Cases
+        self.n_train              = {'pts': 64}                                                             # No of Training Cases
+        self.valid_perc           = 20.0                                                                     # Percentage of Training Data to Be Used for Validation (e.g., = 20.0 => 20%)
+        self.data_dist            = 'uniform'                                                                # Distribution for Sampling Independent Variables
+        self.n_test               = 2                                                                        # No of Test Cases
+        self.test_flg             = False
 
         #=======================================================================================================================================
         ## NN Model Structure
-        self.SurrogateType       = 'DeepONet'                                                              # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
+        self.surrogate_type       = 'DeepONet'                                                              # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
         self.ProbApproach        = 'Deterministic'                                                         # Probabilistic Technique for Training the BNN (if Any)
         self.trans_fun           = {'log': ['t']}                                                          # Dictionary Containing Functions to Be Applied to Input Data 
         self.norm_output_flg     = True                                                                    # Flag for Normalizing Output Data
@@ -64,8 +64,8 @@ class inputdata(object):
         self.internal_pca        = False
 
         # # -----------------------------------------------------------------------------------
-        # self.PathToDataFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_2000Cases_NEq/Orig/'            # Path To Training Data Folder 
-        # FileName   = self.PathToDataFld+'/train/ext/CleanVars.csv'
+        # self.path_to_data_fld       = self.ROMNet_fld   + '/../Data/0DReact_Isobaric_2000Cases_NEq/Orig/'            # Path To Training Data Folder 
+        # FileName   = self.path_to_data_fld+'/train/ext/CleanVars.csv'
         # Vars       = pd.read_csv(FileName, delimiter=',', header=None).to_numpy()[0,:]
         # self.Vars  = list(Vars)
         # Vars0      = []
@@ -82,8 +82,8 @@ class inputdata(object):
         # # -----------------------------------------------------------------------------------
 
         # -----------------------------------------------------------------------------------
-        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_2000Cases_NEq/'+str(self.NRODs)+'PC/'            # Path To Training Data Folder 
-        self.output_vars         = ['PC_'+str(i+1) for i in self.iRODSel]                                  # List Containing the Output Data Variable Names for each System
+        self.path_to_data_fld       = self.ROMNet_fld   + '/../Data/0DReact_Isobaric_2000Cases_NEq/'+str(self.NRODs)+'PC/'            # Path To Training Data Folder 
+        self.output_vars         = ['PC_'+str(i+1) for i in self.i_redSel]                                  # List Containing the Output Data Variable Names for each System
         self.input_vars_all      = ['PC0_'+str(i+1) for i in range(self.NRODs)]+['t']                      # List Containing all the Input Data Variable Names
         self.input_vars          = {'DeepONet': {'Branch': ['PC0_'+str(i+1) for i in range(self.NRODs)],
                                                   'Rigid': ['PC0_'+str(i+1) for i in range(self.NRODs)],
@@ -104,9 +104,9 @@ class inputdata(object):
         self.structure['DeepONet']['Rigid']               = ['Main']
         for i in range(self.n_trunks):
            self.structure['DeepONet']['Trunk_'+str(i+1)]  = ['Main']                                       # Dictionary Containing the Structure of the Network
-        self.n_neurons           = {'DeepONet': {'Branch': {'Main': np.array([32,32,32,self.NPODs])},
+        self.n_neurons           = {'DeepONet': {'Branch': {'Main': np.array([32,32,32,self.n_modes])},
                                                   'Rigid': {'Main': np.array([32,32,32,self.n_trunks])},
-                                                  'Trunk': {'Main': np.array([32,32,32,self.NPODs])}}}     # Dictionary Containing the No of Neurons for each Layer
+                                                  'Trunk': {'Main': np.array([32,32,32,self.n_modes])}}}     # Dictionary Containing the No of Neurons for each Layer
         self.act_funcs           = {'DeepONet': {'Branch': {'Main': ['tanh','tanh','tanh','linear']},
                                                   'Rigid': {'Main': ['tanh','tanh','tanh','linear']},
                                                   'Trunk': {'Main': ['tanh','tanh','tanh','linear']}}}     # Dictionary Containing the Activation Funct.s for each Layer
@@ -124,11 +124,11 @@ class inputdata(object):
         # self.structure['DeepONet']['Rigid']               = ['Main']
         # for i in range(self.NRODs):
         #    self.structure['DeepONet']['Trunk_'+str(i+1)]  = ['Main','U','V']                               # Dictionary Containing the Structure of the Network
-        # self.n_neurons           = {'DeepONet': {'Branch': {'Main': np.array([32,32,32,self.NPODs+2]),
+        # self.n_neurons           = {'DeepONet': {'Branch': {'Main': np.array([32,32,32,self.n_modes+2]),
         #                                                        'U': np.array([32]),
         #                                                        'V': np.array([32])},
-        #                                           'Rigid': {'Main': np.array([32,32,32,self.NPODs])},
-        #                                           'Trunk': {'Main': np.array([32,32,32,self.NPODs+2]),
+        #                                           'Rigid': {'Main': np.array([32,32,32,self.n_modes])},
+        #                                           'Trunk': {'Main': np.array([32,32,32,self.n_modes+2]),
         #                                                        'U': np.array([32]),
         #                                                        'V': np.array([32])}}}                      # Dictionary Containing the No of Neurons for each Layer
         # self.act_funcs           = {'DeepONet': {'Branch': {'Main': ['sigmoid','sigmoid','sigmoid','linear'],
@@ -148,27 +148,27 @@ class inputdata(object):
         #=======================================================================================================================================
         ### Training Quanties
         self.trainable_flg       = {'DeepONet': 'all'}
-        self.TransferFlg         = False                                                                  # Flag for Using Transfer Learning
-        self.PathToTransFld      = None
-        self.NEpoch              = 100000                                                                   # Number of Epoches
-        self.BatchSize           = 2048                                                                     # Mini-Batch Size
-        self.ValidBatchSize      = 2048                                                               # Validation Mini-Batch Size
+        self.transfer_flg         = False                                                                  # Flag for Using Transfer Learning
+        self.path_to_transf_fld      = None
+        self.n_epoch              = 100000                                                                   # Number of Epoches
+        self.batch_size           = 2048                                                                     # Mini-Batch Size
+        self.valid_batch_size      = 2048                                                               # Validation Mini-Batch Size
         self.RunEagerlyFlg       = False
-        # self.Losses              = {'scs': {'name': 'mse', 'axis': 0}, 'res': {'name': 'mse', 'axis': 0}, 'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
-        # self.LossWeights         = {'scs': 1.e-1, 'res': 1.e-8, 'pts': 1.e0}     
-        # self.Losses              = {'res': {'name': 'mse', 'axis': 0}}                                    # Loss Functions
-        # self.LossWeights         = {'res': 1.} 
-        # self.Losses              = {'scs': {'name': 'mse', 'axis': 0}, 'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
-        # self.LossWeights         = {'scs': 0.1, 'pts': 1.}   
-        self.Losses              = {'pts': {'name': 'msle', 'axis': 0}} # Loss Functions
-        self.LossWeights         = {'pts': 1.}     
-        self.Metrics             = None                   
-        self.LR                  = 5.e-4                                                          # Initial Learning Rate
-        self.LRDecay             = ["exponential", 10000, 0.98]
-        self.Optimizer           = 'adam'                                                                 # Optimizer
-        self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
+        # self.losses              = {'scs': {'name': 'mse', 'axis': 0}, 'res': {'name': 'mse', 'axis': 0}, 'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
+        # self.loss_weights         = {'scs': 1.e-1, 'res': 1.e-8, 'pts': 1.e0}     
+        # self.losses              = {'res': {'name': 'mse', 'axis': 0}}                                    # Loss Functions
+        # self.loss_weights         = {'res': 1.} 
+        # self.losses              = {'scs': {'name': 'mse', 'axis': 0}, 'pts': {'name': 'mse', 'axis': 0}} # Loss Functions
+        # self.loss_weights         = {'scs': 0.1, 'pts': 1.}   
+        self.losses              = {'pts': {'name': 'msle', 'axis': 0}} # Loss Functions
+        self.loss_weights         = {'pts': 1.}     
+        self.metrics             = None                   
+        self.lr                  = 5.e-4                                                          # Initial Learning Rate
+        self.lr_decay             = ["exponential", 10000, 0.98]
+        self.optimizer           = 'adam'                                                                 # Optimizer
+        self.optimizer_params     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
         self.weight_decay_coeffs = np.array([1.e-10,1.e-10], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
-        self.Callbacks           = {
+        self.callbacks_dict           = {
             'base': {
                 'stateful_metrics': None
             },

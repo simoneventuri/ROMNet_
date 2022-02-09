@@ -26,14 +26,14 @@ MixtureFile        = 'gri30.yaml'
 
 P0                 = ct.one_atm
 DirName            = 'train'
-NICs               = 50
+n_ics               = 50
 T0Exts             = np.array([1000., 2000.], dtype=np.float64)
 X0Exts             = np.array([0.05, 0.95], dtype=np.float64)
 SpeciesVec         = ['H2','H','O','O2','OH','N','NH','NO','N2']
 EqRatio0Exts       = None #np.array([.5, 4.], dtype=np.float64)
 
 # DirName            = 'test'
-# NICs               = 5
+# n_ics               = 5
 
 NPerT0             = 500
 
@@ -146,11 +146,11 @@ if (DirName == 'train'):
         MaxVals = np.array([EqRatio0Exts[1], T0Exts[1]], dtype=np.float64)
         NDims   = 2
 
-        ICs     = pyDOE.lhs(2, samples=NICs, criterion='center')
+        ICs     = pyDOE.lhs(2, samples=n_ics, criterion='center')
 
         for i in range(NDims):
             ICs[:,i] = ICs[:,i] * (MaxVals[i] - MinVals[i]) + MinVals[i]
-        ICs = np.concatenate([P0*np.ones((NICs,1)),ICs], axis=1)
+        ICs = np.concatenate([P0*np.ones((n_ics,1)),ICs], axis=1)
 
         ### Writing Initial Temperatures
         FileName = OutputDir+'/Orig/'+DirName+'/ext/ICs.csv'
@@ -165,12 +165,12 @@ if (DirName == 'train'):
         MaxVals  = np.array([T0Exts[1], X0Exts[1]], dtype=np.float64)
         NDims    = NSpecies + 1
 
-        ICs      = pyDOE.lhs(NDims, samples=NICs, criterion='center')
+        ICs      = pyDOE.lhs(NDims, samples=n_ics, criterion='center')
 
         ICs[:,0] = ICs[:,0] * (T0Exts[1] - T0Exts[0]) + T0Exts[0]
         for i in range(1, NDims):
             ICs[:,i] = ICs[:,i] * (X0Exts[1] - X0Exts[0]) + X0Exts[0]
-        ICs = np.concatenate([P0*np.ones((NICs,1)),ICs], axis=1)
+        ICs = np.concatenate([P0*np.ones((n_ics,1)),ICs], axis=1)
 
         ### Writing Initial Temperatures
         FileName   = OutputDir+'/Orig/'+DirName+'/ext/ICs.csv'
@@ -187,12 +187,12 @@ if (DirName == 'train'):
 
 elif (DirName == 'test'):
     NDims    = 2
-    ICs      = np.zeros((NICs,NDims))
+    ICs      = np.zeros((n_ics,NDims))
     # ICs[:,0] = [2.5, 1.9, 3.5, 1., 3.6]
     # ICs[:,1] = [1200., 1900., 1300., 1600., 1700.]
     ICs[:,0] = [0.8, 0.9, 1.0, 1.1, 1.2]
     ICs[:,1] = [1300., 1200., 1400., 1500., 1250.]
-    ICs = np.concatenate([P0*np.ones((NICs,1)), ICs], axis=1)
+    ICs = np.concatenate([P0*np.ones((n_ics,1)), ICs], axis=1)
 
 
     ### Writing Initial Temperatures
@@ -204,10 +204,10 @@ elif (DirName == 'test'):
 
 ### Iterating Over Residence Times
 DataMat         = None
-iStart          = np.zeros(NICs)
-iEnd            = np.zeros(NICs)
-AutoIgnitionVec = np.zeros((NICs,1))
-for iIC in range(NICs):
+iStart          = np.zeros(n_ics)
+iEnd            = np.zeros(n_ics)
+AutoIgnitionVec = np.zeros((n_ics,1))
+for iIC in range(n_ics):
     
     if (EqRatio0Exts):
         P0       = ICs[iIC,0]

@@ -36,7 +36,7 @@ def get_callback(model, InputData):
         except:
             args['shape_1'] = 1
 
-        args.update( { 'data_generator': data_generator, 'log_dir': model.TBCheckpointFldr, 'n_train_tot': model.data.n_train_tot, 'save_dir': model.PathToRunFld, 'pde_loss_weights': pde_loss_weights  } )
+        args.update( { 'data_generator': data_generator, 'log_dir': model.TBCheckpointFldr, 'n_train_tot': model.data.n_train_tot, 'save_dir': model.path_to_run_fld, 'pde_loss_weights': pde_loss_weights  } )
         
         Name = args.pop('name')
 
@@ -61,21 +61,21 @@ def get_callback(model, InputData):
     def _get_single_callback(model, Name, args):
 
         if   Name == "base":
-            args.update( { 'PathToRunFld': InputData.PathToRunFld  } )
+            args.update( { 'path_to_run_fld': InputData.path_to_run_fld  } )
             return base.BaseLogger(**args)
 
         elif Name == "early_stopping":
             return tf.keras.callbacks.EarlyStopping(**args)
 
         elif Name == "model_ckpt":
-            return tf.keras.callbacks.ModelCheckpoint( **args, filepath=model.PathToRunFld+"/Training/Params/{epoch:06d}.h5" )
+            return tf.keras.callbacks.ModelCheckpoint( **args, filepath=model.path_to_run_fld+"/Training/Params/{epoch:06d}.h5" )
 
         elif Name == "tensorboard":
             return tf.keras.callbacks.TensorBoard(**args, log_dir=model.TBCheckpointFldr)
 
 
         elif Name == "weighted_loss":
-            return _get_weighted_loss(model, InputData.LossWeights, args)
+            return _get_weighted_loss(model, InputData.loss_weights, args)
 
         elif Name == "lr_scheduler":
             return _get_lr_scheduler(args)
@@ -84,10 +84,10 @@ def get_callback(model, InputData):
             return early_stopping.Timer(**args)
 
         elif Name == "lr_tracker":
-            return learning_rate.LearningRateTracker( **args, file=model.PathToRunFld+'/Training/LR.csv', log_dir=model.TBCheckpointFldr )
+            return learning_rate.LearningRateTracker( **args, file=model.path_to_run_fld+'/Training/LR.csv', log_dir=model.TBCheckpointFldr )
 
         elif Name == "plotter":
-            return plotting.Plotter( test_data=model.data.test, train_dir=model.PathToRunFld+'/Training/', **args )
+            return plotting.Plotter( test_data=model.data.test, train_dir=model.path_to_run_fld+'/Training/', **args )
 
         elif Name == "variable":
             return variable.VariableValue(**args)
@@ -103,10 +103,10 @@ def get_callback(model, InputData):
 
         #=======================================================================================================================================
 
-    callback_list = [ _get_single_callback(model, Name, args) for Name, args in InputData.Callbacks.items() if args is not None ]
+    callback_list = [ _get_single_callback(model, Name, args) for Name, args in InputData.callbacks_dict.items() if args is not None ]
 
-    if "weighted_loss" not in InputData.Callbacks:
-        callback_list.append( _get_single_callback(model, "weighted_loss", {'name': 'ConstantWeightsAdapter', 'data_generator': None, 'pde_loss_weights': InputData.LossWeights}) )
+    if "weighted_loss" not in InputData.callbacks_dict:
+        callback_list.append( _get_single_callback(model, "weighted_loss", {'name': 'ConstantWeightsAdapter', 'data_generator': None, 'pde_loss_weights': InputData.loss_weights}) )
     
     return callback_list
 

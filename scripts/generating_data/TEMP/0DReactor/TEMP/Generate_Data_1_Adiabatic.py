@@ -23,7 +23,7 @@ FigDir             = OutputDir + '/fig/'
 
 MixtureFile        = 'gri30.yaml'
 
-NICs               = 100
+n_ics               = 100
 P0Exts             = np.array([5. * ct.one_atm, 20. * ct.one_atm], dtype=np.float64)
 EqRatio0Exts       = np.array([0.5, 1.0], dtype=np.float64)
 T0Exts             = np.array([900, 1700], dtype=np.float64)
@@ -140,10 +140,10 @@ np.savetxt(FileName, ICs, delimiter=',', header=Header, comments='')
 
 ### Iterating Over Residence Times
 DataMat         = None
-iStart          = np.zeros(NICs)
-iEnd            = np.zeros(NICs)
-AutoIgnitionVec = np.zeros((NICs,1))
-for iIC in range(NICs):
+iStart          = np.zeros(n_ics)
+iEnd            = np.zeros(n_ics)
+AutoIgnitionVec = np.zeros((n_ics,1))
+for iIC in range(n_ics):
     P0       = ICs[iIC,0]
     EqRatio0 = ICs[iIC,1]
     T0       = ICs[iIC,2]

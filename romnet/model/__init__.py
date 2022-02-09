@@ -1,5 +1,5 @@
 
-from .model_deterministic        import Model_Deterministic
+from .model_tf        import Model_TF
 # from .FNN_MCDropOut            import FNN_MCDropOut
 # from .FNN_BayesByBackprop      import FNN_BayesByBackprop
 # from .FNN_HamiltonianMC        import FNN_HamiltonianMC
@@ -8,7 +8,7 @@ from .model_deterministic        import Model_Deterministic
 # from .DeepONet_BayesByBackprop import DeepONet_BayesByBackprop
 
 __all__ = [
-    "Model_Deterministic",
+    "Model_TF",
     # "FNN_MCDropOut",
     # "FNN_BayesByBackprop",
     # "FNN_HamiltonianMC",

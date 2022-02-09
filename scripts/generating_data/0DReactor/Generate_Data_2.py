@@ -19,10 +19,10 @@ OutputDir          = WORKSPACE_PATH + '/ROMNet/Data/0DReact_Isobaric_2000Cases_N
 FigDir             = OutputDir + '/fig/'
 
 DirName            = 'train'
-NICs               = 2000
+n_ics               = 2000
 # DirName            = 'test'
-# NICs               = 5
-iSimVec            = range(NICs)
+# n_ics               = 5
+iSimVec            = range(n_ics)
 
 NVarsRed           = 15
 
@@ -348,7 +348,7 @@ HeaderS = 't,'+HeaderS
 fDeepOnetInput  = open(OutputDir +'/' + str(NVarsRed) + 'PC/'+DirName+'/ext/Input.csv', 'w')
 fDeepOnetOutput = open(OutputDir +'/' + str(NVarsRed) + 'PC/'+DirName+'/ext/Output.csv', 'w')
 
-for iT in range(1,NICs+1):
+for iT in range(1,n_ics+1):
     print(KeptSpeciesNames)
 
     try:

@@ -9,9 +9,11 @@ import romnet as rmnt
 
 if __name__ == "__main__": 
 
-    WORKSPACE_PATH = os.environ['WORKSPACE_PATH']
-    ROMNetFldr     = WORKSPACE_PATH + '/ROMNet/romnet/'
-
+    try:
+        WORKSPACE_PATH = os.environ['WORKSPACE_PATH']
+        print("\n[ROMNet.py                          ]: Found WORKSPACE_PATH Environmental Variable: WORKSPACE_PATH = ", WORKSPACE_PATH)
+    except:
+        pass
     
 
     #===========================================================================
@@ -28,7 +30,7 @@ if __name__ == "__main__":
     from ROMNet_Input import inputdata
 
     print("\n[ROMNet.py                          ]: Initializing Input ...")
-    InputData               = inputdata(WORKSPACE_PATH, ROMNetFldr)
+    InputData               = inputdata(WORKSPACE_PATH)
     InputData.InputFilePath = InputFile
     #===========================================================================
 
@@ -37,8 +39,8 @@ if __name__ == "__main__":
     #===========================================================================
     print("\n[ROMNet.py                          ]: Importing Physical System ... ")
 
-    if (InputData.PhysSystem is not None):
-        System = getattr(rmnt.pinn.system, InputData.PhysSystem)
+    if (InputData.phys_system is not None):
+        System = getattr(rmnt.pinn.system, InputData.phys_system)
         system = System(InputData)
     #===========================================================================
 
@@ -47,23 +49,21 @@ if __name__ == "__main__":
     #===========================================================================
     print("\n[ROMNet.py                          ]: Getting Data ... ")
 
-    Data = getattr(rmnt.data, InputData.DataType)
+    Data = getattr(rmnt.data, InputData.data_type)
     data = Data(InputData, system)
     data.get(InputData)
-
-    print('system = ', system.A)
     #===========================================================================
 
 
 
     #===========================================================================
-    SurrogateType = InputData.SurrogateType
-    if (SurrogateType == 'FNN-SourceTerms'):
-        SurrogateType = 'FNN'
+    surrogate_type = InputData.surrogate_type
+    if (surrogate_type == 'FNN-SourceTerms'):
+        surrogate_type = 'FNN'
         
-    Net   = getattr(rmnt.nn, SurrogateType)
+    Net   = getattr(rmnt.nn, surrogate_type)
 
-    model = rmnt.model.Model_Deterministic(InputData)
+    model = rmnt.model.Model_TF(InputData)
 
     model.build(InputData, data, Net, system)
 
@@ -72,18 +72,11 @@ if __name__ == "__main__":
 
 
     #===========================================================================
-    if (InputData.TrainIntFlg > 0):
+    if (InputData.train_int_flg > 0):
 
         model.compile(InputData)
 
         model.train(InputData)
-
-
-        if (InputData.PlotIntFlg >= 1):
-    
-            print('\n[ROMNet.py                          ]: Plotting the Losses Evolution ... ')
-
-            #loss_history.plot(InputData)
 
 
     else:

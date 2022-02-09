@@ -6,86 +6,86 @@ import numpy                                  as np
 class inputdata(object):
 
 
-    def __init__(self, WORKSPACE_PATH, ROMNetFldr):
+    def __init__(self, WORKSPACE_PATH, ROMNet_fld):
 
         self.NRODs               = 7
-        self.iROD                = 1
-        POD_NAME                 = str(self.iROD) #'All'
+        self.i_red                = 1
+        POD_NAME                 = str(self.i_red) #'All'
 
-        self.NPODs               = 64
+        self.n_modes               = 64
 
 
 
         #=======================================================================================================================================
         ### Case Name
-        self.NNRunIdx            = 0                                                                      # Training Case Identification Number 
+        self.run_idx            = 0                                                                      # Training Case Identification Number 
 
         #=======================================================================================================================================
         ### Execution Flags
         self.DefineModelIntFlg   = 1
-        self.TrainIntFlg         = 2                                                                      # Training                       0=>No, 1=>Yes
+        self.train_int_flg         = 2                                                                      # Training                       0=>No, 1=>Yes
         self.WriteParamsIntFlg   = 1                                                                      # Writing Parameters             0=>Never, 1=>After Training, 2=>Also During Training
         self.WriteDataIntFlg     = 2                                                                      # Writing Data After Training    0=>Never, 1=>After Training, 2=>Also During Training
         self.TestIntFlg          = 2                                                                      # Evaluating                     0=>No, 1=>Yes
-        self.PlotIntFlg          = 2                                                                      # Plotting Data                  0=>Never, 1=>After Training, 2=>Also During Training
+        self.plot_int_flg          = 2                                                                      # Plotting Data                  0=>Never, 1=>After Training, 2=>Also During Training
         self.PredictIntFlg       = 2                                                                      # Plotting Data                  0=>Never, 1=>After Training, 2=>Also During Training
 
         #=======================================================================================================================================
         ### Paths
         self.WORKSPACE_PATH      = WORKSPACE_PATH                                                         # os.getenv('WORKSPACE_PATH')      
-        self.ROMNetFldr          = ROMNetFldr                                                             # $WORKSPACE_PATH/ProPDE/
-        self.PathToRunFld        = self.ROMNetFldr   + '/../0DReact_Isobaric_100Cases_POD_'+POD_NAME+'_Trunk/'           # Path To Training Folder
-        self.PathToLoadFld       = None                                                                   # Path To Pre-Trained Model Folder
-        self.PathToDataFld       = self.ROMNetFldr   + '/../Data/0DReact_Isobaric_100Cases_POD/'+str(self.NRODs)+'PC/OneByOne/POD_'+POD_NAME+'/Trunk/'           # Path To Training Data Folder 
+        self.ROMNet_fld          = ROMNet_fld                                                             # $WORKSPACE_PATH/ProPDE/
+        self.path_to_run_fld        = self.ROMNet_fld   + '/../0DReact_Isobaric_100Cases_POD_'+POD_NAME+'_Trunk/'           # Path To Training Folder
+        self.path_to_load_fld       = None                                                                   # Path To Pre-Trained Model Folder
+        self.path_to_data_fld       = self.ROMNet_fld   + '/../Data/0DReact_Isobaric_100Cases_POD/'+str(self.NRODs)+'PC/OneByOne/POD_'+POD_NAME+'/Trunk/'           # Path To Training Data Folder 
 
         #=======================================================================================================================================
         ### Physical System
-        self.PhysSystem          = 'MassSpringDamper'                                                        # Name of the Physical System for PINN
+        self.phys_system          = 'MassSpringDamper'                                                        # Name of the Physical System for PINN
 
         #=======================================================================================================================================
         ### Data
-        self.DataType            = 'PDE'                                                                    # Module to Be Used for Reading Data
-        self.GenerateFlg         = False
-        self.NTrain              = {'pts': 64}                                                         # No of Training Cases
-        # self.NTrain              = {'ics': 64, 'res': 128}                                                  # No of Training Cases
-        self.ValidPerc           = 20.0                                                                     # Percentage of Training Data to Be Used for Validation (e.g., = 20.0 => 20%)
-        self.DataDist            = 'uniform'                                                                # Distribution for Sampling Independent Variables
-        self.NTest               = 2                                                                        # No of Test Cases
-        self.TestFlg             = False
+        self.data_type            = 'PDE'                                                                    # Module to Be Used for Reading Data
+        self.generate_flg         = False
+        self.n_train              = {'pts': 64}                                                         # No of Training Cases
+        # self.n_train              = {'ics': 64, 'res': 128}                                                  # No of Training Cases
+        self.valid_perc           = 20.0                                                                     # Percentage of Training Data to Be Used for Validation (e.g., = 20.0 => 20%)
+        self.data_dist            = 'uniform'                                                                # Distribution for Sampling Independent Variables
+        self.n_test               = 2                                                                        # No of Test Cases
+        self.test_flg             = False
 
         #=======================================================================================================================================
         ## NN Model Structure
-        self.SurrogateType       = 'FNN_BbB'                                                                  # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
+        self.surrogate_type       = 'FNN_BbB'                                                                  # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
         self.ProbApproach        = 'Deterministic'                                                        # Probabilistic Technique for Training the BNN (if Any)
         self.InputVars           = ['t']                                                                 # List Containing the Input Data Column Names 
-        self.OutputVars          = ['POD_'+str(iPOD+1) for iPOD in range(self.NPODs)]                                                              # List Containing the Output Data Column Names
+        self.OutputVars          = ['POD_'+str(i_mode+1) for i_mode in range(self.n_modes)]                                                              # List Containing the Output Data Column Names
         self.TransFun            = {'log': ['t']} 
         self.NormalizeInput      = True                                                                   # Flag for Normalizing Input Data
-        self.Layers              = [np.array([32,64,128,128,self.NPODs*2])]                                           # List Containing the No of Neurons per Each NN's Layer
+        self.Layers              = [np.array([32,64,128,128,self.n_modes*2])]                                           # List Containing the No of Neurons per Each NN's Layer
         self.ActFun              = [['tanh','tanh','tanh','tanh','linear']]                                 # List Containing the Activation Funct.s per Each NN's Layer
         self.DropOutRate         = 5.e-5                                                                  # NN's Layers Dropout Rate
         self.DropOutPredFlg      = False                                                                  # Flag for Using NN's Dropout during Prediction
-        #self.SigmaLike           = [1.e-10]*self.NPODs
+        #self.SigmaLike           = [1.e-10]*self.n_modes
         self.RunEagerlyFlg       = True
 
         #=======================================================================================================================================
         ### Training Quanties
-        self.TransferFlg         = False                                                                  # Flag for Using Transfer Learning
-        self.PathToTransFld      = ''                                                                     # Folder Containing the Trained Model to be Used for Transfer Learning 
-        self.NEpoch              = 100000                                                                 # Number of Epoches
-        self.BatchSize           = 64                                                                    # Batch Size for Training
-        self.ValidBatchSize      = 64                                                                    # Batch Size for Validation
-        self.Losses              = {'pts': {'name': 'NLL', 'axis': 0}} # Loss Functions
-        self.LossWeights         = {'pts': 1.}  
-        # self.Losses              = {'ics': {'name': 'MSE', 'axis': 0}, 'res': {'name': 'MSE', 'axis': 0}} # Loss Functions
-        # self.LossWeights         = {'ics': 1., 'res': 1.}     
-        self.Metrics             = None                                                                   # List of Metric Functions
-        self.LR                  = 5.e-3                                                                  # Initial Learning Rate
-        self.LRDecay             = ["exponential", 5000, 0.98]
-        self.Optimizer           = 'adam'                                                                 # Optimizer
-        self.OptimizerParams     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
+        self.transfer_flg         = False                                                                  # Flag for Using Transfer Learning
+        self.path_to_transf_fld      = ''                                                                     # Folder Containing the Trained Model to be Used for Transfer Learning 
+        self.n_epoch              = 100000                                                                 # Number of Epoches
+        self.batch_size           = 64                                                                    # Batch Size for Training
+        self.valid_batch_size      = 64                                                                    # Batch Size for Validation
+        self.losses              = {'pts': {'name': 'NLL', 'axis': 0}} # Loss Functions
+        self.loss_weights         = {'pts': 1.}  
+        # self.losses              = {'ics': {'name': 'MSE', 'axis': 0}, 'res': {'name': 'MSE', 'axis': 0}} # Loss Functions
+        # self.loss_weights         = {'ics': 1., 'res': 1.}     
+        self.metrics             = None                                                                   # List of Metric Functions
+        self.lr                  = 5.e-3                                                                  # Initial Learning Rate
+        self.lr_decay             = ["exponential", 5000, 0.98]
+        self.optimizer           = 'adam'                                                                 # Optimizer
+        self.optimizer_params     = [0.9, 0.999, 1e-07]                                                    # Parameters for the Optimizer
         self.WeightDecay         = np.array([1.e-17, 1.e-17], dtype=np.float64)                             # Hyperparameters for L1 and L2 Weight Decay Regularizations
-        self.Callbacks           = {
+        self.callbacks_dict           = {
             'base': {
                 'stateful_metrics': None
             },

@@ -161,6 +161,7 @@ class System_of_Components(object):
 
 
             output_dot  = Dot_Add(axes=1)([y, y_trunk_vec[i_trunk]])            
+            #output_dot  = tf.keras.layers.Dot(axes=1)([y, y_trunk_vec[i_trunk]])            
 
 
             if (self.system_post_layer_flg) and (self.system_post_layer_flg != 'correlation') and (not self.internal_pca):

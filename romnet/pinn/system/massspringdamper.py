@@ -14,7 +14,7 @@ class MassSpringDamper(System):
         self,
         InputData
     ):
-        ROMNetFldr        = InputData.ROMNetFldr
+        ROMNet_fld        = InputData.ROMNet_fld
 
         # Integrator time step
         self.dt0          = 1.e-3
@@ -37,10 +37,10 @@ class MassSpringDamper(System):
 
 
         # Initial/final time
-        self.read_extremes(ROMNetFldr)
+        self.read_extremes(ROMNet_fld)
         
         # Get Parameters
-        self.read_params(ROMNetFldr)
+        self.read_params(ROMNet_fld)
         
         # Get ode matrices
         self.K           = self.get_matrix()
@@ -116,9 +116,9 @@ class MassSpringDamper(System):
 
 
     #===========================================================================
-    def read_extremes(self, ROMNetFldr):
+    def read_extremes(self, ROMNet_fld):
 
-        PathToExtremes = ROMNetFldr + '/database/MassSpringDamper/Extremes/'
+        PathToExtremes = ROMNet_fld + '/database/MassSpringDamper/Extremes/'
 
         Data                = pd.read_csv(PathToExtremes+'/t.csv')
         self.t0             = Data.to_numpy()[0,:]
@@ -140,9 +140,9 @@ class MassSpringDamper(System):
 
 
     #===========================================================================
-    def read_params(self, ROMNetFldr):
+    def read_params(self, ROMNet_fld):
 
-        PathToParams = ROMNetFldr + '/database/MassSpringDamper/Params/'
+        PathToParams = ROMNet_fld + '/database/MassSpringDamper/Params/'
 
         m = pd.read_csv(PathToParams+'/m.csv').to_numpy()[0,0]
         k = pd.read_csv(PathToParams+'/k.csv').to_numpy()[0,0]

@@ -14,6 +14,13 @@ class BlackBox(Data):
     def __init__(self, InputData, system):
         super(BlackBox, self).__init__(InputData, system)
 
+        self.Type                = InputData.data_type
+
+        self.path_to_data_fld    = InputData.path_to_data_fld
+        self.path_to_load_fld    = InputData.path_to_load_fld
+        self.InputFiles          = InputData.InputFiles
+        self.OutputFiles         = InputData.OutputFiles
+        
         self.input_vars          = InputData.input_vars_all
         self.n_inputs            = len(self.input_vars)
 
@@ -32,19 +39,17 @@ class BlackBox(Data):
             self.norm_output_flg = InputData.norm_output_flg
         except:
             self.norm_output_flg = False
-            
 
-        self.Type                = InputData.DataType
+        try:
+            self.valid_perc      = InputData.valid_perc
+        except:
+            self.valid_perc      = 0.
+        try:
+            self.test_perc       = InputData.TestPerc
+        except:
+            self.test_perc       = 0.
 
-        self.PathToDataFld       = InputData.PathToDataFld
-        self.PathToLoadFld       = InputData.PathToLoadFld
-        self.InputFiles          = InputData.InputFiles
-        self.OutputFiles         = InputData.OutputFiles
-
-        self.valid_perc          = InputData.ValidPerc
-        self.test_perc           = InputData.TestPerc
-
-        self.SurrogateType       = InputData.SurrogateType
+        self.surrogate_type      = InputData.surrogate_type
 
         self.NData               = 0
         self.xtrain, self.ytrain = None, None
@@ -79,17 +84,17 @@ class BlackBox(Data):
             if isinstance(self.input_vars, (list,tuple)):
                 input_vars = self.input_vars
             else:
-                input_vars = list(pd.read_csv(self.PathToDataFld+'/train/'+data_id+'/'+self.input_vars[data_id], header=None).to_numpy()[0,:])
+                input_vars = list(pd.read_csv(self.path_to_data_fld+'/train/'+data_id+'/'+self.input_vars[data_id], header=None).to_numpy()[0,:])
 
             if isinstance(self.output_vars, (list,tuple)):
                 output_vars = self.output_vars
             else:
-                output_vars = list(pd.read_csv(self.PathToDataFld+'/train/'+data_id+'/'+self.output_vars[data_id], header=None).to_numpy()[0,:])
+                output_vars = list(pd.read_csv(self.path_to_data_fld+'/train/'+data_id+'/'+self.output_vars[data_id], header=None).to_numpy()[0,:])
 
-            Data = pd.read_csv(self.PathToDataFld+'/train/'+data_id+'/'+InputFile, header=0)
+            Data = pd.read_csv(self.path_to_data_fld+'/train/'+data_id+'/'+InputFile, header=0)
 
 
-            if (self.SurrogateType == 'DeepONet'):
+            if (self.surrogate_type == 'DeepONet'):
 
                 uall = Data[self.BranchVars]
                 if (len(self.TrunkVars) > 0):
@@ -116,7 +121,7 @@ class BlackBox(Data):
                     print('[ROMNet -  blackbox.py              ]:   xall has NaN!!!')
 
 
-            Data = pd.read_csv(self.PathToDataFld+'/train/'+data_id+'/'+self.OutputFiles[data_id], header=0)
+            Data = pd.read_csv(self.path_to_data_fld+'/train/'+data_id+'/'+self.OutputFiles[data_id], header=0)
             yall = Data[output_vars]
             for iCol in range(yall.shape[1]):
                 array_sum = np.sum(yall.to_numpy()[:,iCol])
@@ -163,8 +168,8 @@ class BlackBox(Data):
         self.compute_output_statistics()      
 
         if (self.norm_output_flg):
-            if (self.PathToLoadFld):
-                self.read_output_statistics(self.PathToLoadFld)      
+            if (self.path_to_load_fld):
+                self.read_output_statistics(self.path_to_load_fld)      
             self.train, self.valid = self.normalize_output_data([self.train, self.valid])
 
         self.train, self.valid = self.system.preprocess_data([self.train, self.valid], self.xstat)

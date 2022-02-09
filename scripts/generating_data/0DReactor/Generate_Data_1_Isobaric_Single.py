@@ -26,11 +26,11 @@ MixtureFile        = 'gri30.yaml'
 
 P0                 = ct.one_atm
 DirName            = 'train'
-NICs               = 1
+n_ics               = 1
 EqRatio0Exts       = np.array([1., 1.], dtype=np.float64)
 T0Exts             = np.array([1000, 1000], dtype=np.float64)
 # DirName            = 'test'
-# NICs               = 5
+# n_ics               = 5
 NShifts            = 200
 
 NPerT0             = 2000
@@ -142,11 +142,11 @@ if (DirName == 'train'):
     MaxVals = np.array([EqRatio0Exts[1], T0Exts[1]], dtype=np.float64)
     NDims   = 2
 
-    ICs     = pyDOE.lhs(2, samples=NICs, criterion='center')
+    ICs     = pyDOE.lhs(2, samples=n_ics, criterion='center')
 
     for i in range(NDims):
         ICs[:,i] = ICs[:,i] * (MaxVals[i] - MinVals[i]) + MinVals[i]
-    ICs = np.concatenate([P0*np.ones((NICs,1)),ICs], axis=1)
+    ICs = np.concatenate([P0*np.ones((n_ics,1)),ICs], axis=1)
 
 
     ### Writing Initial Temperatures
@@ -157,12 +157,12 @@ if (DirName == 'train'):
 
 elif (DirName == 'test'):
     NDims    = 2
-    ICs      = np.zeros((NICs,NDims))
+    ICs      = np.zeros((n_ics,NDims))
     # ICs[:,0] = [2.5, 1.9, 3.5, 1., 3.6]
     # ICs[:,1] = [1200., 1900., 1300., 1600., 1700.]
     ICs[:,0] = [0.8, 0.9, 1.0, 1.1, 1.2]
     ICs[:,1] = [1300., 1200., 1400., 1500., 1250.]
-    ICs = np.concatenate([P0*np.ones((NICs,1)), ICs], axis=1)
+    ICs = np.concatenate([P0*np.ones((n_ics,1)), ICs], axis=1)
 
 
     ### Writing Initial Temperatures
@@ -174,11 +174,11 @@ elif (DirName == 'test'):
 
 ### Iterating Over Residence Times
 DataMat         = None
-iStart          = np.zeros(NICs+NShifts)
-iEnd            = np.zeros(NICs+NShifts)
-AutoIgnitionVec = np.zeros((NICs+NShifts,1))
+iStart          = np.zeros(n_ics+NShifts)
+iEnd            = np.zeros(n_ics+NShifts)
+AutoIgnitionVec = np.zeros((n_ics+NShifts,1))
 jIC             = 0
-for iIC in range(NICs):
+for iIC in range(n_ics):
 
     for iShifts in range(NShifts):
         

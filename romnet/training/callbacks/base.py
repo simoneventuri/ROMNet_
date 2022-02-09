@@ -18,10 +18,10 @@ class BaseLogger(CB.Callback):
           All others will be averaged in `on_epoch_end`.
     """
 
-    def __init__(self, stateful_metrics=None, PathToRunFld=None):
+    def __init__(self, stateful_metrics=None, path_to_run_fld=None):
         super(BaseLogger, self).__init__()
         self.stateful_metrics = set(stateful_metrics or [])
-        self.PathToRunFld     = PathToRunFld
+        self.path_to_run_fld     = path_to_run_fld
         self.first_time       = True
 
 
@@ -69,8 +69,8 @@ class BaseLogger(CB.Callback):
             logss[key] = [val]
         if (self.first_time):
             self.first_time = False
-            pd.DataFrame.from_dict(logss).to_csv(path_or_buf=self.PathToRunFld+'/Training/History.csv', index=False, mode='w', header=True)
+            pd.DataFrame.from_dict(logss).to_csv(path_or_buf=self.path_to_run_fld+'/Training/History.csv', index=False, mode='w', header=True)
         else:
-            pd.DataFrame.from_dict(logss).to_csv(path_or_buf=self.PathToRunFld+'/Training/History.csv', index=False, mode='a', header=False)
+            pd.DataFrame.from_dict(logss).to_csv(path_or_buf=self.path_to_run_fld+'/Training/History.csv', index=False, mode='a', header=False)
 
 #=======================================================================================================================================

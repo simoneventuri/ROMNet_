@@ -22,6 +22,13 @@ class PDE(Data):
     def __init__(self, InputData, system):
         super(PDE, self).__init__(InputData, system)
 
+        self.Type                = InputData.data_type
+
+        self.path_to_data_fld    = InputData.path_to_data_fld
+        self.path_to_load_fld    = InputData.path_to_load_fld
+
+        self.surrogate_type      = InputData.surrogate_type
+
         self.input_vars          = InputData.input_vars_all
         self.n_inputs            = len(self.input_vars)
 
@@ -41,13 +48,10 @@ class PDE(Data):
         except:
             self.norm_output_flg = False
 
-
-        self.Type                = InputData.DataType
-
-        self.PathToDataFld       = InputData.PathToDataFld
-        self.PathToLoadFld       = InputData.PathToLoadFld
-
-        self.SurrogateType       = InputData.SurrogateType
+        try:
+            self.valid_perc      = InputData.valid_perc
+        except:
+            self.valid_perc      = 0.
 
         self.NData               = 0
         self.xtrain, self.ytrain = None, None
@@ -128,8 +132,8 @@ class PDE(Data):
             for data_type in data:
                 for data_id in data_obj.data_ids:
 
-                    x_df   = pd.read_csv(data_obj.PathToDataFld+'/'+data_type+"/"+data_id+'/Input.csv')[data_obj.input_vars]
-                    y_df   = pd.read_csv(data_obj.PathToDataFld+'/'+data_type+"/"+data_id+'/Output.csv')[data_obj.output_vars]
+                    x_df   = pd.read_csv(data_obj.path_to_data_fld+'/'+data_type+"/"+data_id+'/Input.csv')[data_obj.input_vars]
+                    y_df   = pd.read_csv(data_obj.path_to_data_fld+'/'+data_type+"/"+data_id+'/Output.csv')[data_obj.output_vars]
                     i_df   = pd.DataFrame( np.arange(x_df.shape[0]), columns=['indx'])
 
                     # if (data_id != 'res'):
@@ -185,7 +189,7 @@ class PDE(Data):
                     data[data_type][data_id].append(y_df) #.to_numpy()
                     data[data_type][data_id].append(i_df) #.to_numpy()
 
-                    path = data_obj.PathToDataFld+'/'+data_type+"/"+data_id+'/'
+                    path = data_obj.path_to_data_fld+'/'+data_type+"/"+data_id+'/'
                     if not os.path.exists(path):
                         os.makedirs(path)
                     x_df.to_csv( path+"Input.csv",  index=False, float_format='%.12e' )
@@ -344,7 +348,7 @@ class PDE(Data):
 
 
             # Print ics
-            Data    = pd.read_csv(data_obj.PathToDataFld+'/test/ics.csv')
+            Data    = pd.read_csv(data_obj.path_to_data_fld+'/test/ics.csv')
             ic_test = Data.to_numpy()
     
             data_test = [single_test_scenario(self, i, ic_i) for i, ic_i in enumerate(tqdm(ic_test))]
@@ -369,7 +373,7 @@ class PDE(Data):
             Data = pd.DataFrame(ic_test, columns=data_obj.system.other_names)
            
             # Print input space
-            path = data_obj.PathToDataFld+'/test/'
+            path = data_obj.path_to_data_fld+'/test/'
             if not os.path.exists(path):
                 os.makedirs(path)
             Data.to_csv(path+"/ics.csv", index=False, float_format='%.10e' )
@@ -405,25 +409,27 @@ class PDE(Data):
         #-----------------------------------------------------------------------
 
 
-        self.PathToDataFld = InputData.PathToDataFld
-        if not os.path.exists(self.PathToDataFld):
-            os.makedirs(self.PathToDataFld)
+        self.path_to_data_fld = InputData.path_to_data_fld
+        if not os.path.exists(self.path_to_data_fld):
+            os.makedirs(self.path_to_data_fld)
 
+        try:
+            self.distribution = InputData.data_dist    
+        except:
+            self.distribution = None
 
-        self.distribution   = InputData.DataDist    
+        self.data_ids         = list(InputData.n_train.keys())
 
-        self.data_ids       = list(InputData.NTrain.keys())
-
-        self.BatchSize      = InputData.BatchSize
-        self.ValidBatchSize = InputData.ValidBatchSize
+        self.batch_size       = InputData.batch_size
+        self.valid_batch_size = InputData.valid_batch_size
 
         # Data Quantities -----------------------------------------------------
         # Training/Validation pts
-        self.n_train     = InputData.NTrain
+        self.n_train     = InputData.n_train
         try:
             self.n_valid = InputData.NValid
         except:
-            valid_perc   = np.power(InputData.ValidPerc/100., len(self.n_train))
+            valid_perc   = np.power(self.valid_perc/100., len(self.n_train))
             self.n_valid = { k: round(valid_perc*self.n_train[k]) for k in self.n_train}
             self.n_train = { k: self.n_train[k] - self.n_valid[k] for k in self.n_train}
         for k in self.n_train:
@@ -432,14 +438,20 @@ class PDE(Data):
         
 
         # Testing scenarios
-        self.n_test            = InputData.NTest
-       
-        self.test_flg          = InputData.TestFlg   
-    
-        self.other_ranges      = self.system.other_ranges
+        try:
+            self.n_test            = InputData.n_test
+        except:
+            self.n_test            = 0.
+
+        try:
+            self.test_flg          = InputData.test_flg   
+        except:
+            self.test_flg          = False
+
+        self.other_ranges          = self.system.other_ranges
 
 
-        if (InputData.GenerateFlg):
+        if (InputData.generate_flg):
 
             ic_list                = initial_cond(self)            
             train_data, valid_data = generate_training_data(self, ic_list)
@@ -462,8 +474,8 @@ class PDE(Data):
         self.compute_output_statistics()      
 
         if (self.norm_output_flg):
-            if (self.PathToLoadFld):
-                self.read_output_statistics(self.PathToLoadFld)      
+            if (self.path_to_load_fld):
+                self.read_output_statistics(self.path_to_load_fld)      
             train_data, valid_data = self.normalize_output_data([train_data, valid_data])
 
 
@@ -489,9 +501,9 @@ class PDE(Data):
         print("[ROMNet - pde.py                    ]:   Train      Data: ", train_data)
         print("[ROMNet - pde.py                    ]:   Validation Data: ", valid_data)
 
-        self.train     = DataSequence(train_dset, self.data_ids, batch_size=self.BatchSize)
+        self.train     = DataSequence(train_dset, self.data_ids, batch_size=self.batch_size)
         if valid_dset:
-            self.valid = DataSequence( valid_dset, self.data_ids, batch_size=self.BatchSize if self.ValidBatchSize  is None else self.ValidBatchSize )
+            self.valid = DataSequence( valid_dset, self.data_ids, batch_size=self.batch_size if self.valid_batch_size  is None else self.valid_batch_size )
 
         # Testing data
         self.test = test_data

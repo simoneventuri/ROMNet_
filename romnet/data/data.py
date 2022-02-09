@@ -7,7 +7,7 @@ class Data(object):
 
     def __init__(self, InputData, system):
 
-        self.Type = InputData.DataType
+        self.Type = InputData.data_type
 
 
     # ---------------------------------------------------------------------------------------------------------------------------
@@ -96,7 +96,7 @@ class Data(object):
         if (PathToRead):
             DataNew = pd.read_csv(PathToRead + "/Data/stats_output.csv")
         else:
-            DataNew = pd.read_csv(self.PathToRunFld + "/Data/stats_output.csv")
+            DataNew = pd.read_csv(self.path_to_run_fld + "/Data/stats_output.csv")
 
         self.stat_output         = {}
         self.stat_output['mean'] = DataNew['output_mean']
