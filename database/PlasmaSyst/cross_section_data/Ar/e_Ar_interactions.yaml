@@ -1,0 +1,1766 @@
+# Note that if USER_DEFINED_PRODUCT_SETS is not defined then it is set to 0 (false) by default by Aprepro
+{if(!USER_DEFINED_PRODUCT_SETS)}
+  # AR_IONIZATION_PRODUCT_SETS = {AR_IONIZATION_PRODUCT_SETS = "+0, +0, +0"}
+  # AR_DOUBLE_IONIZATION_PRODUCT_SETS = {AR_DOUBLE_IONIZATION_PRODUCT_SETS = "+0, +0, +0, +0"}
+  # AR_TRIPLE_IONIZATION_PRODUCT_SETS = {AR_TRIPLE_IONIZATION_PRODUCT_SETS = "+0, +0, +0, +0, +0"}
+  # AR_ELASTIC_PRODUCT_SETS = {AR_ELASTIC_PRODUCT_SETS = "+0, +0"}
+  # AR_EXCITATION_PRODUCT_SETS = {AR_EXCITATION_PRODUCT_SETS = "+0, +0"}
+{endif}
+{if(HYBRID_MCC_SPAWN_PARTICLES)}
+# AR_ELASTIC_PRODUCT_TYPES = {AR_ELASTIC_PRODUCT_TYPES = "e-, Ar"}
+# AR_EXCITATION_PRODUCT_TYPES = {AR_EXCITATION_PRODUCT_TYPES = "e-, Ar"}
+{else}
+# AR_ELASTIC_PRODUCT_TYPES = {AR_ELASTIC_PRODUCT_TYPES = "e-, Ar_fluid"}
+# AR_EXCITATION_PRODUCT_TYPES = {AR_EXCITATION_PRODUCT_TYPES = "e-, Ar_fluid"}
+{endif}
+# GAS_ATOMIC_NUMBER = {GAS_ATOMIC_NUMBER = 18}
+
+# Decide to use either relativistic or non-relativistic data
+{Ifdef(RelativisticCrossSections)}
+# subFolder = {subFolder = "relativistic"}
+{Else}
+# subFolder = {subFolder = "non-relativistic"}
+{Endif}
+
+
+{if(USE_HAYASHI_DATA)}
+{if(!USE_SHELL_IONIZATION_DATA)} # use single ionization only when not using individual shell data
+  # Using Hayashi data for e+Ar interactions
+  Particle Interactions:
+    e+Ar Ionization:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar+, e-]
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 15.7597
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_single_ionization_SI.data
+      Stride: 1
+{endif}   # end the shell data check
+    e+Ar Elastic:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_ELASTIC_PRODUCT_SETS}]
+      Type: Elastic
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_elastic_SI.data
+      Stride: 1
+    e+Ar 11.55 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]      
+      Heat of Reaction: 11.5498
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_11.55eV_SI.data
+      Stride: 1
+    e+Ar 11.62 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.6197
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_11.62eV_SI.data
+      Stride: 1
+    e+Ar 11.72 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.7202
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_11.72eV_SI.data
+      Stride: 1
+    e+Ar 11.83 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.8301
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_11.83eV_SI.data
+      Stride: 1
+    e+Ar 12.91 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 12.9099
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_12.91eV_SI.data
+      Stride: 1
+    e+Ar 13.08 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.0803
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.08eV_SI.data
+      Stride: 1
+    e+Ar 13.09 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.0902
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.09eV_SI.data
+      Stride: 1
+    e+Ar 13.15 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.1502
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.15eV_SI.data
+      Stride: 1
+    e+Ar 13.17 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.1701
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.17eV_SI.data
+      Stride: 1
+    e+Ar 13.27 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.2700
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.27eV_SI.data
+      Stride: 1
+    e+Ar 13.30 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar] 
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.3000
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.30eV_SI.data
+      Stride: 1
+    e+Ar 13.33 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.3299
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.33eV_SI.data
+      Stride: 1
+    e+Ar 13.48 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.4797
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.48eV_SI.data
+      Stride: 1
+    e+Ar 13.84 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.8398
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.84eV_SI.data
+      Stride: 1
+    e+Ar 13.90 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.8998
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.90eV_SI.data
+      Stride: 1
+    e+Ar 13.98 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.9797
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.98eV_SI.data
+      Stride: 1
+    e+Ar 14.01 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.0102
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.01eV_SI.data
+      Stride: 1
+    e+Ar 14.06 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.0602
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.06eV_SI.data
+      Stride: 1
+    e+Ar 14.09 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.0901
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.09eV_SI.data
+      Stride: 1
+    e+Ar 14.15 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.1500
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.15eV_SI.data
+      Stride: 1
+    e+Ar 14.21 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.2100
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.21eV_SI.data
+      Stride: 1
+    e+Ar 14.23 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.2299
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.23eV_SI.data
+      Stride: 1
+    e+Ar 14.30 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.2998
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.30eV_SI.data
+      Stride: 1
+    e+Ar 14.71 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.7099
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.71eV_SI.data
+      Stride: 1
+    e+Ar 15.20 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 15.1999
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_15.20eV_SI.data
+      Stride: 1
+{if(IS_HYBRID)}
+{if(!USE_SHELL_IONIZATION_DATA)}
+    e+Ar Ionization Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar+, e-]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+{Ifdef(CHARGED_FLUID)}
+      Products: e-, Ar+_fluid, e-_fluid
+{Else}
+      Products: e-, Ar+, e-
+{Endif}
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 15.7597
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_single_ionization_SI.data
+      Stride: 1
+{endif}   # end the shell ionization check
+    e+Ar Elastic Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_ELASTIC_PRODUCT_TYPES}]
+      Product_sets: [{AR_ELASTIC_PRODUCT_SETS}]     
+      Type: Elastic
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_elastic_SI.data
+      Stride: 1
+    e+Ar 11.55 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.5498
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_11.55eV_SI.data
+      Stride: 1
+    e+Ar 11.62 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.6197
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_11.62eV_SI.data
+      Stride: 1
+    e+Ar 11.72 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.7202
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_11.72eV_SI.data
+      Stride: 1
+    e+Ar 11.83 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.8301
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_11.83eV_SI.data
+      Stride: 1
+    e+Ar 12.91 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 12.9099
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_12.91eV_SI.data
+      Stride: 1
+    e+Ar 13.08 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.0803
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.08eV_SI.data
+      Stride: 1
+    e+Ar 13.09 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.0902
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.09eV_SI.data
+      Stride: 1
+    e+Ar 13.15 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.1502
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.15eV_SI.data
+      Stride: 1
+    e+Ar 13.17 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.1701
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.17eV_SI.data
+      Stride: 1
+    e+Ar 13.27 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.2700
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.27eV_SI.data
+      Stride: 1
+    e+Ar 13.30 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.3000
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.30eV_SI.data
+      Stride: 1
+    e+Ar 13.33 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.3299
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.33eV_SI.data
+      Stride: 1
+    e+Ar 13.48 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.4797
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.48eV_SI.data
+      Stride: 1
+    e+Ar 13.84 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.8398
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.84eV_SI.data
+      Stride: 1
+    e+Ar 13.90 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.8998
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.90eV_SI.data
+      Stride: 1
+    e+Ar 13.98 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.9797
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_13.98eV_SI.data
+      Stride: 1
+    e+Ar 14.01 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.0102
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.01eV_SI.data
+      Stride: 1
+    e+Ar 14.06 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.0602
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.06eV_SI.data
+      Stride: 1
+    e+Ar 14.09 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Heat of Reaction: 14.0901
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.09eV_SI.data
+      Stride: 1
+    e+Ar 14.15 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.1500
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.15eV_SI.data
+      Stride: 1
+    e+Ar 14.21 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.2100
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.21eV_SI.data
+      Stride: 1
+    e+Ar 14.23 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.2299
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.23eV_SI.data
+      Stride: 1
+    e+Ar 14.30 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.2998
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.30eV_SI.data
+      Stride: 1
+    e+Ar 14.71 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.7099
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_14.71eV_SI.data
+      Stride: 1
+    e+Ar 15.20 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 15.1999
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/Hayashi/{subFolder}/e+Ar_excitation_15.20eV_SI.data
+      Stride: 1
+{endif}
+{else}
+  # Using BSR-500 data for e+Ar interactions
+{if(!USE_SHELL_IONIZATION_DATA)}
+  Particle Interactions:
+    e+Ar Ionization:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar+, e-]
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]     
+      Heat of Reaction: 15.7597
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_single_ionization_SI.data
+      Stride: 1
+{endif}   # end the shell ionization check
+    e+Ar Elastic:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_ELASTIC_PRODUCT_SETS}]     
+      Type: Elastic
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_elastic_SI.data
+      Stride: 1
+    e+Ar 11.55 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.5486
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_11.55eV_SI.data
+      Stride: 1
+    e+Ar 11.62 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.6235
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_11.62eV_SI.data
+      Stride: 1
+    e+Ar 11.72 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.7234
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_11.72eV_SI.data
+      Stride: 1
+    e+Ar 11.83 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.8276
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_11.83eV_SI.data
+      Stride: 1
+    e+Ar 13.07 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.0740
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.07eV_SI.data
+      Stride: 1
+    e+Ar 13.20 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.2032
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.20eV_SI.data
+      Stride: 1
+    e+Ar 13.23 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.2263
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.23eV_SI.data
+      Stride: 1
+    e+Ar 13.28 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.2762
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.28eV_SI.data
+      Stride: 1
+    e+Ar 13.30 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.2981
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.30eV_SI.data
+      Stride: 1
+    e+Ar 13.396 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Heat of Reaction: 13.3954
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.396eV_SI.data
+      Stride: 1
+    e+Ar 13.397 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.3967
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.397eV_SI.data
+      Stride: 1
+    e+Ar 13.42 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.4185
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.42eV_SI.data
+      Stride: 1
+    e+Ar 13.44 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.4416
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.44eV_SI.data
+      Stride: 1
+    e+Ar 13.59 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.5939
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.59eV_SI.data
+      Stride: 1
+    e+Ar 14.07 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.0695
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.07eV_SI.data
+      Stride: 1
+    e+Ar 14.08 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Heat of Reaction: 14.0808
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.08eV_SI.data
+      Stride: 1
+    e+Ar 14.10 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.1001
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.10eV_SI.data
+      Stride: 1
+    e+Ar 14.15 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.1488
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.15eV_SI.data
+      Stride: 1
+    e+Ar 14.164 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.1638
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.164eV_SI.data
+      Stride: 1
+    e+Ar 14.165 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.1650
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.165eV_SI.data
+      Stride: 1
+    e+Ar 14.179 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.1788
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.179eV_SI.data
+      Stride: 1
+    e+Ar 14.201 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.2006
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.201eV_SI.data
+      Stride: 1
+    e+Ar 14.212 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.2112
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.212eV_SI.data
+      Stride: 1
+    e+Ar 14.227 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.2268
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.227eV_SI.data
+      Stride: 1
+    e+Ar 14.312 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.3117
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.312eV_SI.data
+      Stride: 1
+    e+Ar 14.330 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.3292
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.330eV_SI.data
+      Stride: 1
+    e+Ar 14.337 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.3360
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.337eV_SI.data
+      Stride: 1
+    e+Ar 14.343 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.3429
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.343eV_SI.data
+      Stride: 1
+    e+Ar 14.348 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.3479
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.348eV_SI.data
+      Stride: 1
+    e+Ar 14.376 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.3760
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.376eV_SI.data
+      Stride: 1
+    e+Ar 14.558 excitation:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 14.5576
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.558eV_SI.data
+      Stride: 1
+{if(IS_HYBRID)}
+{if(!USE_SHELL_IONIZATION_DATA)}
+    e+Ar Ionization Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar+, e-]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [e- Ar+, e-]
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]     
+      Heat of Reaction: 15.7597
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_single_ionization_SI.data
+      Stride: 1
+{endif}   # end the check for shell data 
+    e+Ar Elastic Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_ELASTIC_PRODUCT_TYPES}]
+      Product_sets: [{AR_ELASTIC_PRODUCT_SETS}]     
+      Type: Elastic
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_elastic_SI.data
+      Stride: 1
+    e+Ar 11.55 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.5486
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_11.55eV_SI.data
+      Stride: 1
+    e+Ar 11.62 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.6235
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_11.62eV_SI.data
+      Stride: 1
+    e+Ar 11.72 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.7234
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_11.72eV_SI.data
+      Stride: 1
+    e+Ar 11.83 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 11.8276
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_11.83eV_SI.data
+      Stride: 1
+    e+Ar 13.07 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.0740
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.07eV_SI.data
+      Stride: 1
+    e+Ar 13.20 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]     
+      Heat of Reaction: 13.2032
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.20eV_SI.data
+      Stride: 1
+    e+Ar 13.23 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 13.2263
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.23eV_SI.data
+      Stride: 1
+    e+Ar 13.28 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 13.2762
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.28eV_SI.data
+      Stride: 1
+    e+Ar 13.30 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Heat of Reaction: 13.2981
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.30eV_SI.data
+      Stride: 1
+    e+Ar 13.396 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 13.3954
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.396eV_SI.data
+      Stride: 1
+    e+Ar 13.397 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 13.3967
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.397eV_SI.data
+      Stride: 1
+    e+Ar 13.42 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 13.4185
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.42eV_SI.data
+      Stride: 1
+    e+Ar 13.44 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 13.4416
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.44eV_SI.data
+      Stride: 1
+    e+Ar 13.59 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 13.5939
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_13.59eV_SI.data
+      Stride: 1
+    e+Ar 14.07 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.0695
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.07eV_SI.data
+      Stride: 1
+    e+Ar 14.08 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.0808
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.08eV_SI.data
+      Stride: 1
+    e+Ar 14.10 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.1001
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.10eV_SI.data
+      Stride: 1
+    e+Ar 14.15 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.1488
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.15eV_SI.data
+      Stride: 1
+    e+Ar 14.164 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.1638
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.164eV_SI.data
+      Stride: 1
+    e+Ar 14.165 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.1650
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.165eV_SI.data
+      Stride: 1
+    e+Ar 14.179 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.1788
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.179eV_SI.data
+      Stride: 1
+    e+Ar 14.201 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.2006
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.201eV_SI.data
+      Stride: 1
+    e+Ar 14.212 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.2112
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.212eV_SI.data
+      Stride: 1
+    e+Ar 14.227 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.2268
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.227eV_SI.data
+      Stride: 1
+    e+Ar 14.312 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.3117
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.312eV_SI.data
+      Stride: 1
+    e+Ar 14.330 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.3292
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.330eV_SI.data
+      Stride: 1
+    e+Ar 14.337 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.3360
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.337eV_SI.data
+      Stride: 1
+    e+Ar 14.343 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.3429
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.343eV_SI.data
+      Stride: 1
+    e+Ar 14.348 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.3479
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.348eV_SI.data
+      Stride: 1
+    e+Ar 14.376 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.3760
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.376eV_SI.data
+      Stride: 1
+    e+Ar 14.558 excitation Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+      Products: [{AR_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{AR_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 14.5576
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/BSR-500/{subFolder}/e+Ar_excitation_14.558eV_SI.data
+      Stride: 1
+{endif}
+{endif}
+
+
+
+
+
+
+{if(USE_DOUBLE_AND_TRIPLE_IONIZATION_DATA)}
+    e+Ar Double Ionization:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar++, e-]     ## FIXME: This is not physical, should be [e-, Ar++, e-, e-]
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]   ## FIXME: Should be [{AR_DOUBLE_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 27.62967
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/double_triple_and_shell_ionization_data/relativistic/e+Ar_double_ionization_SI.data
+      Stride: 1
+    e+Ar Triple Ionization:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar+++, e-]   ## FIXME: This is not physical, should be [e-, Ar+++, e-, e-, e-]
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]   ## FIXME: Should be [{AR_TRIPLE_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 40.74
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/double_triple_and_shell_ionization_data/relativistic/e+Ar_triple_ionization_SI.data
+      Stride: 1
+{endif}   # the the double and triple ionization check
+
+{if(USE_SHELL_IONIZATION_DATA)}
+    e+Ar K Shell Ionization:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar+, e-]
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 15.7597
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/double_triple_and_shell_ionization_data/relativistic/e+Ar_K_1s_shell_ionization_SI.data
+      Stride: 1
+    e+Ar L 2s Shell Ionization:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar+, e-]
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 15.7597
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/double_triple_and_shell_ionization_data/relativistic/e+Ar_L_2s_shell_ionization_SI.data
+      Stride: 1
+    e+Ar L 2p Shell Ionization:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar+, e-]
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 15.7597
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/double_triple_and_shell_ionization_data/relativistic/e+Ar_L_2p_shell_ionization_SI.data
+      Stride: 1
+    e+Ar M 3s Shell Ionization:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar+, e-]
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 15.7597
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/double_triple_and_shell_ionization_data/relativistic/e+Ar_M_3s_shell_ionization_SI.data
+      Stride: 1
+    e+Ar M 3p Shell Ionization:
+      Method: DSMC
+      Reactants_types: [e-, Ar]
+      Products: [e-, Ar+, e-]
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 15.7597
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/double_triple_and_shell_ionization_data/relativistic/e+Ar_M_3p_shell_ionization_SI.data
+      Stride: 1
+{endif}   # end check for using shell ionization
+
+
+
+{if(IS_HYBRID)}
+{if(USE_DOUBLE_AND_TRIPLE_IONIZATION_DATA)}
+    e+Ar Double Ionization Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar++, e-, e-]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+{Ifdef(CHARGED_FLUID)}
+      Products: e-, Ar++_fluid, e-_fluid     ## FIXME: This is not physical, should be e-, Ar++_fluid, e-_fluid, e-_fluid 
+{Else}
+      Products: e-, Ar++, e-      ## FIXME: This is not physical, should be e-, Ar++, e-, e-
+{Endif} # end if charged fluid check
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]      ## FIXME: This is not physical, should be [{AR_DOUBLE_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 27.62967
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/double_triple_and_shell_ionization_data/relativistic/e+Ar_double_ionization_SI.data
+      Stride: 1
+    e+Ar Triple Ionization Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar+++, e-]   ## FIXME: This is not physical, should be [e-, Ar+++, e-, e-, e-]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+{Ifdef(CHARGED_FLUID)}
+      Products: e-, Ar+++_fluid, e-_fluid    ## FIXME: should be e-, Ar+++_fluid, e-_fluid, e-_fluid, e-_fluid
+{Else}
+      Products: e-, Ar+++, e-   # FIXME: should be e-, Ar+++, e-, e-, e-
+{Endif} # end if charged fluid check
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]   # FIXME: should be [{AR_TRIPLE_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 40.74
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/double_triple_and_shell_ionization_data/relativistic/e+Ar_triple_ionization_SI.data
+      Stride: 1
+{endif}   # end the check for double and triple ionization
+
+
+{if(USE_SHELL_IONIZATION_DATA)}
+    e+Ar K Shell Ionization Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar+, e-]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+{Ifdef(CHARGED_FLUID)}
+      Products: e-, Ar+_fluid, e-_fluid
+{Else}
+      Products: e-, Ar+, e-
+{Endif} # end the charged hybrid check
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 15.7597
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/double_triple_and_shell_ionization_data/relativistic/e+Ar_K_1s_shell_ionization_SI.data
+      Stride: 1
+    e+Ar L 2s Shell Ionization Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar+, e-]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+{Ifdef(CHARGED_FLUID)}
+      Products: e-, Ar+_fluid, e-_fluid
+{Else}
+      Products: e-, Ar+, e-
+{Endif} # end the charged hybrid check
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 15.7597
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/double_triple_and_shell_ionization_data/relativistic/e+Ar_L_2s_shell_ionization_SI.data
+      Stride: 1
+    e+Ar L 2p Shell Ionization Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar+, e-]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+{Ifdef(CHARGED_FLUID)}
+      Products: e-, Ar+_fluid, e-_fluid
+{Else}
+      Products: e-, Ar+, e-
+{Endif} # end the charged hybrid check
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 15.7597
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/double_triple_and_shell_ionization_data/relativistic/e+Ar_L_2p_shell_ionization_SI.data
+      Stride: 1
+    e+Ar M 3s Shell Ionization Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar+, e-]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+{Ifdef(CHARGED_FLUID)}
+      Products: e-, Ar+_fluid, e-_fluid
+{Else}
+      Products: e-, Ar+, e-
+{Endif} # end the charged hybrid check
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 15.7597
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/double_triple_and_shell_ionization_data/relativistic/e+Ar_M_3s_shell_ionization_SI.data
+      Stride: 1
+    e+Ar M 3p Shell Ionization Hybrid:
+      Method: Hybrid_MCC
+      #Reactants_types: [e-, Ar]
+      #Products: [e-, Ar+, e-]
+      Reactant A: e-
+      Reactant B: Ar_fluid
+{Ifdef(CHARGED_FLUID)}
+      Products: e-, Ar+_fluid, e-_fluid
+{Else}
+      Products: e-, Ar+, e-
+{Endif} # end the charged hybrid check
+      Product_sets: [{AR_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 15.7597
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/double_triple_and_shell_ionization_data/relativistic/e+Ar_M_3p_shell_ionization_SI.data
+      Stride: 1
+{endif} # end the if using shell ionization
+{endif}	# end the if hybrid check
+

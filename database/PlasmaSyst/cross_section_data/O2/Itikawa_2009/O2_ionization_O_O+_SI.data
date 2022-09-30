@@ -1,0 +1,55 @@
+# DISSOCIATIVE IONIZATION
+# Process:           O2 + e- -> 2e- + O + O+
+# Heat of Reaction:  2.7590e-18 joules
+# Units:             SI
+# Uncertainty:       +/-100% -- Due to estimate of splitting up the cross section for O+ and O2++ ionization. +/-5% sigma_(O+_O2++)
+# Source:            Itikawa, J. Phys. Chem. Ref. Data, Vol. 38, No. 1, 2009. (Table 11) 
+# ALEPH Comments:    Used Total (charge-weighted) ionization cross section from Rapp and Englander-Golden J. Phys. Chem. 43, 1464 (1965) to estimate
+# ALEPH Comments:       fraction of O2++ vs. O+: sigma_total = sigma_O2+ + (1-f_O2++)*sigma_(O+_O2++) + 2*f_O2++*simga_(O+_O2++) + sigma_O++. Good fit for f_O2++ = 0.33
+# ALEPH Comments:    Added 0 value at heat of reaction energy. Extrapolated using ln(E)/E up to 2000 eV, then linearly extrapolated to 0 sigma for the last data point
+# Energy (Joules) | Cross Section (m2)
+#-------------------------------------
+2.7590e-18      0.0
+3.685E-18	1.670E-22
+4.486E-18	7.810E-22
+5.287E-18	1.690E-21
+6.088E-18	1.729E-21
+6.889E-18	2.231E-21
+7.690E-18	2.807E-21
+8.492E-18	3.283E-21
+9.293E-18	3.705E-21
+1.009E-17	4.161E-21
+1.089E-17	4.549E-21
+1.170E-17	4.804E-21
+1.250E-17	5.032E-21
+1.330E-17	5.367E-21
+1.410E-17	5.541E-21
+1.490E-17	5.729E-21
+1.570E-17	5.836E-21
+1.730E-17	6.030E-21
+1.891E-17	6.097E-21
+2.211E-17	6.117E-21
+2.531E-17	6.064E-21
+2.852E-17	5.970E-21
+3.172E-17	5.789E-21
+3.573E-17	5.561E-21
+3.973E-17	5.320E-21
+4.374E-17	5.059E-21
+4.774E-17	4.831E-21
+5.576E-17	4.415E-21
+6.377E-17	4.094E-21
+7.178E-17	3.765E-21
+7.979E-17	3.524E-21
+8.780E-17	3.263E-21
+9.581E-17	3.062E-21
+1.038E-16	2.894E-21
+1.118E-16	2.781E-21
+1.198E-16	2.600E-21
+1.279E-16	2.472E-21
+1.359E-16	2.379E-21
+1.439E-16	2.251E-21
+1.519E-16	2.184E-21
+1.599E-16	2.124E-21
+3.2044E-16	1.1666E-21
+5.1604E-16	0.0000E+00
+#-------------------------------------

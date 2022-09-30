@@ -21,7 +21,7 @@ class BaseLogger(CB.Callback):
     def __init__(self, stateful_metrics=None, path_to_run_fld=None):
         super(BaseLogger, self).__init__()
         self.stateful_metrics = set(stateful_metrics or [])
-        self.path_to_run_fld     = path_to_run_fld
+        self.path_to_run_fld  = path_to_run_fld
         self.first_time       = True
 
 

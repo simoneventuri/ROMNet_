@@ -1,0 +1,45 @@
+# ELASTIC
+# Process:           O2 + e- -> O2 + e-
+# Heat of Reaction:  0.0
+# Units:             SI
+# Uncertainty:       +/-20%
+# Source:            Itikawa, J. Phys. Chem. Ref. Data, Vol. 38, No. 1, 2009. (Table 2)
+# ALEPH Comments:    This is the total elastic scattering cross section
+# ALEPH Comments:    Linearly extrapolated to 0 energy and to 0 for the last data point
+# Energy (Joules) | Cross Section (m2)
+#-------------------------------------
+0.0		5.49E-20
+1.602e-19	5.97E-20
+3.204e-19	6.45E-20
+4.807e-19	6.74E-20
+6.409e-19	6.93E-20
+8.011e-19	7.20E-20
+9.613e-19	7.52E-20
+1.122e-18	7.86E-20
+1.282e-18	8.21E-20
+1.442e-18	8.49E-20
+1.602e-18	8.80E-20
+1.923e-18	9.00E-20
+2.403e-18	8.89E-20
+3.204e-18	8.60E-20
+4.807e-18	8.09E-20
+6.409e-18	7.30E-20
+8.011e-18	6.59E-20
+9.613e-18	6.08E-20
+1.122e-17	5.63E-20
+1.282e-17	5.29E-20
+1.442e-17	5.01E-20
+1.602e-17	4.78E-20
+3.204e-17	3.15E-20
+4.807e-17	2.40E-20
+6.409e-17	2.00E-20
+8.011e-17	1.72E-20
+9.613e-17	1.53E-20
+1.122e-16	1.37E-20
+1.282e-16	1.27E-20
+1.442e-16	1.18E-20
+1.602e-16	1.10E-20
+3.802e-16       0.0
+#-------------------------------------
+	
+

@@ -1,0 +1,26 @@
+# DISSOCIATION
+# Process:           O2 + e- -> e- + O + O
+# Heat of Reaction:  9.8053e-19 joules
+# Units:             SI
+# Uncertainty:       +/-34%
+# Source:            Itikawa, J. Phys. Chem. Ref. Data, Vol. 38, No. 1, 2009. (Table 10)
+# ALEPH Comments:    TOTAL dissociation cross section (includes dissociation to excited products). Heat of reaction assumed equal to dissociation energy.
+# ALEPH Comments:    Linearlly extrapolated cross section to 0 before the first energy data point and to 0 for the last data point
+# Energy (Joules) | Cross Section (m2)
+#-------------------------------------
+1.5924e-18      0.0
+2.1627e-18      0.220e-20
+2.9637e-18      0.529e-20
+3.3642e-18      0.565e-20
+3.7647e-18      0.525e-20
+4.5657e-18      0.587e-20
+5.3667e-18      0.663e-20
+6.1677e-18      0.610e-20
+7.7697e-18      0.534e-20
+9.3717e-18      0.444e-20
+1.1775e-17      0.366e-20
+1.5780e-17      0.331e-20
+2.3790e-17      0.296e-20
+3.1800e-17      0.291e-20
+4.9798e-16      0.0
+#-------------------------------------

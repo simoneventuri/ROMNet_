@@ -1,0 +1,410 @@
+Note that if USER_DEFINED_PRODUCT_SETS is not defined then it is set to 0 (false) by default by Aprepro
+{if(!USER_DEFINED_PRODUCT_SETS)}
+  # O2_IONIZATION_PRODUCT_SETS = {O2_IONIZATION_PRODUCT_SETS = "+0, +0, +0"}
+  # O2_ELASTIC_PRODUCT_SETS = {O2_ELASTIC_PRODUCT_SETS = "+0, +0"}
+  # O2_EXCITATION_PRODUCT_SETS = {O2_EXCITATION_PRODUCT_SETS = "+0, +0"}
+  # O2_DISSOCIATION_PRODUCT_SETS = {O2_DISSOCIATION_PRODUCT_SETS = "+0, +0, +0}
+  # O2_DISSOCIATIVE-RECOMB_PRODUCT_SETS = {O2_DISSOCIATIVE-RECOMB_PRODUCT_SETS = "+0, +0"}
+  # O2_ATTACHMENT_PRODUCT_SETS = {O2_ATTACHMENT_PRODUCT_SETS = "+0, +0"}
+  # O2_DETACHMENT_PRODUCT_SETS = {O2_DETACHMENT_PRODUCT_SETS = "+0, +0, +0"}
+{endif}
+
+{if(HYBRID_MCC_SPAWN_PARTICLES)}
+  # O2_ELASTIC_PRODUCT_TYPES = {O2_ELASTIC_PRODUCT_TYPES = "e-, O2"}
+  # O2_EXCITATION_PRODUCT_TYPES = {O2_EXCITATION_PRODUCT_TYPES = "e-, O2"}
+  # O2_IONIZATION_PRODUCT_TYPES = {O2_IONIZATION_PRODUCT_TYPES = "e-, O2+, e-"}
+  # O2_DISSOCIATION_PRODUCT_TYPES = {O2_DISSOCIATION_PRODUCT_TYPES = "e-, O, O"}
+  # O2_DISSOCIATIVE-RECOMB_PRODUCT_TYPES = {O2_DISSOCIATIVE-RECOMB_PRODUCT_TYPES = "O, O"}
+  # O2_ATTACHMENT_PRODUCT_TYPES = {O2_ATTACHMENT_PRODUCT_TYPES = "O, O-"}
+  # O2_DETACHMENT_PRODUCT_TYPES = {O2_DETACHMENT_PRODUCT_TYPES = "e-, O2, O2"}
+{else}
+  # O2_ELASTIC_PRODUCT_TYPES = {O2_ELASTIC_PRODUCT_TYPES = "e-, O2_fluid"}
+  # O2_EXCITATION_PRODUCT_TYPES = {O2_EXCITATION_PRODUCT_TYPES = "e-, O2_fluid"}
+  # O2_IONIZATION_PRODUCT_TYPES = {O2_IONIZATION_PRODUCT_TYPES = "e-, O2+_fluid, e-_fluid"}
+  # O2_DISSOCIATION_PRODUCT_TYPES = {O2_DISSOCIATION_PRODUCT_TYPES = "e-, O_fluid, O_fluid"}
+  # O2_DISSOCIATIVE-RECOMB_PRODUCT_TYPES = {O2_DISSOCIATIVE-RECOMB_PRODUCT_TYPES = "O_fluid, O_fluid"}
+  # O2_DISSOCIATIVE-ATTACH_PRODUCT_TYPES = {O2_DISSOCIATIVE-ATTACH_PRODUCT_TYPES = "O_fluid, O-"}        
+  # O2_DETACHMENT_PRODUCT_TYPES = {O2_DETACHMENT_PRODUCT_TYPES = "e-, O2_fluid, O2_fluid"}
+{endif}
+
+# GAS_ATOMIC_NUMBER = {GAS_ATOMIC_NUMBER = 16}
+
+#**** Need to define the following in the EMPIRE input deck:
+#  Particle Types:
+#    O2:
+#      Charge: 0.
+#      Mass: 5.313526e-26
+#    O2+:
+#      Charge: 1.602176634e-19
+#      Mass: 5.3134349e-26
+#    O-:
+#      Charge: -1.602176634e-19
+#      Mass: 2.656672e-26
+#
+# Not active yet, will be eventually:
+#    O2++:
+#      Charge: 3.20435313e-19
+#      Mass: 5.313344e-26
+#    O2-:
+#      Charge: -1.602176634e-19
+#      Mass: 5.313617e-26
+#
+
+
+{Ifdef(USE_ITIKAWA2009_DATA)}
+  # Using Itikawa(2009) data for e+O2 interactions
+  Particle Interactions:
+    e+O2 Ionization:
+      Method: DSMC
+      Reactants_types: [e-, O2]
+      Products: [e-, O2+, e-]
+      Product_sets: [{O2_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 12.071
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_ionization_O2+_SI.data
+      Stride: 1
+#    e+O2 Double Ionization:
+#      Method: DSMC
+#      Reactants_types: [e-, O2]
+#      Products: [e-, O2++, e-]
+#      Product_sets: [{O2_IONIZATION_PRODUCT_SETS}]
+#      Heat of Reaction: 36.103
+#      Type: Ionization
+#      Cross Section:
+#        TABULAR:
+#          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_ionization_O2++_SI.data
+#      Stride: 1
+    e+O2 Elastic:
+      Method: DSMC
+      Reactants_types: [e-, O2]
+      Products: [e-, O2]
+      Product_sets: [{O2_ELASTIC_PRODUCT_SETS}]
+      Type: Elastic
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_elastic_SI.data
+      Stride: 1
+    e+O2 v1 excitation:
+      Method: DSMC
+      Reactants_types: [e-, O2]
+      Products: [e-, O2]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.194
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_vib1_SI.data
+      Stride: 1
+    e+O2 v2 excitation:
+      Method: DSMC
+      Reactants_types: [e-, O2]
+      Products: [e-, O2]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.389
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_vib2_SI.data
+      Stride: 1
+    e+O2 v3 excitation:
+      Method: DSMC
+      Reactants_types: [e-, O2]
+      Products: [e-, O2]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.583
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_vib3_SI.data
+      Stride: 1
+    e+O2 0.977 excitation:
+      Method: DSMC
+      Reactants_types: [e-, O2]
+      Products: [e-, O2]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.977
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_a_1delta_g_SI.data
+      Stride: 1
+    e+O2 1.627 excitation:
+      Method: DSMC
+      Reactants_types: [e-, O2]
+      Products: [e-, O2]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 1.627
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_b_1sigma+_g_SI.data
+      Stride: 1
+    e+O2 4.340 excitation:
+      Method: DSMC
+      Reactants_types: [e-, O2]
+      Products: [e-, O2]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 4.340
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_[c_1sigma-_u+A'_3delta_u+A_3sigma+_u]_SI.data
+      Stride: 1
+    e+O2 6.120 excitation:
+      Method: DSMC
+      Reactants_types: [e-, O2]
+      Products: [e-, O2]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 6.120
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_B_3sigma-_u_SI.data
+      Stride: 1
+    e+O2 9.971 excitation:
+      Method: DSMC
+      Reactants_types: [e-, O2]
+      Products: [e-, O2]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 9.971
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_longest_band_SI.data
+      Stride: 1
+    e+O2 10.291 excitation:
+      Method: DSMC
+      Reactants_types: [e-, O2]
+      Products: [e-, O2]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 10.291
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_second_band_SI.data
+      Stride: 1
+#    e+O2 dissociation:
+#      Method: DSMC
+#      Reactants_types: [e-, O2]
+#      Products: [e-, O, O]
+#      Product_sets: [{O2_DISSOCIATION_PRODUCT_SETS}]
+#      Heat of Reaction: 5.149
+#      Type: Reaction
+#      Cross Section:
+#       TABULAR:
+#          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/e+O2_dissociation_e+O_O_SI.data
+#      Stride: 1
+    e+O2+ dissociative recombination:
+      Method: DSMC
+      Reactants_types: [e-, O2+]
+      Products: [O, O]
+      Product_sets: [{O2_DISSOCIATIVE_RECOMB_PRODUCT_SETS}]
+      Heat of Reaction: -6.909
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/e+O2+_recombination_O_O_SI.data
+      Stride: 1 
+    e+O2 dissociative attachment:
+      Method: DSMC
+      Reactants_types: [e-, O2]
+      Products: [O, O-]
+      Product_sets: [{O2_DISSOCIATIVE-ATTACH_PRODUCT_SETS}]
+      Heat of Reaction: 3.688
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_attachment_O_O-_SI.data
+      Stride: 1
+#    O2+O2- detachment:
+#      Method: DSMC
+#      Reactants_types: [O2-, O2]
+#      Products: [e-, O2, O2]
+#      Product_sets: [{O2_DETACHMENT_PRODUCT_SETS}]
+#      Heat of Reaction: 0.449
+#      Type: Reaction
+#      Cross Section:
+#       TABULAR:
+#          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2n_detachment_O2+e_SI.data
+#      Stride: 1
+
+{Ifdef(IS_HYBRID)}
+    e+O2 Ionization Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, O2_fluid]
+      Products: [{O2_IONIZATION_PRODUCT_TYPES}]
+      Product_sets: [{O2_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 12.071
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_ionization_O2+_SI.data
+      Stride: 1
+#    e+O2 Double Ionization Hybrid:
+#      Method: Hybrid_MCC
+#      Reactants_types: [e-, O2_fluid]
+#      Products: [{O2_IONIZATION_PRODUCT_TYPES}]
+#      Product_sets: [{O2_IONIZATION_PRODUCT_SETS}]
+#      Heat of Reaction: 36.103
+#      Type: Ionization
+#      Cross Section:
+#        TABULAR:
+#          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_ionization_O2++_SI.data
+#      Stride: 1
+    e+O2 Elastic Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, O2_fluid]
+      Products: [{O2_ELASTIC_PRODUCT_TYPES}]  
+      Product_sets: [{O2_ELASTIC_PRODUCT_SETS}]
+      Type: Elastic
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_elastic_SI.data
+      Stride: 1
+    e+O2 v1 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, O2_fluid]
+      Products: [{O2_EXCITATION_PRODUCT_TYPES}]  
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.194
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_vib1_SI.data
+      Stride: 1
+    e+O2 v2 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, O2_fluid]
+      Products: [{O2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.389
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_vib2_SI.data
+      Stride: 1
+    e+O2 v3 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, O2_fluid]
+      Products: [{O2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.583
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_vib3_SI.data
+      Stride: 1
+    e+O2 0.977 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, O2_fluid]
+      Products: [{O2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.977
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_a_1delta_g_SI.data
+      Stride: 1
+    e+O2 1.627 excitation:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, O2_fluid]
+      Products: [{O2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 1.627
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_b_1sigma+_g_SI.data
+      Stride: 1
+    e+O2 4.340 excitation:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, O2_fluid]
+      Products: [{O2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 4.340
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_[c_1sigma-_u+A'_3delta_u+A_3sigma+_u]_SI.data
+      Stride: 1
+    e+O2 6.120 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, O2_fluid]
+      Products: [{O2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 6.120
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_B_3sigma-_u_SI.data
+      Stride: 1
+    e+O2 9.971 excitation:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, O2_fluid]
+      Products: [{O2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 9.971
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_longest_band_SI.data
+      Stride: 1
+    e+O2 10.291 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, O2_fluid]
+      Products: [{O2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{O2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 10.291
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_excitation_O2_second_band_SI.data
+      Stride: 1
+#    e+O2 dissociation Hybrid:
+#      Method: Hybrid_MCC
+#      Reactants_types: [e-, O2_fluid]
+#      Products: [{O2_DISSOCIATION_PRODUCT_TYPES}]
+#      Product_sets: [{O2_DISSOCIATION_PRODUCT_SETS}]
+#      Heat of Reaction: 5.149
+#      Type: Reaction
+#      Cross Section:
+#       TABULAR:
+#          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/e+O2_dissociation_e+O_O_SI.data
+#      Stride: 1
+    e+O2+ dissociative recombination Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, O2+_fluid]
+      Products: [{O2_DISSOCIATIVE-RECOMB_PRODUCT_TYPES}]
+      Product_sets: [{O2_DISSOCIATIVE_RECOMB_PRODUCT_SETS}]
+      Heat of Reaction: -6.909
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/e+O2+_recombination_O_O_SI.data
+      Stride: 1 
+    e+O2 dissociative attachment Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, O2_fluid]
+      Products: [{O2_DISSOCIATIVE-ATTACH_PRODUCT_TYPES}] 
+      Product_sets: [{O2_DISSOCIATIVE-ATTACH_PRODUCT_SETS}]
+      Heat of Reaction: 3.688
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2_attachment_O_O-_SI.data
+      Stride: 1
+#    O2+O2- detachment Hybrid:
+#      Method: Hybrid_MCC
+#      Reactants_types: [O2-, O2_fluid]
+#      Products: [{O2_DETACHMENT_PRODUCT_TYPES}] 
+#      Product_sets: [{O2_DETACHMENT_PRODUCT_SETS}]
+#      Heat of Reaction: 0.449
+#      Type: Reaction
+#      Cross Section:
+#       TABULAR:
+#          File Name: {CROSS_SECTION_DIR}/O2/Itikawa_2009/O2n_detachment_O2+e_SI.data
+#      Stride: 1
+{Endif}
+{Endif}

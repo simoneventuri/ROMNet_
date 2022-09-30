@@ -16,40 +16,40 @@ class ZeroDR(System):
         InputData
     ):  
 
-        path_to_data_fld      = InputData.path_to_data_fld
-        ROMNet_fld         = InputData.ROMNet_fld
+        path_to_data_fld       = InputData.path_to_data_fld
+        ROMNet_fld             = InputData.ROMNet_fld
         try:
-            self.ROM_pred_flg = InputData.ROM_pred_flg
+            self.ROM_type      = InputData.ROM_type
         except:
-            self.ROM_pred_flg = None
-        self.NRODs         = InputData.NRODs
+            self.ROM_type      = None
+        self.NRODs             = InputData.NRODs
 
-        self.mixture_file  = 'gri30.yaml'
-        # self.fuel          = 'CH4:1.0'
-        # self.oxidizer      = 'O2:1.0, N2:0.0'
-        self.fuel          = 'H2:1.0'
-        self.oxidizer      = 'O2:1.0, N2:4.0'
+        self.mixture_file      = 'gri30.yaml'
+        # self.fuel              = 'CH4:1.0'
+        # self.oxidizer          = 'O2:1.0, N2:0.0'
+        self.fuel              = 'H2:1.0'
+        self.oxidizer          = 'O2:1.0, N2:4.0'
 
-        self.T0            = 300.
-        self.P0            = ct.one_atm
-        self.eq_ratio0     = 1.
- 
-        # Integrator time step
-        self.dt0           = 1.e-14
-        self.dt_str        = 1.
-        self.dt_max        = 1.e-3
+        self.T0                = 300.
+        self.P0                = ct.one_atm
+        self.eq_ratio0         = 1.
 
-        # Integration method
-        self.method        = 'BDF'
+
+        self.norm_output_flg   = InputData.norm_output_flg
+        self.data_preproc_type = InputData.data_preproc_type
+
+        self.pinn_flg          = 'pts' in InputData.n_train
  
+        self.order             = [1]
  
-        self.order         = [1]
- 
-        self.ind_names     = ['t']
-        self.other_names   = ['PC0_'+str(i) for i in range(self.NRODs)]
- 
-        self.ind_labels    = ['t [s]']
-        self.other_labels  = ['PC_{0_{'+str(i)+'}}' for i in range(self.NRODs)]
+        self.ind_names         = ['t']
+        self.other_names       = InputData.input_vars_all.copy()
+        try:
+            self.other_names.remove('t')
+        except:
+            pass
+        self.ind_labels        = ['t [s]']
+        self.other_labels      = ['PC_{0_{'+str(i)+'}}' for i in range(self.NRODs)]
 
         self.get_variable_locations()
 
@@ -61,14 +61,17 @@ class ZeroDR(System):
 
         self.read_params_ROM(path_to_data_fld)
         
-        if (self.ROM_pred_flg):
-            self.f_call     = self.f_pc
-            self.n_dims     = self.n_pc
-        else:
-            self.f_call     = self.f
-            self.n_dims     = self.n_mask
+        if (self.ROM_type == 'PCA'):
+            self.f_call = self.f_pc
+            self.n_dims = self.n_pc
+        elif (self.ROM_type == 'Autoencoder'):
+            self.f_call = self.f_pc
+            self.n_dims = self.NRODs
+        elif (self.ROM_type is None):
+            self.f_call = self.f
+            self.n_dims = len(self.other_names)
 
-        self.n_batch       = InputData.batch_size 
+        self.n_batch    = InputData.batch_size 
 
     #===========================================================================
 
@@ -76,13 +79,13 @@ class ZeroDR(System):
 
     #===========================================================================
     def f_orig(self, t, y_orig, ICs):
-        n_points     = y_orig.shape[0]
+        n_points                   = y_orig.shape[0]
 
-        dy_orig_dt   = np.zeros_like(y_orig)
+        dy_orig_dt                 = np.zeros_like(y_orig)
         for i_point in range(n_points):
 
             T                      = y_orig[i_point,0]
-            T                      = y_orig[i_point,1:]
+            Y                      = y_orig[i_point,1:]
             self.gas.TPY           = T, self.P0, Y
                           
             wdot                   = self.gas.net_production_rates
@@ -96,50 +99,47 @@ class ZeroDR(System):
 
 
 
-    #===========================================================================
-    def f_temp(self, t, y_masked, ICs):
-        n_points               = y_masked.shape[0]
+    # #===========================================================================
+    # def f(self, t, y_masked, ICs):
+    #     n_points                   = y_masked.shape[0]
 
-        y_orig                 = np.zeros((n_points,self.n_species+1))
-        y_orig[:,self.to_orig] = y_masked
-        dy_orig_dt             = np.zeros_like(y_orig)
-        for i_point in range(n_points):
-            T                      = y_orig[i_point,0]
-            Y                      = y_orig[i_point,1:]
-            self.gas.TPY           = T, self.P0, Y
+    #     y_orig                     = np.zeros((n_points,self.n_species+1))
+    #     y_orig[:,self.to_orig]     = y_masked
+    #     dy_orig_dt                 = np.zeros_like(y_orig)
+    #     for i_point in range(n_points):
+    #         T                      = y_orig[i_point,0]
+    #         Y                      = y_orig[i_point,1:]
+    #         self.gas.TPY           = T, self.P0, Y
                           
-            wdot                   = self.gas.net_production_rates
+    #         wdot                   = self.gas.net_production_rates
 
-            dy_orig_dt[i_point,0]  = - np.dot(wdot, self.gas.partial_molar_enthalpies) / self.gas.cp / self.gas.density
-            dy_orig_dt[i_point,1:] = wdot * self.gas.molecular_weights / self.gas.density
+    #         dy_orig_dt[i_point,0]  = - np.dot(wdot, self.gas.partial_molar_enthalpies) / self.gas.cp / self.gas.density
+    #         dy_orig_dt[i_point,1:] = wdot * self.gas.molecular_weights / self.gas.density
    
-            dy_masked_dt           = dy_orig_dt[:,self.to_orig]
+    #     dy_masked_dt               = dy_orig_dt[:,self.to_orig]
 
-        return dy_masked_dt
+    #     return dy_masked_dt
 
-    #===========================================================================
-
+    # #===========================================================================
 
 
     #===========================================================================
     def f(self, t, y_masked, ICs):
-        n_points               = y_masked.shape[0]
+        n_points                     = y_masked.shape[0]
 
-        y_orig                 = np.zeros((n_points,self.n_species+1))
-        y_orig[:,self.to_orig] = y_masked * self.D[0,:] + self.C[0,:]
-        dy_orig_dt             = np.zeros_like(y_orig)
+        y_orig                       = np.zeros((n_points,self.n_species+1))
+        y_orig[:,self.to_orig]       = y_masked
+        dy_masked_dt                 = np.zeros_like(y_masked)
         for i_point in range(n_points):
-            T                      = y_orig[i_point,0]
-            Y                      = y_orig[i_point,1:]
-            self.gas.TPY           = T, self.P0, Y
+            T                        = y_orig[i_point,0]
+            Y                        = y_orig[i_point,1:]
+            self.gas.TPY             = T, self.P0, Y
                           
-            wdot                   = self.gas.net_production_rates
+            wdot                     = self.gas.net_production_rates
 
-            dy_orig_dt[i_point,0]  = - np.dot(wdot, self.gas.partial_molar_enthalpies) / self.gas.cp / self.gas.density
-            dy_orig_dt[i_point,1:] = wdot * self.gas.molecular_weights / self.gas.density
+            dy_masked_dt[i_point,0]  = - np.dot(wdot, self.gas.partial_molar_enthalpies) / self.gas.cp / self.gas.density
+            dy_masked_dt[i_point,1:] = wdot[self.to_orig[1::]] * self.gas.molecular_weights[self.to_orig[1::]] / self.gas.density
    
-        dy_masked_dt           = dy_orig_dt[:,self.to_orig] / self.D[0,:]
-
         return dy_masked_dt
 
     #===========================================================================
@@ -158,7 +158,6 @@ class ZeroDR(System):
         for i_point in range(n_points):
             T                      = y_orig[i_point,0]
             Y                      = np.maximum(y_orig[i_point,1:], 0.)
-            #Y[-1]                  = np.minimum(1. - np.sum(Y[0:-1]), 1.0)
             self.gas.TPY           = T, self.P0, Y
                           
             wdot                   = self.gas.net_production_rates
@@ -196,19 +195,45 @@ class ZeroDR(System):
 
         y, dy_dt = grads
 
-        if (self.ynorm_flg):
-            y = y * self.y_range + self.y_min
 
-        with open('/Users/sventur/Desktop/DAJE/Input.csv', "ab") as f:
-            np.savetxt(f, np.concatenate([t[0].numpy(), y.numpy()], axis=1), delimiter=',')
+        if (self.norm_output_flg):
+
+            if (self.data_preproc_type == None) or (self.data_preproc_type == 'std') or (self.data_preproc_type == 'auto'):
+                y = y * self.output_std + self.output_mean
+
+            elif (self.data_preproc_type == '0to1'):
+                y = y * self.output_range + self.output_min
+
+            elif (self.data_preproc_type == 'range'):
+                y = y * self.output_range
+
+            elif (self.data_preproc_type == '-1to1'):
+                y = (y + 1.)/2. * self.output_range + self.output_min
+
+            elif (self.data_preproc_type == 'pareto'):
+                y = y * np.sqrt(self.output_std) + self.output_mean
+
 
         dy_ct_dt = self.f_call(t, y.numpy(), ICs.numpy()) #* np.exp(t[0].numpy())
 
-        if (self.ynorm_flg):
-            dy_ct_dt /= self.y_range
 
-        with open('/Users/sventur/Desktop/DAJE/Output.csv', "ab") as f:
-            np.savetxt(f, np.concatenate([t[0].numpy(), dy_dt.numpy(), dy_ct_dt], axis=1), delimiter=',')
+        if (self.norm_output_flg):
+
+            if (self.data_preproc_type == None) or (self.data_preproc_type == 'std') or (self.data_preproc_type == 'auto'):
+                dy_ct_dt /= self.output_std
+
+            elif (self.data_preproc_type == '0to1'):
+                dy_ct_dt /= self.output_range
+
+            elif (self.data_preproc_type == 'range'):
+                dy_ct_dt /= self.output_range
+
+            elif (self.data_preproc_type == '-1to1'):
+                dy_ct_dt /= self.output_range*2.
+
+            elif (self.data_preproc_type == 'pareto'):
+                dy_ct_dt /= np.sqrt(self.output_std)
+
 
         return dy_dt - dy_ct_dt
 
@@ -245,20 +270,29 @@ class ZeroDR(System):
     #===========================================================================
     def read_params_ROM(self, path_to_data_fld):
 
-        if (self.ROM_pred_flg):
+        if (self.ROM_type == 'PCA'):
             PathToParams    = path_to_data_fld + '/ROM/'
-        else:
-            PathToParams    = path_to_data_fld + '/../'+str(self.NRODs)+'PC/ROM/'
-            self.OutputVars = list(pd.read_csv(path_to_data_fld+'/train/ext/CleanVars.csv', header=None).to_numpy()[0,:])
+        # # elif (self.ROM_type ):
+        # #     PathToParams    = path_to_data_fld + '/../'+str(self.NRODs)+'PC/ROM/'
+        # #     self.OutputVars = list(pd.read_csv(path_to_data_fld+'/train/ext/CleanVars.csv', header=None).to_numpy()[0,:])
 
-        self.A         = pd.read_csv(PathToParams+'/A.csv', header=None).to_numpy()
-        self.C         = pd.read_csv(PathToParams+'/C.csv', header=None).to_numpy().T
-        self.D         = pd.read_csv(PathToParams+'/D.csv', header=None).to_numpy().T
-        self.AT        = self.A.T
-        self.n_pc      = self.A.shape[0]
+        # if (self.NRODs > 0):
+            try:
+                self.A         = pd.read_csv(PathToParams+'/A.csv', header=None).to_numpy()
+                self.C         = pd.read_csv(PathToParams+'/C.csv', header=None).to_numpy().T
+                self.D         = pd.read_csv(PathToParams+'/D.csv', header=None).to_numpy().T
+                self.AT        = self.A.T
+                self.n_pc      = self.A.shape[0]
 
-        self.to_orig   = pd.read_csv(PathToParams+'/ToOrig_Mask.csv',   header=None).to_numpy(int)[:,0]
-        self.n_mask    = len(self.to_orig)
+                self.to_orig   = pd.read_csv(PathToParams+'/ToOrig_Mask.csv',     header=None).to_numpy(int)[:,0]
+                self.n_mask    = len(self.to_orig)
+            except:
+                self.n_pc      = self.NRODs
+                pass
+
+        elif (self.ROM_type is None):
+            self.to_orig   = pd.read_csv(path_to_data_fld+'/ToOrig_Mask.csv', header=None).to_numpy(int)[:,0]
+            self.n_mask    = len(self.to_orig)
 
     #===========================================================================
 
@@ -288,7 +322,7 @@ class ZeroDR(System):
             y_masked = tf.matmul(y_pc, self.A) #* self.D + self.C
             return y_masked
 
-        if (self.ROM_pred_flg):
+        if (self.ROM_type):
             return None
         else:
             return None #fROM_anti_PCA 

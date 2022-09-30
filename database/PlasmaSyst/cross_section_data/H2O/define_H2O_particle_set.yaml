@@ -1,0 +1,16 @@
+  Particle Types:
+    H2O:
+      Charge: 0.0 
+      Mass: 2.9914077e-26
+    H2O+:
+      Charge: 1.602176634e-19
+      Mass: 2.9914077e-26
+    OH+:
+      Charge: 1.602176634e-19
+      Mass: 2.82405195e-26
+    H2+:
+      Charge: 1.602176634e-19
+      Mass: 3.347115e-27
+    O+2:
+      Charge: 3.204353268e-19
+      Mass: 2.6566962e-26

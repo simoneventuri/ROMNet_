@@ -1,0 +1,17 @@
+# EXCITATION    
+# Process:           O2 + e- -> e- + O2 (v=1) 
+# Heat of Reaction:  3.108e-20 joules
+# Units:             SI
+# Uncertainty:       +/-20%
+# Source:            Itikawa, J. Phys. Chem. Ref. Data, Vol. 38, No. 1, 2009. (Table 4)
+# ALEPH Comments:    Limited differential cross section information is available
+# ALEPH Comments:    Linearly extrapolated to 0 sigma for both first and last data point
+# Energy (Joules) | Cross Section (m2)
+#-------------------------------------
+6.5613E-19	0.0000E+00
+8.0109E-19	9.5000E-22
+1.1215E-18	3.0500E-21
+1.6022E-18	4.4000E-21
+2.4033E-18	5.7000E-22
+2.5225E-18	0.0000E+00
+#-------------------------------------

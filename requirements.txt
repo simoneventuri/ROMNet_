@@ -5,3 +5,6 @@ pydot
 sklearn
 tensorflow
 tensorflow_probability
+tqdm
+#cantera
+#PCAFold

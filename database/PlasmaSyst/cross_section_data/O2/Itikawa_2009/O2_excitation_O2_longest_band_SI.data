@@ -1,0 +1,18 @@
+# EXCITATION
+# Process:           O2 + e- -> e- + O2 "longest" band 
+# Heat of Reaction:  1.5974e-18 joules
+# Units:             SI
+# Uncertainty:       +/-20%
+# Source:            Itikawa, J. Phys. Chem. Ref. Data, Vol. 38, No. 1, 2009. (Table 9)
+# ALEPH Comments:    "Longest band" excitation, exact electronic state not known. Some differential cross section data available, see Shyn (1994), Phys. Rev. A, 49, 3680.
+# ALEPH Comments:    Added 0 value at heat of reaction energy. Extrapolated using ln(E)/E up to 500 eV, then linearly extrapolated to 0 sigma for the last data point
+# Energy (Joules) | Cross Section (m2)
+#-------------------------------------
+1.5974E-18	0.0000E+00
+2.4033E-18	5.7500E-22
+3.2044E-18	6.6900E-22
+4.8065E-18	6.2200E-22
+8.0109E-18	2.3600E-22
+8.0109E-17	3.7491E-23
+9.3725E-17	0.0000E+00
+#-------------------------------------

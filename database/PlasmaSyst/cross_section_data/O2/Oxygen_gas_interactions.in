@@ -1,0 +1,2245 @@
+# *****************************************************************************
+#
+# Using This Model
+# ----------------
+# In order to use this model in your simulation, you will want to add two lines
+# to your input deck. The first should be an APREPRO command to include this
+# file, preferably located at the very top of your input deck. Afterward, you
+# will need to specify CROSS_SECTION_DIR so that the other cross sections can
+# be imported.
+#
+# At this point, everything will automatically be included with the default
+# settings. While this will (almost) certainly work, the careful user is
+# advised to carefully inspect the options below and override their defaults to
+# enable or disable physics as necessary.
+#
+#
+# APREPRO Inputs
+# --------------
+# You can define these here or in your main input deck.
+#
+#  if(!USER_DEFINED_APREPRO_INPUTS)
+#  If set to true (non-zero) then the aprepro values set in the main input deck will
+#  be used. If false (undefined or zero) then the default values below will be used.
+#
+#  {if(!USER_DEFINED_APREPRO_INPUTS)}
+#
+#     {_FIXED_HEAVY_PARTICLE_PROPS = "false"}
+#     If set to true, heavy particles will have constant properities in
+#     collisions that do not change their type.
+#
+#     {_REMERGE_SPLIT_PARTICLE = "false"}
+#     Set to true if FIXED_HEAVIES is false *and* reweighting has trouble
+#     keeping particle count under control. This will conserve momentum, but
+#     *not* energy.
+#
+#     {_QUENCHING_FRACTION = 0}
+#     This is the fraction of VHS neutral-neutral collisions that result in
+#     quenching excited states. Future updates will hopefully refine the
+#     quenching cross sections used (at the very least this should match the
+#     available quenching rate data if you have a Maxwellian VDF).
+#
+#     {_NUM_PHOTONS = 1}
+#     Number of photons released for a spontaneous emission event (note that
+#     photons with wavelengths > 1000nm are not tracked/created)
+#
+#     {_EMISSION_STRIDE = 1}
+#     Number of timesteps between testing for spontaneous emission
+#
+#     {_THREE_BODY_RXN_STRIDE = 1}
+#     Number of timesteps between doing the three body rate reactions
+#
+#     {_VSIGMAMAX_DECAY_FRACTION = 0}  
+#     Fraction of vsigma_max from previous timestep that is averaged into 
+#     current vsigma_max (not relevant if RECOMPUTE_VSIGMAMAX_STRIDE = 1)
+#       
+#     {_RECOMPUTE_VSIGMAMAX_STRIDE = 1}   
+#     Number of timesteps between recomputing vsigma_max via random sampling
+#
+#     {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons = 50}  
+#     Number of pairs to sample when recomputing vsigma_max for collisions 
+#     between electrons and neutrals 
+#
+#     {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals = 20}  
+#     Number of pairs to sample when recomputing vsigma_max for collisions 
+#     between neutrals 
+#       
+#     {_RECOMPUTE_VSIGMAMAX_SAMPLES_photons = 20}  
+#     Number of pairs to sample when recomputing vsigma_max for collisions 
+#     between photons and neutrals 
+#
+#  {endif}
+#  endif
+#
+# Naming Convention
+# -----------------
+# Excited states are named by their energy (relative to ground state).
+#
+#
+# Assumptions
+# -----------
+#
+#     * O2 is the parent gas.
+#
+#     * O is a trace species created through electron/photon interactions with
+#       O2.
+#
+#     * Photons with wavelengths > 2000nm (~0.62eV) are not important and
+#       therefore not tracked (though the decay to the lower state is modeled).
+#
+#     * Atomic O ground state fine structure splitting is neglected. This has
+#       been shown to be an important cooling mech. for e- in Earth's
+#       ionosphere
+#
+#     * Neglected dissociative double ionization of O2 -> O + O++ (~1% of total
+#       ionization)
+#
+#
+# Todo
+# ----
+#
+#     * Include superelastic collisions via detailed balance.
+#
+# *****************************************************************************
+
+# Particle Definitions
+# ====================
+
+# Constants
+# ---------
+#
+# Per CODATA
+#
+# {_e = 1.602176565e-19} C
+# {_m_e = 9.10938356e-31} kg
+#
+# Per NIST's Chemistry WebBook, assume ion mass differences are equal m_e.
+#
+# {_m_O = 2.656763E-26} kg
+# {_m_Om = _m_O + _m_e}
+# {_m_Op = _m_O - _m_e}
+# {_m_O2 = 2 * _m_O} kg
+# {_m_O2m = _m_O2 + _m_e}
+# {_m_O2p = _m_O2 - _m_e}
+# {_m_O2pp = _m_O2 - 2*_m_e}
+#
+# Per Bird (1994), Table A3. O and N are assumed to be roughly equal to Ne.
+#
+# {_d_O2 = 4.07e-10} m
+# {_d_O = 2.77e-10} m
+
+# Neutrals
+# --------
+
+define particle O2, \
+    mass = {_m_O2}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O2}, \
+    polarizability = 0.0
+
+#  a 1^DELTA_g
+define particle O2_0.98eV, \
+    mass = {_m_O2}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O2}, \
+    polarizability = 0.0
+
+#  b 1^SIGMA_g	
+define particle O2_1.63eV, \
+    mass = {_m_O2}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O2}, \
+    polarizability = 0.0
+
+#  c 1^SIGMA_u + A' (C) 3^DELTA_u + A 3^SIGMA_u -- (4.050, 4.262, 4.340)eV
+define particle O2_4.34eV, \
+    mass = {_m_O2}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O2}, \
+    polarizability = 0.0
+
+#  B 3^SIGMA_u
+define particle O2_6.12eV, \
+    mass = {_m_O2}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O2}, \
+    polarizability = 0.0
+
+#  "Longest band" -- 9.97 eV, see Shyn (1994), Phys. Rev. A, 49, 3680.
+define particle O2_9.97eV, \
+    mass = {_m_O2}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O2}, \
+    polarizability = 0.0
+
+#  "Second band" -- 10.29 eV, see Shyn (1994), Phys. Rev. A, 49, 3680.
+define particle O2_10.29eV, \
+    mass = {_m_O2}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O2}, \
+    polarizability = 0.0
+
+# This state is effectively multiple excited states. Wakiya (1978), J. Phys. B,
+# 11, 3913 suggests it is from
+
+# 2s^2 2p^4 3P -- J = (2,1,0) -> (0.0000000, 0.0196224, 0.0281416) eV.
+# We have ignored ground state fine split energy levels .
+define particle O, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+# 2s^2 2p^4 1D -- J = 2 -> 1.9673641eV
+define particle O_1.97eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+# 2s^2 2p^4 1S -- J = 0 -> 4.1897463eV 
+define particle O_4.19eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+# 2s^2 2p^3 (4S^0)3s 5S^0 -- J = 2 -> 9.1460911eV
+define particle O_9.15eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+# 2s^2 2p^3 (4S^0)3s 3S^0 -- J = 1 -> 9.5213637eV
+define particle O_9.52eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+#  2s^2 2p^3 (4S^0)3p 5P -- J=(1,2,3) -> (10.7402250, 10.7404755, 10.7409313)eV
+define particle O_10.74eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+#  2s^2 2p^3 (4S^0)3p 3P   -- J=(1,2,0) -> (10.9887922, 10.9888615, 10.9888810)eV
+define particle O_10.99eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+#  2s^2 2p^3 (4S^0)4s 3S^0 -- J = 1     -> 11.9303855eV
+define particle O_11.93eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+#  2s^2 2p^3 (4S^0)3d 3D^0 -- J=(1,2,3) -> (12.0870183, 12.0870270, 12.0870381)eV
+define particle O_12.09eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+#  2s^2 2p^3 (4S^0)4p 3P   -- J=(1,2,0) -> (12.3588648, 12.3588749, 12.3589071)eV
+define particle O_12.36eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+#  2s^2 2p^3 (2D^0)3s 3D^0 -- J=(3,2,1) -> (12.5391923, 12.5406948, 12.5416738)eV
+define particle O_12.54eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+#  2s^2 2p^3 (4S^0)4d 3D^0 -- J=(3,2,1) -> (12.7590122, 12.7590207, 12.7590264)eV
+define particle O_12.76eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+# 2s^2 2p^3 (4S^0)5d 3D^0 -- J=(2,3,1) -> (13.0690513, 13.0690513, 13.0690513)eV
+# ... fine split energies the same according to NIST...
+define particle O_13.07eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+# 2s^2 2p^3 (4S^0)6d 3D^0 -- J=(3,1,2) -> (13.2372724, 13.2372724, 13.2372724)eV
+# ... fine split energies the same according to NIST...
+define particle O_13.24eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+# 2s^2 2p^3 (4S^0)7d 3D^0 -- J=(3,1,2) -> (13.3385643, 13.3385643, 13.3385643)eV
+# ... fine split energies the same according to NIST...
+define particle O_13.34eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+# 2s^2 2p^3 (2P^0)3s 3P^0 -- J=(2,1,0) -> (14.1231586, 14.1244522, 14.1252139)eV
+# -- This state is autoionizing
+define particle O_14.12eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+# 2s 2p^5 3P^0 -- J=(2,1,0) -> (15.6550998, 15.6641914, 15.6695879)eV
+# -- This state is autoionizing
+define particle O_15.66eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+# 2s^2 2p^3 (2D^0)4d 3P^0 -- J=(2,1,0) -> (16.1142261, 16.1153896, 16.1160305)eV
+# -- This state is autoionizing
+define particle O_16.11eV, \
+    mass = {_m_O}, \
+    charge = 0, \
+    category = neutral, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+
+# Ions
+define particle O2+, \
+    mass = {_m_O2p}, \
+    charge = {_e}, \
+    category = ion, \
+    diameter = {_d_O2}, \
+    polarizability = 0.0
+
+define particle O2++, \
+    mass = {_m_O2pp}, \
+    charge = {2*_e}, \
+    category = ion, \
+    diameter = {_d_O2}, \
+    polarizability = 0.0
+
+define particle O2-, \
+    mass = {_m_O2m}, \
+    charge = {-_e}, \
+    category = ion, \
+    diameter = {_d_O2}, \
+    polarizability = 0.0
+
+define particle O+, \
+    mass = {_m_Op}, \
+    charge = {_e}, \
+    category = ion, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+define particle O-, \
+    mass = {_m_Om}, \
+    charge = {-_e}, \
+    category = ion, \
+    diameter = {_d_O}, \
+    polarizability = 0.0
+
+
+# e + O2 Interactions
+# =====================
+
+# Elastic and Vibrational Excitation
+# ----------------------------------
+
+interact e- + O2, \
+    interaction_name = e_O2_elastic, \
+    interaction_model = elastic_screened_coulomb_scattering, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/O2_elastic_[SI].data, \
+    fixed_heavy_particle_properties = {_FIXED_HEAVY_PARTICLE_PROPS}, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2, \
+    interaction_name = e_O2_vib1_exc, \
+    interaction_model = inelastic_isotropic_scattering, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/O2_excitation_O2_vib1_[SI].data, \
+    heat_of_reaction = 3.108e-20, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2, \
+    interaction_name = e_O2_vib2_exc, \
+    interaction_model = inelastic_isotropic_scattering, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/O2_excitation_O2_vib2_[SI].data, \
+    heat_of_reaction = 6.232e-20, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2, \
+    interaction_name = e_O2_vib3_exc, \
+    interaction_model = inelastic_isotropic_scattering, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/O2_excitation_O2_vib3_[SI].data, \
+    heat_of_reaction = 9.341e-20, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+
+# Electronic Excitation
+# --------------------
+
+interact e- + O2 -> e- + O2_0.98eV, \
+    interaction_name = e_O2->O2_0.98eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/O2_excitation_O2_a_1delta_g_[SI].data, \
+    heat_of_reaction = 1.5653e-19, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2 -> e- + O2_1.63eV, \
+    interaction_name = e_O2->O2_1.63eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/O2_excitation_O2_b_1sigma+_g_[SI].data, \
+    heat_of_reaction = 2.6067e-19, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2 -> e- + O2_4.34eV, \
+    interaction_name = e_O2->O2_4.34eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/O2_excitation_O2_[c_1sigma-_u+A'_3delta_u+A_3sigma+_u]_[SI].data, \
+    heat_of_reaction = 6.9534e-19, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2 -> e- + O2_6.12eV, \
+    interaction_name = e_O2->O2_6.12eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/O2_excitation_O2_B_3sigma-_u_[SI].data, \
+    heat_of_reaction = 9.8053e-19, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2 -> e- + O2_9.97eV, \
+    interaction_name = e_O2->O2_9.97eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/O2_excitation_O2_longest_band_[SI].data, \
+    heat_of_reaction = 1.5974e-18, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2 -> e- + O2_10.29eV, \
+    interaction_name = e_O2->O2_10.29eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/O2_excitation_O2_second_band_[SI].data, \
+    heat_of_reaction = 1.6486e-18, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+
+# Ionization
+# ----------
+
+interact e- + O2 -> e- + O2+ + e-, \
+    interaction_name = e+O2->2e+O2p, \
+    interaction_model = ionization, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/O2_ionization_O2+_[SI].data, \
+    heat_of_reaction = 1.9338e-18, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2 -> e- + O2++ + e-, \
+    interaction_name = e+O2->3e+O2pp, \
+    interaction_model = ionization, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/O2_ionization_O2++_[SI].data, \
+    heat_of_reaction = 5.7839e-18, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2 -> e- + O+ + e- + O, \
+    interaction_name = e+O2->2e+O+Op, \
+    interaction_model = ionization, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/O2_ionization_O_O+_[SI].data, \
+    heat_of_reaction = 2.7590e-18, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2_0.98eV -> e- + O2+ + e-, \
+    interaction_name = e+O2_0.98eV->2e+O2p, \
+    interaction_model = ionization, \
+    cross_section_function = binary_encounter_ionization, \
+    heat_of_reaction = 1.7773e-18, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2_1.63eV -> e- + O2+ + e-, \
+    interaction_name = e+O2_1.63eV->2e+O2p, \
+    interaction_model = ionization, \
+    cross_section_function = binary_encounter_ionization, \
+    heat_of_reaction = 1.6731e-18, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2_4.34eV -> e- + O2+ + e-, \
+    interaction_name = e+O2_4.34eV->2e+O2p, \
+    interaction_model = ionization, \
+    cross_section_function = binary_encounter_ionization, \
+    heat_of_reaction = 1.2385e-18, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2_6.12eV -> e- + O2+ + e-, \
+    interaction_name = e+O2_6.12eV->2e+O2p, \
+    interaction_model = ionization, \
+    cross_section_function = binary_encounter_ionization, \
+    heat_of_reaction = 9.5327e-19, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2_9.97eV -> e- + O2+ + e-, \
+    interaction_name = e+O2_9.97eV->2e+O2p, \
+    interaction_model = ionization, \
+    cross_section_function = binary_encounter_ionization, \
+    heat_of_reaction = 3.3640e-19, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O2_10.29eV -> e- + O2+ + e-, \
+    interaction_name = e+O2_10.29eV->2e+O2p, \
+    interaction_model = ionization, \
+    cross_section_function = binary_encounter_ionization, \
+    heat_of_reaction = 2.8516e-19, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+
+# Dissociation
+# ---------------------
+
+interact e- + O2 -> e- + O + O, \
+    interaction_name = e_O2_diss, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/e+O2_dissociation_e+O_O_[SI].data, \
+    heat_of_reaction = 8.2503e-19, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+
+# Two-Body Detachment
+#-----------------------
+#
+# heat_of_reaction = O2 electron affinity
+
+interact O2- + O2 -> O2 + O2 + e-, \
+    interaction_name = O2n+O2->2O2+e, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2n/Ponomarev_2015/O2n_detachment_O2+e_[SI].data, \
+    heat_of_reaction = 7.209e-20, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+
+# Two-Body Attachment
+# -----------------------
+#
+# heat_of_reaction = dissociation energy - O_electron_affinity
+
+interact e- + O2 -> O + O-, \
+    interaction_name = e+O2->O+O-, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/Itikawa_2009/O2_attachment_O_O-_[SI].data, \
+    heat_of_reaction = 5.9095e-19, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+
+# Three-Body Attachment
+# ---------------------
+# Uses rate equation and does not give accurate post-recombination velocity
+# distribution (kinetic energy of e- and O2 is lost) but it does at least get
+# the loss rate for the electrons correct which will better model avalanche.
+
+#  Rate based on M = O2 from Lieberman and Lichtenberg (2005) in Table 8.3. Te =
+#  1eV, T = 300 K. Kossyi (1992) #45
+interact e- + O2 + O2 -> O2- + O2, \
+    interaction_name = e_O2_O2_attach, \
+    interaction_model = n_body_interaction, \
+    rate = 4.8e-43, \
+    stride = {_THREE_BODY_RXN_STRIDE}
+
+#  Rate based on M = O from Lieberman and Lichtenberg (2005) in Table 8.3. Te =
+#  1eV, T = 300 K. Kossyi (1992) #47
+interact e- + O2 + O -> O2- + O, \
+    interaction_name = e_O2_O-O2n_attach, \
+    interaction_model = n_body_interaction, \
+    rate = 1e-43, \
+    stride = {_THREE_BODY_RXN_STRIDE}
+
+#  Rate based on M = N2 from Kossyi (1992) reaction #48
+interact e- + O2 + O -> O2  + O-, \
+    interaction_name = e_O2_O-On_attach, \
+    interaction_model = n_body_interaction, \
+    rate = 1e-43, \
+    stride = {_THREE_BODY_RXN_STRIDE}
+
+# End of e + O2 interactions
+
+
+# e + O Interactions
+# ==================
+
+# Elastic
+# -------
+
+interact e- + O, \
+    interaction_name = e+O_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_elastic_[SI].data, \
+    fixed_heavy_particle_properties = {_FIXED_HEAVY_PARTICLE_PROPS}, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+# Excitation
+# ----------
+
+interact e- + O -> e- + O_1.97eV, \
+    interaction_name = e_O->e_O_1.97eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_2p^4_1D_[SI].data, \
+    heat_of_reaction = 3.1403e-19, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_4.19eV, \
+    interaction_name = e_O->e_O_4.19eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_2p^4_1S_[SI].data, \
+    heat_of_reaction = 6.7131e-19, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_9.15eV, \
+    interaction_name = e_O->e_O_9.15eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_3s_5S^0_[SI].data, \
+    heat_of_reaction = 1.4658e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_9.52eV, \
+    interaction_name = e_O->e_O_9.52eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_3s_3S^0_[SI].data, \
+    heat_of_reaction = 1.5253e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_10.74eV, \
+    interaction_name = e_O->e_O_10.74eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_3p_5P_[SI].data, \
+    heat_of_reaction = 1.7207e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_10.99eV, \
+    interaction_name = e_O->e_O_10.99eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_3p_3P_[SI].data, \
+    heat_of_reaction = 1.7608e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_11.93eV, \
+    interaction_name = e_O->e_O_11.93eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_4s_3S^0_[SI].data, \
+    heat_of_reaction = 1.9120e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_12.09eV, \
+    interaction_name = e_O->e_O_12.09eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_3d_3D^0_[SI].data, \
+    heat_of_reaction = 1.9366e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_12.36eV, \
+    interaction_name = e_O->e_O_12.36eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_4p_3P_[SI].data, \
+    heat_of_reaction = 1.9807e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_12.54eV, \
+    interaction_name = e_O->e_O_12.54eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_3s_3D^0_[SI].data, \
+    heat_of_reaction = 2.0091e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_12.76eV, \
+    interaction_name = e_O->e_O_12.76eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_4d_3D^0_[SI].data, \
+    heat_of_reaction = 2.0442e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_13.07eV, \
+    interaction_name = e_O->e_O_13.07eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_5d_3D^0_[SI].data, \
+    heat_of_reaction = 2.0939e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_13.24eV, \
+    interaction_name = e_O->e_O_13.24eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_6d_3D^0_[SI].data, \
+    heat_of_reaction = 2.1208e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_13.34eV, \
+    interaction_name = e_O->e_O_13.34eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_7d_3D^0_[SI].data, \
+    heat_of_reaction = 2.1371e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_14.12eV, \
+    interaction_name = e_O->e_O_14.12eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_3s_3P^0_[SI].data, \
+    heat_of_reaction = 2.2630e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_15.66eV, \
+    interaction_name = e_O->e_O_15.66V, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_2p^5_3P^0_[SI].data, \
+    heat_of_reaction = 2.5090e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O -> e- + O_16.11eV, \
+    interaction_name = e_O->e_O_16.11eV, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_excitation_O_(2D^0)_4d_3P^0_[SI].data, \
+    heat_of_reaction = 2.5819e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+
+# Ionization
+# ----------
+
+interact e- + O -> e- + O+ + e-, \
+    interaction_name = e+O->2e_Op, \
+    interaction_model = ionization, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Itikawa_1990/e+O_ionization_2e+O+_[SI].data, \
+    heat_of_reaction = 2.1818e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O_1.97eV -> e- + O+ + e-, \
+    interaction_name = e+O1.97->2e_Op, \
+    interaction_model = ionization, \
+    cross_section_function = binary_encounter_ionization, \
+    heat_of_reaction = 1.8678e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact e- + O_4.19eV -> e- + O+ + e-, \
+    interaction_name = e+O4.19->2e_Op, \
+    interaction_model = ionization, \
+    cross_section_function = binary_encounter_ionization, \
+    heat_of_reaction = 1.5105e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+
+#*** Need to include de-excitation collisions based on detailed balance!
+
+# End of e- + O interactions
+
+
+
+# e- + <ion>
+# ==========
+
+# Recombination
+# -------------
+
+# e+O2+  -- Assume 1/E scaling (broken into two regions) based on Peverall,
+# 2001. J. Chem. Phys. 114, 6679.
+#
+# Heat of reaction assumed to be = Ediss - Eiz
+interact e- + O2+ -> O + O, \
+    interaction_name = e_O2p_diss_recomb, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O2/e+O2+_recombination_O_O_[SI].data, \
+    heat_of_reaction = -1.107e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+
+# Three-body recombination: e- + ion + M -> neutral + M. Uses rate equation and
+# does not give accuarte post-recombination velocity distribution (kinetic
+# energy of e- and O2+ is lost) but it does at least get the loss rate for the
+# electrons correct which will better model avalanche.
+
+# Rate based on M = e- from Kossyi (1992), reaction #25. Te = 1eV
+interact e- + O2+ + e- -> O2 + e-, \
+    interaction_name = e_O2p_e_recomb, \
+    interaction_model = n_body_interaction, \
+    rate = 7.4e-39, \
+    stride = {_THREE_BODY_RXN_STRIDE}
+
+#  Rate based on M = O2 from Kossyi (1992), reaction #26. Te = 1eV
+interact e- + O2+ + O2 -> O2 + O2, \
+    interaction_name = e_O2p_O2_recomb, \
+    interaction_model = n_body_interaction, \
+    rate = 2.5e-41, \
+    stride = {_THREE_BODY_RXN_STRIDE}
+
+#  Rate based on M = e- from Kossyi (1992), reaction #25. Te = 1eV
+interact e- + O+ + e- -> O + e-, \
+    interaction_name = e_Op_e_recomb, \
+    interaction_model = n_body_interaction, \
+    rate = 7.4e-39, \
+    stride = {_THREE_BODY_RXN_STRIDE}
+
+# Detachment
+# ----------
+
+interact e- + O- -> e- + O + e-, \
+    interaction_name = e+On->2e_O, \
+    interaction_model = reaction, \
+    cross_section_file = {CROSS_SECTION_DIR}/e+O/Rost_1999/e+O-_detachment_[SI].data, \
+    heat_of_reaction = -2.34e-19, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+# End of e- + <ion>
+
+
+# Heavy + Heavy
+# =============
+
+# Elastic and Charge Exchange
+# ---------------------------
+
+interact O2 + O2+, \
+    interaction_name = O2_O2p_rce, \
+    interaction_model = resonant_charge_exchange, \
+    cross_section_function = Smirnov, \
+    ionization_energy = 1.93377892e-18, \
+    fixed_heavy_particle_properties = {_FIXED_HEAVY_PARTICLE_PROPS}, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact O2 + O2+, \
+    interaction_name = O2_O2p_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    fixed_heavy_particle_properties = {_FIXED_HEAVY_PARTICLE_PROPS}, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact O2 + O2, \
+    interaction_name = O2_O2_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    fixed_heavy_particle_properties = {_FIXED_HEAVY_PARTICLE_PROPS}, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O + O2+, \
+    interaction_name = O_O2p_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    fixed_heavy_particle_properties = {_FIXED_HEAVY_PARTICLE_PROPS}, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+interact O + O2, \
+    interaction_name = O_O2_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    fixed_heavy_particle_properties = {_FIXED_HEAVY_PARTICLE_PROPS}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O2-, \
+    interaction_name = O2_O2n_rce, \
+    interaction_model = resonant_charge_exchange, \
+    cross_section_function = Smirnov, \
+    ionization_energy = 1.93377892e-18, \
+    fixed_heavy_particle_properties = {_FIXED_HEAVY_PARTICLE_PROPS}, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+	 
+interact O2 + O2-, \
+    interaction_name = O2_O2n_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    fixed_heavy_particle_properties = {_FIXED_HEAVY_PARTICLE_PROPS}, \
+    remerge_split_particle = {_REMERGE_SPLIT_PARTICLE}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_electrons}
+
+
+## ionization energy = IZ_O2++ - IZ_O+
+#interact O2 + O2++ -> O2+ + O2+, \
+#    interaction_name = O2_O2pp_rce, \
+#    interaction_model = reaction, \
+#    cross_section_function = Smirnov, \
+#    ionization_energy = 3.85e-18, \
+#    fixed_heavy_particle_properties = {_FIXED_HEAVY_PARTICLE_PROPS}
+
+
+# Excited state collisions
+# ------------------------
+#
+# Neglects quenching to intermediate (non-ground) states
+
+# O2 + O2*
+
+interact O2 + O2_0.98eV, \
+    interaction_name = O2_O2_0.98eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O2_0.98eV -> O2 + O2, \
+    interaction_name = O2_O2_0.98eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -1.5653e-19, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O2_1.63eV, \
+    interaction_name = O2_O2_1.63eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O2_1.63eV -> O2 + O2, \
+    interaction_name = O2_O2_1.63eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -2.6067e-19, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O2_4.34eV, \
+    interaction_name = O2_O2_4.34eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O2_4.34eV -> O2 + O2, \
+    interaction_name = O2_O2_4.34eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -6.9534e-19, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O2_6.12eV, \
+    interaction_name = O2_O2_6.12eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O2_6.12eV -> O2 + O2, \
+    interaction_name = O2_O2_6.12eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -9.8053e-19, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O2_9.97eV, \
+    interaction_name = O2_O2_9.97eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O2_9.97eV -> O2 + O2, \
+    interaction_name = O2_O2_9.97eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -1.5974e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O2_10.29eV, \
+    interaction_name = O2_O2_10.29eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O2_10.29eV -> O2 + O2, \
+    interaction_name = O2_O2_10.29eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.77, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -1.6486e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+# O2 + O*
+# -------
+
+interact O2 + O_1.97eV, \
+    interaction_name = O2_O_1.97eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_1.97eV -> O2 + O, \
+    interaction_name = O2_O_1.97eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -3.1403e-19, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_4.19eV, \
+    interaction_name = O2_O_4.19eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_4.19eV -> O2 + O, \
+    interaction_name = O2_O_4.19eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -6.7131e-19, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_9.15eV, \
+    interaction_name = O2_O_9.15eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_9.15eV -> O2 + O, \
+    interaction_name = O2_O_9.15eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -1.4658e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_9.52eV, \
+    interaction_name = O2_O_9.52eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_9.52eV -> O2 + O, \
+    interaction_name = O2_O_9.52eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -1.5253e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_10.74eV, \
+    interaction_name = O2_O_10.74eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_10.74eV -> O2 + O, \
+    interaction_name = O2_O_10.74eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -1.7207e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_10.99eV, \
+    interaction_name = O2_O_10.99eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_10.99eV -> O2 + O, \
+    interaction_name = O2_O_10.99eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -1.7608e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_11.93eV, \
+    interaction_name = O2_O_11.93eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_11.93eV -> O2 + O, \
+    interaction_name = O2_O_11.93eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -1.9120e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_12.09eV, \
+    interaction_name = O2_O_12.09eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_12.09eV -> O2 + O, \
+    interaction_name = O2_O_12.09eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -1.9372e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_12.36eV, \
+    interaction_name = O2_O_12.36eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_12.36eV -> O2 + O, \
+    interaction_name = O2_O_12.36eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -1.9807e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_12.54eV, \
+    interaction_name = O2_O_12.54eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_12.54eV -> O2 + O, \
+    interaction_name = O2_O_12.54eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -2.0091e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_12.76eV, \
+    interaction_name = O2_O_12.76eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_12.76eV -> O2 + O, \
+    interaction_name = O2_O_12.76eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -2.0442e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_13.07eV, \
+    interaction_name = O2_O_13.07eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_13.07eV -> O2 + O, \
+    interaction_name = O2_O_13.07eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -2.0939e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_13.24eV, \
+    interaction_name = O2_O_13.24eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_13.24eV -> O2 + O, \
+    interaction_name = O2_O_13.24eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -2.1208e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_13.34eV, \
+    interaction_name = O2_O_13.34eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_13.34eV -> O2 + O, \
+    interaction_name = O2_O_13.34eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -2.1371e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_14.12eV, \
+    interaction_name = O2_O_14.12eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_14.12eV -> O2 + O, \
+    interaction_name = O2_O_14.12eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -2.2630e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_15.66eV, \
+    interaction_name = O2_O_15.66eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_15.66eV -> O2 + O, \
+    interaction_name = O2_O_15.66eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -2.5090e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+interact O2 + O_16.11eV, \
+    interaction_name = O2_O_16.11eV_elastic, \
+    interaction_model = elastic_isotropic_scattering, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {1-_QUENCHING_FRACTION}, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+interact O2 + O_16.11eV -> O2 + O, \
+    interaction_name = O2_O_16.11eV_quench, \
+    interaction_model = reaction, \
+    cross_section_function = VHS, \
+    reference_temperature = 273, \
+    viscosity_index = 0.7, \
+    scale_factor = {_QUENCHING_FRACTION}, \
+    heat_of_reaction = -2.5819e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_neutrals}
+
+# End Heavy + Heavy
+
+# Photon + Heavy
+# ==============
+
+interact O2 + photon -> O2+ + e-, \
+    interaction_name = photon_O2->O2p, \
+    interaction_model = photoionization, \
+    cross_section_file = {CROSS_SECTION_DIR}/photon+O2/Fennelly_1992/photon+O2_ionization_e+O2+_[SI].data, \
+    heat_of_reaction = 1.9338e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_photons}
+
+interact O2 + photon -> O + O, \
+    interaction_name = photon_O2->2O, \
+    interaction_model = photodissociation, \
+    cross_section_file = {CROSS_SECTION_DIR}/photon+O2/phidrates/photon+O2_dissociation_O_3P_+_O_3P_[SI].data, \
+    heat_of_reaction = 8.2503e-19, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_photons}
+
+# HoR based on threshold energy  
+interact O2 + photon -> O + O_1.97eV, \
+    interaction_name = photon_O2->O_O_1.97eV, \
+    interaction_model = photodissociation, \
+    cross_section_file = {CROSS_SECTION_DIR}/photon+O2/phidrates/photon+O2_dissociation_O_3P_+_O_1D_[SI].data, \
+    heat_of_reaction = 1.12866e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_photons}
+
+interact O2 + photon -> O_4.19eV + O_4.19eV, \
+    interaction_name = photon_O2->2O_4.19eV, \
+    interaction_model = photodissociation, \
+    cross_section_file = {CROSS_SECTION_DIR}/photon+O2/phidrates/photon+O2_dissociation_O_1S_+_O_1S_[SI].data, \
+    heat_of_reaction = 2.1676e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_photons}
+
+
+interact O + photon -> O+ + e-, \
+    interaction_name = photon_O->Op, \
+    interaction_model = photoionization, \
+    cross_section_file = {CROSS_SECTION_DIR}/photon+O/phidrates/photon+O_ionization_e+O+_[SI].data, \
+    heat_of_reaction = 2.1818e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_photons}
+
+interact O_1.97eV + photon -> O+ + e-, \
+    interaction_name = photon_O_1.97eV->Op, \
+    interaction_model = photoionization, \
+    cross_section_file = {CROSS_SECTION_DIR}/photon+O/phidrates/photon+O_1.97eV_ionization_e+O+_[SI].data, \
+    heat_of_reaction = 1.8678e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_photons}
+
+interact O_4.19eV + photon -> O+ + e-, \
+    interaction_name = photon_O_4.19eV->Op, \
+    interaction_model = photoionization, \
+    cross_section_file = {CROSS_SECTION_DIR}/photon+O/phidrates/photon+O_4.19eV_ionization_e+O+_[SI].data, \
+    heat_of_reaction = 1.5105e-18, \
+    vsigmamax_decay_fraction = {_VSIGMAMAX_DECAY_FRACTION}, \
+    recompute_vsigmamax_stride = {_RECOMPUTE_VSIGMAMAX_STRIDE}, \
+    vsigmamax_samples = {_RECOMPUTE_VSIGMAMAX_SAMPLES_photons}
+
+
+# CHM: Threshold energy higher than all photons in present system
+#interact O2 + photon -> O + O+ + e-, \
+#    interaction_name = photon_O2->O_Op, \
+#    interaction_model = photoionization, \
+#    cross_section_file = {CROSS_SECTION_DIR}/photon+O2/Fennelly_1992/photon+O2_dissociative_ionization_O_+_O+_[SI].data, \
+#    heat_of_reaction = 2.7590e-18
+
+# End photon + Heavy
+
+
+# Spontaneous Emission (with photons)
+# ===================================
+#
+# Currently we do not track rotational and vibrational states so the emission
+# wavelengths are for ground to ground electronic state transitions. This
+# introduces large error in the simulated molecular spectrum; however it is
+# unclear what the influence is on breakdown dynamics -- Vb, time delay, steady
+# state current, etc.
+
+
+# O2*
+# ---
+
+# From Krupenie, 1972: "O2 is a weak light emitter because, for most of its
+# excited states, transitions to the ground state are stronglyy forbidden.
+# Since O(16) has zero nuclear spin, antisymmetric rotational levels of O2(32)
+# are missing. The lifetimes are, at best, order of magnitude estimates
+
+# Table 54, Krupenie 1972. Infrared Atmospheric System (1,580 - 924 nm)
+interact O2_0.98eV -> O2 + photon, \
+    wavelength = 1265.1e-9, \
+    interaction_name = 12651A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 2.58e-4 
+
+# Table 54, Krupenie 1972. Atmospheric System (997 - 538 nm) rate for (v', v'')
+# = (0,0)
+interact O2_1.63eV -> O2 + photon, \
+    wavelength = 760.6e-9, \
+    interaction_name = 7606A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 8.5e-2  
+
+# Table 54, Krupenie 1972. Noxon System (0-0 band at 1,908.0 nm), electric
+# quadrupole transition observed in low pressure He-O2 discharge
+interact O2_1.63eV -> O2_0.98eV + photon, \
+    wavelength = 1908.0e-9, \
+    interaction_name = 19080A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1.5e-3
+
+# Table 54, Krupenie 1972. Chamberlain System (438-370 nm). Rate unknown,
+# assumed=Herzberg III. O2_4.34eV is composed of 3 electronic states in model,
+# this emission is from 4.262eV
+interact O2_4.34eV -> O2_0.98eV + photon, \
+    wavelength = 377.8e-9, \
+    interaction_name = 3778A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1e-5
+
+# Table 54, Krupenie 1972. Herzberg III System (292.4-244 nm). From 4.262eV
+# state of O2_4.34eV. Line much weaker than expected, likely that it
+# dissociates to ground state O atoms.
+interact O2_4.34eV -> O2 + photon, \
+    wavelength = 290.9e-9, \
+    interaction_name = 2909A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1e-5
+
+# Table 54, Krupenie 1972. Herzberg II System (271.5-254.0; 479-449 nm). From
+# 4.050eV state of O2_4.34eV.
+interact O2_4.34eV -> O2 + photon, \
+    wavelength = 306.1e-9, \
+    interaction_name = 3061A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1e-4
+
+# Table 54, Krupenie 1972. Herzberg I System (488-243 nm). From 4.34eV state of
+# O2_4.34eV.
+interact O2_4.34eV -> O2 + photon, \
+    wavelength = 285.7e-9, \
+    interaction_name = 2857A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1e-3
+
+# Table 54, Krupenie 1972
+interact O2_6.12eV -> O2 + photon, \
+    wavelength = 202.6e-9, \
+    interaction_name = 2026_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1e3
+
+# Rate unknown. Shyn (1994), Phys. Rev. A, 49, 3680 suggest that the longest
+# band results from allowed and forbidden transitions. Guess that rate is
+# relatively slow...
+interact O2_9.97eV -> O2 + photon, \
+    wavelength = 124.4e-9, \
+    interaction_name = 1244_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1e2
+
+# Rate unknown. Shyn (1994), Phys. Rev. A, 49, 3680 suggest that the second
+# band results from allowed and forbidden transitions. Guess that rate is
+# relatively slow...
+interact O2_10.29eV -> O2 + photon, \
+    wavelength = 120.5e-9, \
+    interaction_name = 1205A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1e2
+
+# End of O2* spontaneous emission
+
+
+# O* spontaneous emission
+# -----------------------
+
+# NIST atomic line database.  J' -> J, J'=(1,2,0) & J=(2,1,0)
+interact O_16.11eV -> O + photon, \
+    wavelength = 77.01e-9, \
+    interaction_name = 770.1A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 2.12e8
+
+# NIST atomic line database.  J' -> J, J'=(0,1,2) & J=(1,2,0)
+interact O_16.11eV -> O_10.99eV + photon, \
+    wavelength = 241.8e-9, \
+    interaction_name = 2418A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 2.98e5
+
+# NIST atomic line database.  J' -> J, J'=(0,1,2) & J=(1,2,0)
+interact O_16.11eV -> O_12.36eV + photon, \
+    wavelength = 330.0e-9, \
+    interaction_name = 3300A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS},\
+    rate = 1.43e5
+
+# NIST atomic line database
+interact O_15.66eV -> O + photon, \
+    wavelength = 79.24e-9, \
+    interaction_name = 792.4A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 6.59e8
+
+# NIST atomic line database. J' -> J, J'= (1,2,0) & J=(2,1,0)
+interact O_14.12eV -> O + photon, \
+    wavelength = 87.87e-9, \
+    interaction_name = 878.7A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 6.72e8
+
+# NIST atomic line database. J' -> J, J'=(0,1,2) & J=(1,2,0)
+interact O_14.12eV -> O_10.99eV + photon, \
+    wavelength = 395.3e-9, \
+    interaction_name = 3953A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 3.10e5
+
+# NIST atomic line database.  J' -> J, J'=(0,1,2) & J=(1,2,0)
+interact O_14.12eV -> O_12.36eV + photon, \
+    wavelength = 702.2e-9, \
+    interaction_name = 7022A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 3.22e4
+
+# NIST atomic line database. J' -> J, J'=(3,2,1) & J=(2,1,0)
+interact O_13.34eV -> O + photon, \
+    wavelength = 92.96e-9, \
+    interaction_name = 929.6A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1.06e7
+
+# NIST atomic line database. J' -> J, J'=(2,1,3) & J=(2,0,1)
+interact O_13.34eV -> O_10.99eV + photon, \
+    wavelength = 527.5e-9, \
+    interaction_name = 5275A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1.76e5
+
+# NIST atomic line database.  J' -> J, J'=(2,1,3) & J=(1,2,0)
+interact O_13.34eV -> O_12.36eV + photon, \
+    wavelength = 1265.2e-9, \
+    interaction_name = 12652A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 2.35e5
+
+
+# NIST atomic line database. J' -> J, J'=(3,2,1) & J=(2,1,0)
+interact O_13.24eV -> O + photon, \
+    wavelength = 93.74e-9, \
+    interaction_name = 937.4A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1.66e7
+
+# NIST atomic line database. J' -> J, J'=(2,1,3) & J=(1,2,0)
+interact O_13.24eV -> O_10.99eV + photon, \
+    wavelength = 551.3e-9, \
+    interaction_name = 5513A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 3.58e5
+
+# NIST atomic line database.  J' -> J, J'=(1,2,3) & J=(1,2,0)
+interact O_13.24eV -> O_12.36eV + photon, \
+    wavelength = 1411.1e-9, \
+    interaction_name = 14111A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 4.65e5
+
+# NIST atomic line database. J' -> J, J'=(2,1,3) & J=(2,1,0)
+interact O_13.07eV  -> O + photon, \
+    wavelength = 94.95e-9, \
+    interaction_name = 949.5A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 2.80e7
+
+# NIST atomic line database. J' -> J, J'=(1,2,3) & J=(1,2,0)
+interact O_13.07eV -> O_10.99eV + photon, \
+    wavelength = 595.9e-9, \
+    interaction_name = 5959A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 9.07e5
+
+# NIST atomic line database.  J' -> J, J'=(1,2,3) & J=(1,2,0)
+interact O_13.07eV -> O_12.36eV + photon, \
+    wavelength = 1745.4e-9,interaction_name = 17454A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1.18e6
+
+# NIST atomic line database. J' -> J, J'=(1,2,3) & J=(2,1,0)
+interact O_12.76eV  -> O + photon, \
+    wavelength = 97.26e-9, \
+    interaction_name = 972.6A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 5.83e7
+
+# NIST atomic line database.
+interact O_12.76eV  -> O_10.74eV + photon, \
+    wavelength = 614.1e-9, \
+    interaction_name = 6141A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 9.62e2
+
+# NIST atomic line database. J' -> J, J'=(1,2,3) & J=(1,2,0)
+interact O_12.76eV -> O_10.99eV + photon, \
+    wavelength = 700.2e-9, \
+    interaction_name = 7002A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 2.94e6
+
+# NIST atomic line database
+interact O_12.54eV -> O  + photon, \
+    wavelength = 98.95e-9, \
+    interaction_name = 989.5A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 2.26e8
+
+# NIST atomic line database.  J' -> J, J'=(1,2,3) & J=2.
+interact O_12.54eV -> O_1.97eV + photon, \
+    wavelength = 117.3e-9, \
+    interaction_name = 1173A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1.94e4
+
+# NIST atomic line database. J' -> J, J'=1 & J=0.
+interact O_12.54eV -> O_4.19eV + photon, \
+    wavelength = 148.4e-9, \
+    interaction_name = 1484A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 9.05e3
+
+# NIST atomic line database. J' -> J, J'=(1,2,3) & J=(1,2,0)
+interact O_12.54eV -> O_10.99eV + photon, \
+    wavelength = 798.6e-9, \
+    interaction_name = 7986A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 5.61e4
+
+# NIST atomic line database.  J' -> J, J'=(0,2,1) & J=1
+interact O_12.36eV -> O_9.52eV + photon, \
+    wavelength = 436.8e-9, \
+    interaction_name = 4368A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 7.58e7
+
+# NIST atomic line database.  J' -> J, J'=(3,1,2) & J=(2,1,0)
+interact O_12.09eV -> O + photon, \
+    wavelength = 102.7e-9, \
+    interaction_name = 1027A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 7.63e7
+
+# NIST atomic line database.
+interact O_12.09eV -> O_10.74eV + photon, \
+    wavelength = 920.5e-9, \
+    interaction_name = 9205A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1.66e3
+
+# NIST atomic line database. J' -> J, J'=(2,1,3) & J=(1,2,0)
+interact O_12.09eV -> O_10.99eV + photon, \
+    wavelength = 1128.7e-9,interaction_name = 11287A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 3.09e7
+
+# NIST atomic line database. J' -> J, J'=1 & J=(2,1,0) [Fine split ground: J=2
+# emits 103.92nm (A=9.43e7), J=1 emits 104.09nm (A=5.64e7), J=0 emits 104.17nm
+# (A=1.88e7)
+interact O_11.93eV -> O + photon, \
+    wavelength = 104.0e-9, \
+    interaction_name = 1040A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1.70e8
+
+# NIST atomic line database. J' -> J, J'=1 & J=(1,2,0)
+interact O_11.93eV -> O_10.99eV + photon, \
+    wavelength = 1316.5e-9,interaction_name = 13165A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 2.14e7
+
+# NIST atomic line database. J' -> J, J'=(2,1) & J=2
+interact O_10.99eV -> O_9.15eV + photon, \
+    wavelength = 672.6e-9, \
+    interaction_name = 6726A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 9.12e2
+
+# NIST atomic line database. J' -> J, J'=(0,2,1) & J=1. Emission rates for all
+# J' are listed as identical in NIST database...
+interact O_10.99eV -> O_9.52eV + photon, \
+    wavelength = 844.6e-9, \
+    interaction_name = 8446A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 3.22e7
+
+# NIST atomic line database. J' -> J,  J'=(3, 2, 1) & J=2. Emission rates for
+# all J' are listed as identical in NIST database...
+interact O_10.74eV -> O_9.15eV + photon, \
+    wavelength = 777.5e-9, \
+    interaction_name = 7775A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 3.69e7
+
+# NIST atomic line database. J' -> J, J'=(2, 1) & J=1. Emission rates from J' =
+# (3.61e2, 1.97e2)
+interact O_10.74eV -> O_9.52eV + photon, \
+    wavelength = 1016.7e-9, \
+    interaction_name = 10167A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 2.79e2
+
+# NIST atomic line database. Decays to ground (Fine split): J=2 emits 130.22nm
+# (A=3.41e8), J=1 emits 130.49nm (A=2.03e8), J=0 emits 130.60nm (A=6.76e7)
+interact O_9.52eV -> O  + photon, \
+    wavelength = 130.3e-9, \
+    interaction_name = 1303A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 6.12e8
+
+# NIST atomic line database.
+interact O_9.52eV -> O_1.97eV + photon, \
+    wavelength = 164.1e-9, \
+    interaction_name = 1641A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1.83e3
+
+# NIST atomic line database.
+interact O_9.52eV -> O_4.19eV + photon, \
+    wavelength = 232.5e-9, \
+    interaction_name = 2325A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 4.61
+
+# NIST atomic line database. Decays to ground (Fine split): J=2 emits 135.56nm
+# (A=4.2e3), J=1 emits 135.85nm (A=1.36e3) (product photon wavelength weighted
+# by A's)
+interact O_9.15eV -> O + photon, \
+    wavelength = 135.7e-9, \
+    interaction_name = 1357A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 5.56e3
+
+# NIST atomic line database.
+interact O_9.15eV -> O_1.97eV + photon, \
+    wavelength = 172.7e-9, \
+    interaction_name = 1727A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 5.32e-3
+
+# NIST atomic line database. Forbidden transitions. Decays to ground (fine
+# split): J=2 emits 295.8nm photon (A=2.42e-4), J=1 emits 297.2nm photon
+# (A=7.54e-2)
+interact O_4.19eV -> O + photon, \
+    wavelength = 297.2e-9, \
+    interaction_name = 2972A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 7.56e-2
+
+# NIST atomic line database. Forbidden transition.
+interact O_4.19eV -> O_1.97eV + photon, \
+    wavelength = 557.7e-9, \
+    interaction_name = 5577A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 1.26
+
+# NIST atomic line database. Forbidden transitions. Decays to ground (fine
+# split): J=2 emits 630.03nm photon (A=5.65e-3), J=1 emits 636.38nm
+# (A=1.82e-3), and J=0 emits 639.17nm (A=8.6e-7)
+interact O_1.97eV -> O + photon, \
+    wavelength = 631.8e-9, \
+    interaction_name = 6318A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    natural_line_broadening = true, \
+    number_of_product_photons = {_NUM_PHOTONS}, \
+    rate = 7.47e-3
+
+# End of O* spontaneous emission (with photons)
+
+
+# O* Low Energy Spontaneous Emission (Non-Ionizing)
+# =================================================
+
+## NIST atomic line database. Decays to 4p 5^P state. J' -> J, J'=(2,3) & J=(1,2)
+#interact O_12.76eV -> O_12.29eV, \
+#    interaction_name = 26212A_decay, \
+#    interaction_model = rate_emission, \
+#    stride = {_EMISSION_STRIDE}, \
+#    rate = 4.70e2
+
+#  NIST atomic line database. Decays to 4p 3^P state. J' -> J, J'=(1,2,3) & J=(1,2,0)
+interact O_12.76eV -> O_12.36eV, \
+    interaction_name = 30985A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    rate = 5.04e6
+
+#  NIST atomic line database.  J' -> J, J'=(0,2,1) & J=1
+interact O_12.36eV -> O_11.93eV, \
+    interaction_name = 28935A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    rate = 4.10e6
+
+#  NIST atomic line database.  J' -> J, J'=(0,2,1) & J=1
+interact O_12.36eV -> O_12.09eV, \
+    interaction_name = 45607A_decay, \
+    interaction_model = rate_emission, \
+    stride = {_EMISSION_STRIDE}, \
+    rate = 9.86e5
+
+# End of O* low energy spontaneous emission (non-ionizing)
+
+
+# O* Auto-Ionization
+# ==================
+
+#interact O_15.66eV -> O+ + e-, \
+#    interaction_name = O_15.66eV_auto_iz, \
+#    interaction_model =
+
+# End of O* auto-ionization
+
+
+# O2 Pre-Dissociation
+
+#interact O2_6.12 -> O + O, \
+#    interaction_name = O2_6.12eV_prediss, \
+#    interaction_model = rate
+
+# End of O2 pre-dissociation
+
+#********************** EXCITED SPECIES DECAY **********************

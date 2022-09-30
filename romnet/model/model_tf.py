@@ -9,11 +9,11 @@ from sklearn.model_selection              import train_test_split
 import tensorflow                             as tf
 from tensorflow                           import train as tf_train
 
-from .model        import Model
-from ..training    import LossHistory, get_loss, get_optimizer, callbacks
-from ..nn          import load_model_, load_weights_
-from ..            import utils
-from ..metrics     import get_metric
+from .model         import Model
+from ..training     import LossHistory, get_loss, get_optimizer, callbacks
+from ..architecture import load_model_, load_weights_
+from ..             import utils
+from ..metrics      import get_metric
 
 
 
@@ -52,16 +52,20 @@ class Model_TF(Model):
         """
         print('\n[ROMNet - model_tf.py    ]:   Initializing the ML Model')
 
-        self.surrogate_type     = InputData.surrogate_type
+        self.surrogate_type        = InputData.surrogate_type
   
-        self.train_int_flg       = InputData.train_int_flg
-        self.path_to_load_fld    = InputData.path_to_load_fld
+        self.train_int_flg         = InputData.train_int_flg
+        self.path_to_load_fld      = InputData.path_to_load_fld
   
-        self.got_stats           = False
+        self.got_stats             = False
         try:
-            self.norm_output_flg = InputData.norm_output_flg
+            self.norm_output_flg   = InputData.norm_output_flg
         except:
-            self.norm_output_flg = False
+            self.norm_output_flg   = False
+        try:
+            self.data_preproc_type = InputData.data_preproc_type
+        except:
+            self.data_preproc_type = None
 
         if (self.train_int_flg > 0):
 
@@ -149,11 +153,13 @@ class Model_TF(Model):
 
         if (self.train_int_flg > 0):
             self.norm_input  = self.data.norm_input
+            self.stat_input  = self.data.stat_input
             self.stat_output = self.data.stat_output
         else:
             try:
                 self.read_data_statistics()
             except:
+                self.stat_input  = None
                 self.stat_output = None
             self.norm_input  = None
             
@@ -161,7 +167,7 @@ class Model_TF(Model):
 
 
         #-----------------------------------------------------------------------
-        self.net = Net(InputData, self.norm_input, self.stat_output, system)
+        self.net = Net(InputData, self.norm_input, None, self.stat_output, system)
 
         self.net.AntiPCA_flg = False
         # try:
@@ -239,12 +245,17 @@ class Model_TF(Model):
 
         with open(self.path_to_run_fld+'/Model/Model_Summary.txt', 'w') as f:
             self.graph.summary(print_fn=lambda x: f.write(x + '\n'))
-        
-        tf.keras.utils.plot_model(self.graph, self.path_to_run_fld + 
-                                                             "/Model/Model.png")
 
-        ModelFile = self.path_to_run_fld + '/Model/' + self.net.structure_name + '/'
-        self.graph.save(ModelFile)
+        try:
+            plot_graph_flg = InputData.plot_graph_flg
+        except:
+            plot_graph_flg = True
+        if (plot_graph_flg):            
+            tf.keras.utils.plot_model(self.graph, self.path_to_run_fld + 
+                                                                 "/Model/Model.png")
+
+            ModelFile = self.path_to_run_fld + '/Model/' + self.net.structure_name + '/'
+            self.graph.save(ModelFile)
 
         #-----------------------------------------------------------------------
 
@@ -271,11 +282,11 @@ class Model_TF(Model):
         if (self.norm_output_flg):
             self.save_data_statistics(self.data.stat_input, self.data.stat_output)
             self.data.system.norm_output_flg = True
-            self.data.system.output_mean    = self.output_mean
-            self.data.system.output_std     = self.output_std
-            self.data.system.output_min     = self.output_min
-            self.data.system.output_max     = self.output_max
-            self.data.system.output_range   = self.output_range
+            self.data.system.output_mean    = self.output_mean[np.newaxis,...]
+            self.data.system.output_std     = self.output_std[np.newaxis,...]
+            self.data.system.output_min     = self.output_min[np.newaxis,...]
+            self.data.system.output_max     = self.output_max[np.newaxis,...]
+            self.data.system.output_range   = self.output_range[np.newaxis,...]
         else:
             self.data.system.norm_output_flg = False
         #-----------------------------------------------------------------------
@@ -322,9 +333,12 @@ class Model_TF(Model):
 
         #-----------------------------------------------------------------------
         try:
-            run_eagerly_flg = InputData.RunEagerlyFlg
+            run_eagerly_flg = InputData.run_eagerly_flg
         except:
             run_eagerly_flg = False
+
+        if (run_eagerly_flg):
+            print('\n\n\n[ROMNet - model_tf.py    ]:   WARNING: Running Eagerly!\n\n\n')
 
         self.net.compile(self.data,
                          optimizer    = opt,
@@ -368,6 +382,7 @@ class Model_TF(Model):
         History       = self.net.fit(x=x, 
                                      y=y, 
                                      batch_size=InputData.batch_size, 
+                                     validation_batch_size=InputData.valid_batch_size, 
                                      validation_data=xy_valid, 
                                      verbose=1, 
                                      epochs=InputData.n_epoch, 
@@ -445,56 +460,27 @@ class Model_TF(Model):
             if (not self.got_stats):
                 self.read_data_statistics()
 
-            y_pred = y_pred * self.output_range + self.output_min
+            if (self.data_preproc_type == None) or (self.data_preproc_type == 'std') or (self.data_preproc_type == 'auto'):
+                y_pred = y_pred * self.output_std + self.output_mean
 
-        return y_pred
+            elif (self.data_preproc_type == '0to1'):
+                y_pred = y_pred * self.output_range + self.output_min
 
-    #===========================================================================
+            elif (self.data_preproc_type == 'range'):
+                y_pred = y_pred * self.output_range
 
+            elif (self.data_preproc_type == '-1to1'):
+                y_pred = (y_pred + 1.)/2. * self.output_range + self.output_min
 
+            elif (self.data_preproc_type == 'pareto'):
+                y_pred = y_pred * np.sqrt(self.output_std) + self.output_mean
 
-    #===========================================================================
-    def predict_test(self, input_data):
-        """
+            elif (self.data_preproc_type == 'log'):
+                y_pred = np.exp(y_pred) + self.output_min - 1.e-10
 
-        Args:
-            
-            
-        """
+            elif (self.data_preproc_type == 'log10'):
+                y_pred = 10.**y_pred + self.output_min - 1.e-10
 
-        y_pred = self.net.call_predict_deeponet_1(input_data)
-
-        # if (self.norm_output_flg):
-
-        #     if (not self.got_stats):
-        #         self.read_data_statistics()
-
-        #     y_pred = y_pred * self.output_range + self.output_min
-
-        return y_pred
-
-    #===========================================================================
-
-
-
-
-    #===========================================================================
-    def predict_test_2(self, input_data):
-        """
-
-        Args:
-            
-            
-        """
-
-        y_pred = self.net.call_predict_deeponet_2(input_data)
-
-        # if (self.norm_output_flg):
-
-        #     if (not self.got_stats):
-        #         self.read_data_statistics()
-
-        #     y_pred = y_pred * self.output_range + self.output_min
 
         return y_pred
 

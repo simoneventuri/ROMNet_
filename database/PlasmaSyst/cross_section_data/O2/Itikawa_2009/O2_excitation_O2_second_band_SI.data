@@ -1,0 +1,18 @@
+# EXCITATION
+# Process:           O2 + e- -> e- + O2 "second" band 
+# Heat of Reaction:  1.6486e-18 joules
+# Units:             SI
+# Uncertainty:       +/-23%
+# Source:            Itikawa, J. Phys. Chem. Ref. Data, Vol. 38, No. 1, 2009. (Table 9)
+# ALEPH Comments:    "Second band" excitation, exact electronic state not known. Some differential cross section data available, see Shyn (1994), Phys. Rev. A, 49, 3680.
+# ALEPH Comments:    Added 0 value at heat of reaction energy. Extrapolated using ln(E)/E up to 500 eV, then linearly extrapolated to 0 sigma for the last data point
+# Energy (Joules) | Cross Section (m2)
+#-------------------------------------
+1.6486E-18	0.0000E+00
+2.4033E-18	7.2000E-23
+3.2044E-18	9.1500E-23
+4.8065E-18	8.7100E-23
+8.0109E-18	4.7200E-23
+8.0109E-17	7.4982E-24
+9.3725E-17	0.0000E+00
+#-------------------------------------

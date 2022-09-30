@@ -53,16 +53,40 @@ class PDE(Data):
         except:
             self.valid_perc      = 0.
 
+        try:
+            self.internal_pca_flg= InputData.internal_pca_flg
+        except:
+            self.internal_pca_flg= False
+
         self.NData               = 0
         self.xtrain, self.ytrain = None, None
         self.xtest,  self.ytest  = None, None
 
         self.system              = system
-        self.other_idxs          = system.other_idxs
-        self.ind_idxs            = system.ind_idxs
-        self.size_splits         = [len(self.other_idxs)]+[1]*len(self.ind_idxs)
-        self.order               = system.order[0]
-        self.get_residual        = system.get_residual
+        try:
+            self.other_idxs      = system.other_idxs
+        except:
+            self.other_idxs      = None
+        try:
+            self.ind_idxs        = system.ind_idxs
+        except:
+            self.ind_idxs        = None
+        try:
+            self.size_splits     = [len(self.other_idxs)]+[1]*len(self.ind_idxs)
+        except:
+            self.size_splits     = None
+        try:
+            self.order           = system.order[0]
+        except:
+            self.order           = None
+        try:
+            self.get_residual    = system.get_residual
+        except:
+            self.get_residual    = None
+        try:
+            self.fROM_anti       = system.fROM_anti
+        except:
+            self.fROM_anti       = None
         if (system.fROM_anti):
             self.fROM_anti       = system.fROM_anti()
         else:
@@ -132,14 +156,25 @@ class PDE(Data):
             for data_type in data:
                 for data_id in data_obj.data_ids:
 
-                    x_df   = pd.read_csv(data_obj.path_to_data_fld+'/'+data_type+"/"+data_id+'/Input.csv')[data_obj.input_vars]
+                    if (self.internal_pca_flg):
+                        input_file_name = 'Input_PCA.csv'
+                    else:
+                        input_file_name = 'Input.csv'
+                    #input_file_name = 'Input.csv'
+                    print('\n[ROMNet - pde.py                    ]:   Reading input pts from  ', data_obj.path_to_data_fld+'/'+data_type+"/"+data_id+'/'+input_file_name)
+                    x_df   = pd.read_csv(data_obj.path_to_data_fld+'/'+data_type+"/"+data_id+'/'+input_file_name)[data_obj.input_vars]
+                    
+                    print('\n[ROMNet - pde.py                    ]:   Reading output pts from ', data_obj.path_to_data_fld+'/'+data_type+"/"+data_id+'/Output.csv')
                     y_df   = pd.read_csv(data_obj.path_to_data_fld+'/'+data_type+"/"+data_id+'/Output.csv')[data_obj.output_vars]
+                    
                     i_df   = pd.DataFrame( np.arange(x_df.shape[0]), columns=['indx'])
 
-                    # if (data_id != 'res'):
-                    #     y    = y_df.to_numpy()
-                    #     y    = (y - data_obj.system.C) / data_obj.system.D
-                    #     y_df = pd.DataFrame(y, columns=y_df.columns)
+                    # for col in x_df.columns:
+                    #     if (col != 't'):
+                    #         x_df[col] = np.log10(x_df[col].to_numpy()+1e-14)
+                    # for col in y_df.columns:
+                    #     if (col != 't'):
+                    #         y_df[col] = np.log10(y_df[col].to_numpy()+1e-14)
 
                     data[data_type][data_id] = []
                     data[data_type][data_id].append(x_df) #.to_numpy()
@@ -448,7 +483,10 @@ class PDE(Data):
         except:
             self.test_flg          = False
 
-        self.other_ranges          = self.system.other_ranges
+        try:
+            self.other_ranges      = self.system.other_ranges
+        except:
+            self.other_ranges      = None
 
 
         if (InputData.generate_flg):
@@ -474,8 +512,8 @@ class PDE(Data):
         self.compute_output_statistics()      
 
         if (self.norm_output_flg):
-            if (self.path_to_load_fld):
-                self.read_output_statistics(self.path_to_load_fld)      
+            #if (self.path_to_load_fld):
+            #    self.read_output_statistics(self.path_to_load_fld)      
             train_data, valid_data = self.normalize_output_data([train_data, valid_data])
 
 

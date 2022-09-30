@@ -8,23 +8,23 @@ class inputdata(object):
 
     def __init__(self, WORKSPACE_PATH):
 
-        self.n_modes              = 2                                                                        # No of Modes (i.e., No of Neurons in Trunch's Last Layer)
+        self.n_modes             = 1                                                                         # No of Modes (i.e., No of Neurons in Trunch's Last Layer)
 
         #=======================================================================================================================================
         ### Case Name
-        self.run_idx              = 0                                                                        # Training Case Identification Number. If ==0, the code automatically assigns one.
+        self.run_idx             = 0                                                                         # Training Case Identification Number. If ==0, the code automatically assigns one.
 
         #=======================================================================================================================================
         ### Execution Flags
-        self.train_int_flg        = 1                                                                        # Integer Flag for Training (0=>No, 1=>Yes)
+        self.train_int_flg       = 1                                                                         # Integer Flag for Training (0=>No, 1=>Yes)
 
         #=======================================================================================================================================
         ### Paths
-        self.WORKSPACE_PATH       = WORKSPACE_PATH                                                           # os.getenv('WORKSPACE_PATH')       
-        self.ROMNet_fld           = self.WORKSPACE_PATH + '/ROMNet/romnet/'                                  # $WORKSPACE_PATH/ROMNet/romnet/
+        self.WORKSPACE_PATH      = WORKSPACE_PATH                                                            # os.getenv('WORKSPACE_PATH')       
+        self.ROMNet_fld          = self.WORKSPACE_PATH + '/ROMNet/romnet/'                                   # $WORKSPACE_PATH/ROMNet/romnet/
         self.path_to_run_fld     = self.ROMNet_fld + '/../MSD_100Cases_All/'                                 # Path To Training Folder
-        self.path_to_load_fld    = None #self.ROMNet_fld + '/../Data/MSD_100Cases/Orig/All/FNN/Final.h5'     # Path To Pre-Trained Model Folder 
-                                   #self.ROMNet_fld +'/../MSD_100Cases_All/DeepONet/Deterministic/Run_26/'   
+        self.path_to_load_fld    = None #self.ROMNet_fld + '/../Data/MSD_100Cases/Orig/OneByOne/FNN/Final.h5'      # Path To Pre-Trained Model Folder 
+        # self.path_to_load_fld    = self.ROMNet_fld +'/../MSD_100Cases_All/DeepONet/Run_2/'   
         self.path_to_data_fld    = self.ROMNet_fld + '/../Data/MSD_100Cases/Orig/'                           # Path To Training-Data Folder 
 
         #=======================================================================================================================================
@@ -35,16 +35,19 @@ class inputdata(object):
         ### Data
         self.data_type           = 'PDE'                                                                     # Module to Be Used for Reading Data
         self.generate_flg        = False                                                                     # Flag for Generating Data
+        ## Fully Data Driven
         self.n_train             = {'pts': 0}                                                                # Type/No of Data Points
-                                  #{'ics': 0, 'res': 0}                                                  
-        # self.valid_perc          = 20.0                                                                      # Percentage of Training Data to Be Used for Validation (e.g., = 20.0 => 20%)
-        # self.data_dist           = 'uniform'                                                                 # Distribution for Sampling Independent Variables
-        # self.test_flg             = False                                                                    # Test Flag
-        # self.n_test               = 2                                                                        # No of Test Cases
+        ### Physics Informed
+        # self.n_train             = {'ics': 0, 'res': 0}                                                      # Type/No of Data Points
+        # self.valid_perc          = 20.0                                                                    # Percentage of Training Data to Be Used for Validation (e.g., = 20.0 => 20%)
+        # self.data_dist           = 'uniform'                                                               # Distribution for Sampling Independent Variables
+        # self.test_flg             = False                                                                  # Test Flag
+        # self.n_test               = 2                                                                      # No of Test Cases
 
         #=======================================================================================================================================
         ## NN Model Structure
         self.surrogate_type      = 'DeepONet'                                                                # Type of Surrogate ('DeepONet' / 'FNN' / 'FNN-SourceTerms')
+        self.plot_graph_flg      = True                                                                      # Flag for Plotting and Saving the Graph for the Network Structure
         self.trans_fun           = None #{'log': ['t']}                                                      # Dictionary Containing Functions to Be Applied to Input Data 
         self.norm_output_flg     = False                                                                     # Flag for Normalizing Output Data
         self.output_vars         = ['x','v']                                                                 # List Containing the Output Data Variable Names for each System
@@ -53,13 +56,17 @@ class inputdata(object):
                                                   'Trunk': ['t']}}                                           # Dictionary Containing the Input  Data Variable Names for each Component
         self.norm_input_flg      = {'DeepONet': {'Branch_1': True,   
                                                  'Branch_2': True,   
-                                                    'Trunk': True}}                                          # Dictionary Containing Flags for Normalizing Input Data for each Component
+                                                  'Trunk_1': True,
+                                                  'Trunk_2': True}}                                          # Dictionary Containing Flags for Normalizing Input Data for each Component
         self.structure           = {'DeepONet': {'Branch_1': ['Main'],  
                                                  'Branch_2': ['Main'],  
-                                                    'Trunk': ['Main']}}                                      # Dictionary Containing the Structure of the Network
-        self.branch_to_trunk     = {'DeepONet': 'stacked'}                                                   # DeepONet Branch-to-Trunk Type of Mapping  ('stacked'/'unstacked')
-        self.n_neurons           = {'DeepONet': {'Branch': {'Main': np.array([32,32,32,self.n_modes+2])},  
-                                                  'Trunk': {'Main': np.array([32,32,32,self.n_modes])}}}     # Dictionary Containing the No of Neurons for each Layer
+                                                  'Trunk_1': ['Main'],
+                                                  'Trunk_2': ['Main']}}                                      # Dictionary Containing the Structure of the Network
+        self.branch_to_trunk     = {'DeepONet': 'one_to_one'}                                                # DeepONet Branch-to-Trunk Type of Mapping  ('one_to_one'/'multi_to_one')
+        self.n_branch_out        = self.n_modes
+        self.n_trunk_out         = self.n_modes
+        self.n_neurons           = {'DeepONet': {'Branch': {'Main': np.array([32,32,32,self.n_branch_out])},  
+                                                  'Trunk': {'Main': np.array([32,32,32,self.n_trunk_out])}}} # Dictionary Containing the No of Neurons for each Layer
         self.act_funcs           = {'DeepONet': {'Branch': {'Main': ['tanh','tanh','tanh','linear']},  
                                                   'Trunk': {'Main': ['tanh','tanh','tanh','linear']}}}       # Dictionary Containing the Activation Funct.s for each Layer
         self.dropout_rate        = {'DeepONet': {'Branch': {'Main': 1.e-10},  
@@ -86,10 +93,12 @@ class inputdata(object):
 
         #=======================================================================================================================================
         ### Losses
+        ## Fully Data Driven
         self.losses              = {'pts': {'name': 'MSE', 'axis': 0}}                                       # Dictionary Containing Loss Functions for Each Data Type
-                                  #{'ics': {'name': 'MSE', 'axis': 0}, 'res': {'name': 'MSE', 'axis': 0}} 
         self.loss_weights        = {'pts': 1.}                                                               # Dictionary Containing Weights for Each Data Type
-                                  #{'ics': 1., 'res': 1.}     
+        # ## Physics Informed
+        # self.losses              = {'ics': {'name': 'MSE', 'axis': 0}, 'res': {'name': 'MSE', 'axis': 0}}    # Dictionary Containing Loss Functions for Each Data Type
+        # self.loss_weights        = {'ics': 1., 'res': 1.}                                                    # Dictionary Containing Weights for Each Data Type
         self.metrics             = None                                                                      # List of Metrics                                                          
 
         #=======================================================================================================================================

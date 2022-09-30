@@ -1,0 +1,598 @@
+# Note that if USER_DEFINED_PRODUCT_SETS is not defined then it is set to 0 (false) by default by Aprepro
+{if(!USER_DEFINED_PRODUCT_SETS)}
+  # N2_IONIZATION_PRODUCT_SETS = {N2_IONIZATION_PRODUCT_SETS = "+0, +0, +0"}
+  # N2_ELASTIC_PRODUCT_SETS = {N2_ELASTIC_PRODUCT_SETS = "+0, +0"}
+  # N2_EXCITATION_PRODUCT_SETS = {N2_EXCITATION_PRODUCT_SETS = "+0, +0"}
+{endif}
+{if(HYBRID_MCC_SPAWN_PARTICLES)}
+# N2_ELASTIC_PRODUCT_TYPES = {N2_ELASTIC_PRODUCT_TYPES = "e-, N2"}
+# N2_EXCITATION_PRODUCT_TYPES = {N2_EXCITATION_PRODUCT_TYPES = "e-, N2"}
+{else}
+# N2_ELASTIC_PRODUCT_TYPES = {N2_ELASTIC_PRODUCT_TYPES = "e-, N2_fluid"}
+# N2_EXCITATION_PRODUCT_TYPES = {N2_EXCITATION_PRODUCT_TYPES = "e-, N2_fluid"}
+{endif}
+# GAS_ATOMIC_NUMBER = {GAS_ATOMIC_NUMBER = 14}
+
+{Ifdef(USE_EMPHASIS_DATA)}
+  # Using EMPHASIS data for e+N2 interactions
+  Particle Interactions:
+    e+N2 Ionization:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2+, e-]
+      Product_sets: [{N2_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 15.6
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_single_ionization_15.6eV_SI.data
+      Stride: 1
+    e+N2 Ionization Excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2+, e-]
+      Product_sets: [{N2_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 18.8
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_ionization_excitation_18.8eV_SI.data
+      Stride: 1
+    e+N2 Elastic:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_ELASTIC_PRODUCT_SETS}]
+      Type: Elastic
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_elastic_SI.data
+      Stride: 1
+    e+N2 0.02 rot excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.02
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_rot_excitation_0.02eV_SI.data
+      Stride: 1
+    e+N2 0.29 v1 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.29
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v1_excitation_0.29eV_SI.data
+      Stride: 1
+    e+N2 0.291 v1 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.291
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v1_excitation_0.291eV_SI.data
+      Stride: 1
+    e+N2 0.59 v2 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.59
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v2_excitation_0.59eV_SI.data
+      Stride: 1
+    e+N2 0.88 v3 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.88
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v3_excitation_0.88eV_SI.data
+      Stride: 1
+    e+N2 1.17 v4 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 1.17
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v4_excitation_1.17eV_SI.data
+      Stride: 1
+    e+N2 1.47 v5 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 1.47
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v5_excitation_1.47eV_SI.data
+      Stride: 1
+    e+N2 1.76 v6 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 1.76
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v6_excitation_1.76eV_SI.data
+      Stride: 1
+    e+N2 2.06 v7 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 2.06
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v7_excitation_2.06eV_SI.data
+      Stride: 1
+    e+N2 2.35 v8 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 2.35
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v8_excitation_2.35eV_SI.data
+      Stride: 1
+    e+N2 6.17 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 6.17
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_A3sigma_v0-4_excitation_6.17eV_SI.data
+      Stride: 1
+    e+N2 7.0 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 7.0
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_A3sigma_v5-9_excitation_7.0eV_SI.data
+      Stride: 1
+    e+N2 7.35 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 7.35
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_B3pi_excitation_7.35eV_SI.data
+      Stride: 1
+    e+N2 7.36 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 7.36
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_W3delta_excitation_7.36eV_SI.data
+      Stride: 1
+    e+N2 7.8 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 7.8
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_A3sigma_v10+_excitation_7.8eV_SI.data
+      Stride: 1
+    e+N2 8.16 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 8.16
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_B'3sigma_excitation_8.16eV_SI.data
+      Stride: 1
+    e+N2 8.4 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 8.4
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_A'1sigma_excitation_8.4eV_SI.data
+      Stride: 1
+    e+N2 8.55 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 8.55
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_A1pi_excitation_8.55eV_SI.data
+      Stride: 1
+    e+N2 8.89 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 8.89
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_W1delta_excitation_8.89eV_SI.data
+      Stride: 1
+    e+N2 11.03 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 11.03
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_C3pi_excitation_11.03eV_SI.data
+      Stride: 1
+    e+N2 11.87 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 11.87
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_E3sigma_excitation_11.87eV_SI.data
+      Stride: 1
+    e+N2 12.25 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 12.25
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_A''1sigma_excitation_12.25eV_SI.data
+      Stride: 1
+    e+N2 13.0 excitation:
+      Method: DSMC
+      Reactants_types: [e-, N2]
+      Products: [e-, N2]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 13.0
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_sum_singlets_excitation_13.0eV_SI.data
+      Stride: 1
+{Ifdef(IS_HYBRID)}
+    e+N2 Ionization Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+{Ifdef(CHARGED_FLUID)}
+      Products: [e-, N2+_fluid, e-_fluid]
+{Else}
+      Products: [e-, N2+, e-]
+{Endif}
+      Product_sets: [{N2_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 15.6
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_single_ionization_15.6eV_SI.data
+      Stride: 1
+    e+N2 Ionization Excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+{Ifdef(CHARGED_FLUID)}
+      Products: [e-, N2+_fluid, e-_fluid]
+{Else}
+      Products: [e-, N2+, e-]
+{Endif}
+      Product_sets: [{N2_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 18.8
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_ionization_excitation_18.8eV_SI.data
+      Stride: 1
+    e+N2 Elastic Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_ELASTIC_PRODUCT_TYPES}]
+      Product_sets: [{N2_ELASTIC_PRODUCT_SETS}]
+      Type: Elastic
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_elastic_SI.data
+      Stride: 1
+    e+N2 0.02 rot excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.02
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_rot_excitation_0.02eV_SI.data
+      Stride: 1
+    e+N2 0.29 v1 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.29
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v1_excitation_0.29eV_SI.data
+      Stride: 1
+    e+N2 0.291 v1 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.291
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v1_excitation_0.291eV_SI.data
+      Stride: 1
+    e+N2 0.59 v2 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.59
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v2_excitation_0.59eV_SI.data
+      Stride: 1
+    e+N2 0.88 v3 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 0.88
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v3_excitation_0.88eV_SI.data
+      Stride: 1
+    e+N2 1.17 v4 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 1.17
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v4_excitation_1.17eV_SI.data
+      Stride: 1
+    e+N2 1.47 v5 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 1.47
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v5_excitation_1.47eV_SI.data
+      Stride: 1
+    e+N2 1.76 v6 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 1.76
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v6_excitation_1.76eV_SI.data
+      Stride: 1
+    e+N2 2.06 v7 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 2.06
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v7_excitation_2.06eV_SI.data
+      Stride: 1
+    e+N2 2.35 v8 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 2.35
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_v8_excitation_2.35eV_SI.data
+      Stride: 1
+    e+N2 6.17 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 6.17
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_A3sigma_v0-4_excitation_6.17eV_SI.data
+      Stride: 1
+    e+N2 7.0 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 7.0
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_A3sigma_v5-9_excitation_7.0eV_SI.data
+      Stride: 1
+    e+N2 7.35 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 7.35
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_B3pi_excitation_7.35eV_SI.data
+      Stride: 1
+    e+N2 7.36 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 7.36
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_W3delta_excitation_7.36eV_SI.data
+      Stride: 1
+    e+N2 7.8 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 7.8
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_A3sigma_v10+_excitation_7.8eV_SI.data
+      Stride: 1
+    e+N2 8.16 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 8.16
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_B'3sigma_excitation_8.16eV_SI.data
+      Stride: 1
+    e+N2 8.4 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 8.4
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_A'1sigma_excitation_8.4eV_SI.data
+      Stride: 1
+    e+N2 8.55 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 8.55
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_A1pi_excitation_8.55eV_SI.data
+      Stride: 1
+    e+N2 8.89 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 8.89
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_W1delta_excitation_8.89eV_SI.data
+      Stride: 1
+    e+N2 11.03 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 11.03
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_C3pi_excitation_11.03eV_SI.data
+      Stride: 1
+    e+N2 11.87 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Heat of Reaction: 11.87
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_E3sigma_excitation_11.87eV_SI.data
+      Stride: 1
+    e+N2 12.25 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 12.25
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_A''1sigma_excitation_12.25eV_SI.data
+      Stride: 1
+    e+N2 13.0 excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, N2_fluid]
+      Products: [{N2_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{N2_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 13.0
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/EMPHASIS/e+N2_sum_singlets_excitation_13.0eV_SI.data
+      Stride: 1
+{Endif}
+{Endif}

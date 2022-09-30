@@ -3,7 +3,7 @@ import tensorflow as tf
 from .real import Real
 
 
-real = Real(32)
+real = Real(64)
 
 
 def default_float():

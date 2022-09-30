@@ -1,0 +1,18 @@
+# EXCITATION
+# Process:           O2 + e- -> e- + O2 B 3_DELTA{u,-} 
+# Heat of Reaction:  9.8053e-19 joules
+# Units:             SI
+# Uncertainty:       +/-20%
+# Source:            Itikawa, J. Phys. Chem. Ref. Data, Vol. 38, No. 1, 2009. (Table 9)
+# ALEPH Comments:    Schumann-Runge Continuum. Some differential cross section data available
+# ALEPH Comments:    Added 0 value at heat of reaction energy. Extrapolated using ln(E)/E up to 500 eV, then linearly extrapolated to 0 sigma for the last data point
+# Energy (Joules) | Cross Section (m2)
+#-------------------------------------
+9.8053e-19 	0.0
+2.403e-18  	0.687e-20
+3.204e-18  	0.790e-20
+4.807e-18  	0.598e-20
+8.0109E-18	2.7640E-21
+8.0109E-17	4.3909E-22
+9.3725E-17	0.0000E+00
+#-------------------------------------

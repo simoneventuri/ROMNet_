@@ -7,8 +7,11 @@ class Data(object):
 
     def __init__(self, InputData, system):
 
-        self.Type = InputData.data_type
-
+        self.Type                  = InputData.data_type
+        try:
+            self.data_preproc_type = InputData.data_preproc_type
+        except:
+            self.data_preproc_type = None
 
     # ---------------------------------------------------------------------------------------------------------------------------
     def transform_normalization_data(self):
@@ -42,8 +45,26 @@ class Data(object):
                 if (data_id != 'res'):
                     x_data = xyi_data[0]
 
-                    all_data[i][data_id][0] = (x_data - self.stat_input['min'].to_numpy()) / (self.stat_input['max'].to_numpy() - self.stat_input['min'].to_numpy())
-                    #all_data[i][data_id][1] = (x_data - self.system.C) / self.system.D
+                    if (self.data_preproc_type == None) or (self.data_preproc_type == 'std') or (self.data_preproc_type == 'auto'):
+                        all_data[i][data_id][0] = (x_data - self.stat_input['mean'].to_numpy()) / self.stat_input['std'].to_numpy()
+
+                    elif (self.data_preproc_type == '0to1'):
+                        all_data[i][data_id][0] = (x_data - self.stat_input['min'].to_numpy()) / (self.stat_input['max'].to_numpy() - self.stat_input['min'].to_numpy())
+
+                    elif (self.data_preproc_type == 'range'):
+                        all_data[i][data_id][0] = (x_data) / (self.stat_input['max'].to_numpy() - self.stat_input['min'].to_numpy())
+
+                    elif (self.data_preproc_type == '-1to1'):
+                        all_data[i][data_id][0] = 2. * (x_data - self.stat_input['min'].to_numpy()) / (self.stat_input['max'].to_numpy() - self.stat_input['min'].to_numpy()) - 1.
+                    
+                    elif (self.data_preproc_type == 'pareto'):
+                        all_data[i][data_id][0] = (x_data - self.stat_input['mean'].to_numpy()) / np.sqrt(self.stat_input['std'].to_numpy())
+
+                    elif (self.data_preproc_type == 'log') or (self.data_preproc_type == 'log10'):
+                        all_data[i][data_id][0] = (x_data - self.stat_input['min'].to_numpy()+1e-10)
+                    
+                    # # PCA
+                    # all_data[i][data_id][1] = (x_data - self.system.C) / self.system.D
         
         return all_data
 
@@ -58,8 +79,29 @@ class Data(object):
                 if (data_id != 'res'):
                     y_data = xyi_data[1]
 
-                    all_data[i][data_id][1] = (y_data - self.stat_output['min'].to_numpy()) / (self.stat_output['max'].to_numpy() - self.stat_output['min'].to_numpy())
-                    #all_data[i][data_id][1] = (y_data - self.system.C) / self.system.D
+                    if (self.data_preproc_type == None) or (self.data_preproc_type == 'std')  or (self.data_preproc_type == 'auto'):
+                        all_data[i][data_id][1] = (y_data - self.stat_output['mean'].to_numpy()) / self.stat_output['std'].to_numpy()
+
+                    elif (self.data_preproc_type == '0to1'):
+                        all_data[i][data_id][1] = (y_data - self.stat_output['min'].to_numpy())  / (self.stat_output['max'].to_numpy() - self.stat_output['min'].to_numpy())
+
+                    elif (self.data_preproc_type == 'range'):
+                        all_data[i][data_id][1] = (y_data)  / (self.stat_output['max'].to_numpy() - self.stat_output['min'].to_numpy())
+
+                    elif (self.data_preproc_type == '-1to1'):
+                        all_data[i][data_id][1] = 2. * (y_data - self.stat_output['min'].to_numpy())  / (self.stat_output['max'].to_numpy() - self.stat_output['min'].to_numpy()) - 1.
+
+                    elif (self.data_preproc_type == 'pareto'):
+                        all_data[i][data_id][1] = (y_data - self.stat_output['mean'].to_numpy()) / np.sqrt(self.stat_output['std'].to_numpy())
+
+                    elif (self.data_preproc_type == 'log'):
+                        all_data[i][data_id][1] = np.log(y_data - self.stat_output['min'].to_numpy()+1e-10)
+
+                    elif (self.data_preproc_type == 'log10'):
+                        all_data[i][data_id][1] = np.log10(y_data - self.stat_output['min'].to_numpy()+1e-10)
+
+                    # # PCA
+                    # all_data[i][data_id][1] = (y_data - self.system.C) / self.system.D
         
         return all_data
 

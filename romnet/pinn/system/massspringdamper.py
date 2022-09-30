@@ -21,6 +21,11 @@ class MassSpringDamper(System):
         self.dt_str       = 1.
         self.dt_max       = 0.02
 
+        self.norm_output_flg       = InputData.norm_output_flg
+        try:
+            self.data_preproc_type = InputData.data_preproc_type
+        except:
+            self.data_preproc_type = None
         # Integration method
         self.method       = 'bdf'
 
@@ -95,11 +100,51 @@ class MassSpringDamper(System):
 
 
     #===========================================================================
-    def get_residual(self, ic, t, grads):
+    def get_residual(self, ICs, t, grads):
 
         y, dy_dt = grads
 
-        return dy_dt - tf.matmul(y, self.K, transpose_b=True)
+
+        if (self.norm_output_flg):
+
+            if (self.data_preproc_type == None) or (self.data_preproc_type == 'std') or (self.data_preproc_type == 'auto'):
+                y = y * self.output_std + self.output_mean
+
+            elif (self.data_preproc_type == '0to1'):
+                y = y * self.output_range + self.output_min
+
+            elif (self.data_preproc_type == 'range'):
+                y = y * self.output_range
+
+            elif (self.data_preproc_type == '-1to1'):
+                y = (y + 1.)/2. * self.output_range + self.output_min
+
+            elif (self.data_preproc_type == 'pareto'):
+                y = y * np.sqrt(self.output_std) + self.output_mean
+
+
+        dy_ct_dt = tf.matmul(y, self.K, transpose_b=True)
+
+
+        if (self.norm_output_flg):
+
+            if (self.data_preproc_type == None) or (self.data_preproc_type == 'std') or (self.data_preproc_type == 'auto'):
+                dy_ct_dt /= self.output_std
+
+            elif (self.data_preproc_type == '0to1'):
+                dy_ct_dt /= self.output_range
+
+            elif (self.data_preproc_type == 'range'):
+                dy_ct_dt /= self.output_range
+
+            elif (self.data_preproc_type == '-1to1'):
+                dy_ct_dt /= self.output_range*2.
+
+            elif (self.data_preproc_type == 'pareto'):
+                dy_ct_dt /= np.sqrt(self.output_std)
+
+
+        return dy_dt - dy_ct_dt
 
     #===========================================================================
 

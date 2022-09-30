@@ -1,0 +1,174 @@
+# Note that if USER_DEFINED_PRODUCT_SETS is not defined then it is set to 0 (false) by default by Aprepro
+{if(!USER_DEFINED_PRODUCT_SETS)}
+  # H2O_IONIZATION_PRODUCT_SETS = {H2O_IONIZATION_PRODUCT_SETS = "+0, +0, +0"}
+  # H2O_OH_IONIZATION_PRODUCT_SETS = {H2O_OH_IONIZATION_PRODUCT_SETS = "+0, +0, +0"}
+  # H2O_H_IONIZATION_PRODUCT_SETS = {H2O_H_IONIZATION_PRODUCT_SETS = "+0, +0, +0"}
+  # H2O_O_IONIZATION_PRODUCT_SETS = {H2O_O_IONIZATION_PRODUCT_SETS = "+0, +0, +0"}
+  # H2O_O_DOUBLE_IONIZATION_PRODUCT_SETS = {H2O_O_DOUBLE_IONIZATION_PRODUCT_SETS = "+0, +0, +0"}
+  # H2O_H2_IONIZATION_PRODUCT_SETS = {H2O_H2_IONIZATION_PRODUCT_SETS = "+0, +0, +0"}
+  # H2O_ELASTIC_PRODUCT_SETS = {H2O_ELASTIC_PRODUCT_SETS = "+0, +0"}
+{endif}
+
+{if(HYBRID_MCC_SPAWN_PARTICLES)}
+# H2O_ELASTIC_PRODUCT_TYPES = {H2O_ELASTIC_PRODUCT_TYPES = "e-, H2O"}
+{else}
+# H2O_ELASTIC_PRODUCT_TYPES = {H2O_ELASTIC_PRODUCT_TYPES = "e-, H2O_fluid"}
+{endif}
+# GAS_ATOMIC_NUMBER = {GAS_ATOMIC_NUMBER = 10}
+
+
+{Ifdef(USE_WATER_VAPOR_DATA)}
+  # FIXME: The heat of reactions are completely wrong - this is important
+  #        in the case that the electrons are low energy.
+  Particle Interactions:
+    e+H2O Ionization:
+      Method: DSMC
+      Reactants_types: [e-, H2O]
+      Products: [e-, H2O+, e-]
+      Product_sets: [{H2O_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 44.0
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/cx/e+H2O__2e+H2Oi_ionization_SI.data
+    e+H2O Dissociative Ionization - OH ion:
+      Method: DSMC
+      Reactants_types: [e-, H2O]
+      Products: [e-, OH+, e-]
+      Product_sets: [{H2O_OH_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 44.0
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/cx/e+H2O__2e+OHi+H_dissociative_ionization_SI.data
+      Stride: 1
+    e+H2O Dissociative Ionization - H ion:
+      Method: DSMC
+      Reactants_types: [e-, H2O]
+      Products: [e-, H+, e-]
+      Product_sets: [{H2O_H_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 44.0
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/cx/e+H2O__2e+Hi+OH_dissociative_ionization_SI.data
+      Stride: 1
+    e+H2O Dissociative Ionization - O ion:
+      Method: DSMC
+      Reactants_types: [e-, H2O]
+      Products: [e-, O+, e-]
+      Product_sets: [{H2O_O_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 44.0
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/cx/e+H2O__2e+Oi+H2_dissociative_ionization_SI.data
+      Stride: 1
+    e+H2O Dissociative Ionization - H2 ion:
+      Method: DSMC
+      Reactants_types: [e-, H2O]
+      Products: [e-, H2+, e-]
+      Product_sets: [{H2O_H2_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 44.0
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/cx/e+H2O__2e+H2i+O_dissociative_ionization_SI.data
+    e+H2O Dissociative Ionization - O doubly charged ion:
+      Method: DSMC
+      Reactants_types: [e-, H2O]
+      Products: [e-, O+2, e-]
+      Product_sets: [{H2O_O_DOUBLE_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 44.0
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/cx/e+H2O__2e+Oii+H2_dissociative_doubleIonization_SI.data
+      Stride: 1
+    e+H2O Elastic:
+      Method: DSMC
+      Reactants_types: [e-, H2O]
+      Products: [e-, H2O]
+      Product_sets: [{H2O_ELASTIC_PRODUCT_SETS}]
+      Type: Elastic
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/cx/e+H2O_elastic_SI.data
+      Stride: 1
+{Ifdef(IS_HYBRID)}
+      e+H2O Ionization - Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, H2O_fluid]
+      Products: [e-, H2O+, e-]
+      Product_sets: [{H2O_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 44.0
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/cx/e+H2O__2e+H2Oi_ionization_SI.data
+    e+H2O Dissociative Ionization - OH ion - Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, H2O_fluid]
+      Products: [e-, OH+, e-]
+      Product_sets: [{H2O_OH_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 44.0
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/cx/e+H2O__2e+OHi+H_dissociative_ionization_SI.data
+      Stride: 1
+    e+H2O Dissociative Ionization - H ion - Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, H2O_fluid]
+      Products: [e-, H+, e-]
+      Product_sets: [{H2O_H_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 44.0
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/cx/e+H2O__2e+Hi+OH_dissociative_ionization_SI.data
+      Stride: 1
+    e+H2O Dissociative Ionization - O ion - Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, H2O_fluid]
+      Products: [e-, O+, e-]
+      Product_sets: [{H2O_O_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 44.0
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/cx/e+H2O__2e+Oi+H2_dissociative_ionization_SI.data
+      Stride: 1
+    e+H2O Dissociative Ionization - H2 ion - Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, H2O_fluid]
+      Products: [e-, H2+, e-]
+      Product_sets: [{H2O_H2_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 44.0
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/cx/e+H2O__2e+H2i+O_dissociative_ionization_SI.data
+    e+H2O Dissociative Ionization - O doubly charged ion - Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, H2O_fluid]
+      Products: [e-, O+2, e-]
+      Product_sets: [{H2O_O_DOUBLE_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 44.0
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/cx/e+H2O__2e+Oii+H2_dissociative_doubleIonization_SI.data
+      Stride: 1
+    e+H2O Elastic - Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, H2O_fluid]
+      Products: [{H2O_ELASTIC_PRODUCT_TYPE}]
+      Product_sets: [{H2O_ELASTIC_PRODUCT_SETS}]
+      Type: Elastic
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/cx/e+H2O_elastic_SI.data
+      Stride: 1
+{endif}
+{endif}

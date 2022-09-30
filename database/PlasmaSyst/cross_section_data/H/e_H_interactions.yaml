@@ -1,0 +1,172 @@
+# Note that if USER_DEFINED_PRODUCT_SETS is not defined then it is set to 0 (false) by default by Aprepro
+{if(!USER_DEFINED_PRODUCT_SETS)}
+  # H_IONIZATION_PRODUCT_SETS = {H_IONIZATION_PRODUCT_SETS = "+0, +0, +0"}
+  # H_ELASTIC_PRODUCT_SETS = {H_ELASTIC_PRODUCT_SETS = "+0, +0"}
+  # H_EXCITATION_PRODUCT_SETS = {H_EXCITATION_PRODUCT_SETS = "+0, +0"}
+{endif}
+{if(HYBRID_MCC_SPAWN_PARTICLES)}
+# H_ELASTIC_PRODUCT_TYPES = {H_ELASTIC_PRODUCT_TYPES = "e-, H"}
+# H_EXCITATION_PRODUCT_TYPES = {H_EXCITATION_PRODUCT_TYPES = "e-, H"}
+{else}
+# H_ELASTIC_PRODUCT_TYPES = {H_ELASTIC_PRODUCT_TYPES = "e-, H_fluid"}
+# H_EXCITATION_PRODUCT_TYPES = {H_EXCITATION_PRODUCT_TYPES = "e-, H_fluid"}
+{endif}
+# GAS_ATOMIC_NUMBER = {GAS_ATOMIC_NUMBER = 1}
+
+{Ifdef(USE_IST-LISBON_DATA)}
+  # Using IST-LISBON data for e+H interactions
+  Particle Interactions:
+    e+H Ionization:
+      Method: DSMC
+      Reactants_types: [e-, H]
+      Products: [e-, H+, e-]
+      Product_sets: [{H_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 13.61
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/IST-LISBON/e+H_ionization_13.61eV_SI.data
+      Stride: 1
+    e+H Elastic:
+      Method: DSMC
+      Reactants_types: [e-, H]
+      Products: [e-, H]
+      Product_sets: [{H_ELASTIC_PRODUCT_SETS}]
+      Type: Elastic
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/IST-LISBON/e+H_elastic_SI.data
+      Stride: 1
+    e+H H(2p) excitation:
+      Method: DSMC
+      Reactants_types: [e-, H]
+      Products: [e-, H]
+      Product_sets: [{H_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 10.21
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/IST-LISBON/e+H_excitation_H(2p)_10.21eV_SI.data
+      Stride: 1
+    e+H H(2s) excitation:
+      Method: DSMC
+      Reactants_types: [e-, H]
+      Products: [e-, H]
+      Product_sets: [{H_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 10.21
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/IST-LISBON/e+H_excitation_H(2s)_10.21eV_SI.data
+      Stride: 1
+    e+H 12.11 excitation:
+      Method: DSMC
+      Reactants_types: [e-, H]
+      Products: [e-, H]
+      Product_sets: [{H_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 12.11
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/IST-LISBON/e+H_excitation_12.11eV_SI.data
+      Stride: 1
+    e+H 12.76 excitation:
+      Method: DSMC
+      Reactants_types: [e-, H]
+      Products: [e-, H]
+      Product_sets: [{H_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 12.76
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/IST-LISBON/e+H_excitation_12.76eV_SI.data
+      Stride: 1
+    e+H 13.11 excitation:
+      Method: DSMC
+      Reactants_types: [e-, H]
+      Products: [e-, H]
+      Product_sets: [{H_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 13.11
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/IST-LISBON/e+H_excitation_13.11eV_SI.data
+      Stride: 1
+{Ifdef(IS_HYBRID)}
+    e+H Ionization Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, H_fluid]
+      Products: [e-, H+, e-]
+      Product_sets: [{H_IONIZATION_PRODUCT_SETS}]
+      Heat of Reaction: 13.61
+      Type: Ionization
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/IST-LISBON/e+H_ionization_13.61eV_SI.data
+      Stride: 1
+    e+H Elastic Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, H_fluid]
+      Products: [{H_ELASTIC_PRODUCT_TYPES}]
+      Product_sets: [{H_ELASTIC_PRODUCT_SETS}]
+      Type: Elastic
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/IST-LISBON/e+H_elastic_SI.data
+      Stride: 1
+    e+H H(2p) excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, H_fluid]
+      Products: [{H_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{H_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 10.21
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/IST-LISBON/e+H_excitation_H(2p)_10.21eV_SI.data
+      Stride: 1
+    e+H H(2s) excitation Hybrid:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, H_fluid]
+      Products: [{H_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{H_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 10.21
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/IST-LISBON/e+H_excitation_H(2s)_10.21eV_SI.data
+      Stride: 1
+    e+H 12.11 excitation:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, H_fluid]
+      Products: [{H_EXCITATION_PRODUCT_TYPES}]
+      Heat of Reaction: 12.11
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/IST-LISBON/e+H_excitation_12.11eV_SI.data
+      Stride: 1
+    e+H 12.76 excitation:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, H_fluid]
+      Products: [{H_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{H_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 12.76
+      Type: Reaction
+      Cross Section:
+       TABULAR:
+          File Name: {CROSS_SECTION_DIR}/IST-LISBON/e+H_excitation_12.76eV_SI.data
+      Stride: 1
+    e+H 13.11 excitation:
+      Method: Hybrid_MCC
+      Reactants_types: [e-, H_fluid]
+      Products: [{H_EXCITATION_PRODUCT_TYPES}]
+      Product_sets: [{H_EXCITATION_PRODUCT_SETS}]
+      Heat of Reaction: 13.11
+      Type: Reaction
+      Cross Section:
+        TABULAR:
+          File Name: {CROSS_SECTION_DIR}/IST-LISBON/e+H_excitation_13.11eV_SI.data
+      Stride: 1
+{endif}
+{endif}

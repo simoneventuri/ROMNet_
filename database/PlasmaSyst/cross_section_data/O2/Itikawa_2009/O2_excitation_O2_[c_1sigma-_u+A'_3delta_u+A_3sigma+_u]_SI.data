@@ -1,0 +1,18 @@
+# EXCITATION
+# Process:           O2 + e- -> e- + O2 [c 1_SIGMA{u,-} + A' 3_DELTA{u} + A 3_SIGMA{u,+}]
+# Heat of Reaction:  6.9534e-19 joules (for the A 3_SIGMA{u,+} state)
+# Units:             SI
+# Uncertainty:       UNKOWN
+# Source:            Itikawa, J. Phys. Chem. Ref. Data, Vol. 38, No. 1, 2009. (Table 8)
+# ALEPH Comments:    This is the cross section for excitation to any of the three listed excited states.
+# ALEPH Comments:    Added 0 value at heat of reaction energy. Extrapolated using ln(E)/E up to 500 eV, then linearly extrapolated to 0 sigma for the last data point
+# Energy (Joules) | Cross Section (m2)
+#-------------------------------------
+6.9534e-19	0.0
+1.602e-18 	0.1305e-20
+2.403e-18 	0.075e-20
+3.204e-18 	0.039e-20
+4.8065E-18	1.3000E-22
+8.0109E-17	1.4252E-23
+8.9381E-17	0.0000E+00
+#-------------------------------------

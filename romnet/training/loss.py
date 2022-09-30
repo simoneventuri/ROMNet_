@@ -81,6 +81,7 @@ def mse(axis):
         err      = tf.math.squared_difference(y_pred, y_true) 
         if attention_mask is not None:
             attention_mask = tf.convert_to_tensor(attention_mask)
+            attention_mask = tf.cast(attention_mask, y_pred.dtype)
             err           *= attention_mask**2
         # return K.mean(err, axis=-1)                          # TF
         # return tf.reduce_sum(tf.reduce_mean(err, axis=axis)) # PRODE
@@ -131,7 +132,8 @@ def zero(*args):
 def nll(axis): 
     def negative_log_likelihood(y, distr, attention_mask=None):
         #y_true   = tf.cast(y_true, y_pred.dtype)
-        return K.sum( -distr.log_prob(y), axis=-1)
+        #return K.sum( -distr.log_prob(y), axis=-1)
+        return -distr.log_prob(y)
     return negative_log_likelihood
 
 

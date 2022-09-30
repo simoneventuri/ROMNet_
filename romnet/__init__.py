@@ -1,10 +1,10 @@
 from .__about__ import __version__
 
-from . import training
+from . import architecture
 from . import data
 from . import model
-from . import nn
 from . import pinn
+from . import training
 from . import utils
 
 

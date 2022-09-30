@@ -1,0 +1,18 @@
+# EXCITATION
+# Process:           O2 + e- -> e- + O2 b 1_SIGMA{g,+} 
+# Heat of Reaction:  2.6067e-19 joules
+# Units:             SI
+# Uncertainty:       +/-18%
+# Source:            Itikawa, J. Phys. Chem. Ref. Data, Vol. 38, No. 1, 2009. (Table 7)
+# ALEPH Comments:    Added 0 value at heat of reaction energy. Extrapolated using ln(E)/E up to 500 eV, then linearly extrapolated to 0 sigma for the last data point
+# Energy (Joules) | Cross Section (m2)
+#-------------------------------------
+2.6067e-19  	0.0
+8.011e-19   	0.020e-20  
+1.122e-18   	0.033e-20
+1.602e-18  	0.019e-20
+2.403e-18  	0.0078e-20
+3.2044E-18	5.5000E-23
+8.0109E-17	4.5639E-24
+8.7068E-17	0.0000E+00
+#-------------------------------------
